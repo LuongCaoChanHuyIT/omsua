@@ -55,4 +55,20 @@ describe('Admin App routes & layout', () => {
       screen.getByRole('heading', { name: /Cài đặt hệ thống/i }),
     ).toBeInTheDocument();
   });
+
+  it('renders not-found fallback inside AdminLayout on unknown routes', () => {
+    render(
+      <MemoryRouter initialEntries={['/unknown-route']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('link', { name: 'Tổng quan' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Quay về Tổng quan' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /Không tìm thấy trang/i }),
+    ).toBeInTheDocument();
+  });
 });

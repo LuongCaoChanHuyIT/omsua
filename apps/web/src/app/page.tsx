@@ -1,7 +1,9 @@
-import { DEFAULT_PORTS } from '@omsua/shared';
+import { DEFAULT_PORTS, normalizeApiBaseUrl } from '@omsua/shared';
 import { HealthStatusCard } from '@/components/health-status-card';
 
 export default function HomePage() {
+  const apiBaseUrl = normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_URL);
+
   const services = [
     {
       name: 'Web Storefront (Next.js)',
@@ -15,12 +17,12 @@ export default function HomePage() {
     },
     {
       name: 'Backend Health (NestJS)',
-      url: `http://localhost:${DEFAULT_PORTS.BACKEND}/api/health`,
+      url: `${apiBaseUrl}/health`,
       port: DEFAULT_PORTS.BACKEND,
     },
     {
       name: 'Swagger API Docs',
-      url: `http://localhost:${DEFAULT_PORTS.BACKEND}/api/docs`,
+      url: `${apiBaseUrl}/docs`,
       port: DEFAULT_PORTS.BACKEND,
     },
   ];

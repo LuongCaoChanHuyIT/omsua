@@ -4,4 +4,9 @@ export type {
   HealthFetchResult,
   HealthStatus,
 } from './contracts';
-export { createApiResponse, normalizeApiBaseUrl } from './utils';
+export {
+  createApiResponse,
+  isValidHealthPayload,
+  normalizeApiBaseUrl,
+  requestBackendHealth,
+} from './utils';

@@ -6,8 +6,10 @@ import { configureApp } from '../src/app.setup';
 
 describe('Backend App (e2e)', () => {
   let app: INestApplication;
+  const originalCorsOrigins = process.env.CORS_ORIGINS;
 
   beforeAll(async () => {
+    process.env.CORS_ORIGINS = '';
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -18,6 +20,11 @@ describe('Backend App (e2e)', () => {
   });
 
   afterAll(async () => {
+    if (originalCorsOrigins === undefined) {
+      delete process.env.CORS_ORIGINS;
+    } else {
+      process.env.CORS_ORIGINS = originalCorsOrigins;
+    }
     await app.close();
   });
 
@@ -36,7 +43,7 @@ describe('Backend App (e2e)', () => {
     expect(typeof res.body.timestamp).toBe('string');
   });
 
-  it('enforces CORS allowlist for web (:3000) and admin (:3001) while omitting unlisted origins', async () => {
+  it('enforces default CORS allowlist (:3000, :3001) deterministically regardless of shell or .env overrides', async () => {
     const webRes = await request(app.getHttpServer())
       .get('/api/health')
       .set('Origin', 'http://localhost:3000')
@@ -58,6 +65,29 @@ describe('Backend App (e2e)', () => {
       .set('Origin', 'http://evil.example.com')
       .expect(200);
     expect(blockedRes.headers['access-control-allow-origin']).toBeUndefined();
+  });
+
+  it('normalizes custom CORS_ORIGINS with whitespace and trailing slashes end-to-end', async () => {
+    process.env.CORS_ORIGINS = ' https://portal.omsua.vn/// ';
+    const customModule = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+    const customApp = customModule.createNestApplication();
+    configureApp(customApp);
+    await customApp.init();
+
+    try {
+      const allowed = await request(customApp.getHttpServer())
+        .get('/api/health')
+        .set('Origin', 'https://portal.omsua.vn')
+        .expect(200);
+      expect(allowed.headers['access-control-allow-origin']).toBe(
+        'https://portal.omsua.vn',
+      );
+    } finally {
+      process.env.CORS_ORIGINS = '';
+      await customApp.close();
+    }
   });
 
   it('rejects non-whitelisted query parameters via global ValidationPipe', async () => {

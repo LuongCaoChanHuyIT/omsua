@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { execFileSync } from 'node:child_process';
+import tsupConfig from '../tsup.config';
 import {
   DEFAULT_API_BASE_URL,
   DEFAULT_PORTS,
@@ -8,6 +9,16 @@ import {
 } from './index';
 
 describe('@omsua/shared', () => {
+  it('disables dist cleaning in watch mode so pnpm dev never deletes active declarations', () => {
+    expect(typeof tsupConfig).toBe('function');
+    if (typeof tsupConfig === 'function') {
+      const watchResolved = tsupConfig({ watch: true });
+      const buildResolved = tsupConfig({});
+      expect(watchResolved).toMatchObject({ clean: false });
+      expect(buildResolved).toMatchObject({ clean: true });
+    }
+  });
+
   it('exposes exact default ports and API base URL', () => {
     expect(DEFAULT_PORTS).toEqual({ WEB: 3000, ADMIN: 3001, BACKEND: 4000 });
     expect(DEFAULT_API_BASE_URL).toBe('http://localhost:4000/api');
