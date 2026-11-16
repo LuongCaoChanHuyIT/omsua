@@ -31,22 +31,23 @@ describe('@omsua/shared', () => {
   });
 
   it('resolves built package from both CommonJS require() and ESM import()', () => {
+    const cleanEnv = { ...process.env, NO_COLOR: '1', FORCE_COLOR: '0' };
     const cjsOut = execFileSync(
       process.execPath,
       [
         '-e',
-        'const s = require("./dist/index.cjs"); console.log(s.DEFAULT_PORTS.BACKEND);',
+        'const s = require("./dist/index.cjs"); process.stdout.write(String(s.DEFAULT_PORTS.BACKEND));',
       ],
-      { cwd: process.cwd(), encoding: 'utf8' },
+      { cwd: process.cwd(), encoding: 'utf8', env: cleanEnv },
     ).trim();
     const esmOut = execFileSync(
       process.execPath,
       [
         '--input-type=module',
         '-e',
-        'import { DEFAULT_PORTS } from "./dist/index.js"; console.log(DEFAULT_PORTS.WEB);',
+        'import { DEFAULT_PORTS } from "./dist/index.js"; process.stdout.write(String(DEFAULT_PORTS.WEB));',
       ],
-      { cwd: process.cwd(), encoding: 'utf8' },
+      { cwd: process.cwd(), encoding: 'utf8', env: cleanEnv },
     ).trim();
     expect(cjsOut).toBe('4000');
     expect(esmOut).toBe('3000');
