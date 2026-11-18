@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   ICE_LEVELS,
+  PAYMENT_METHODS,
   PRODUCT_SIZE_CODES,
   SPICE_LEVELS,
   SUGAR_LEVELS,
@@ -14,6 +15,7 @@ import {
 } from '@omsua/shared';
 import { Transform, Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
   ArrayMinSize,
   IsArray,
   IsIn,
@@ -166,10 +168,10 @@ export class CreateOrderDto implements CreateOrderPayload {
 
   @ApiProperty({
     description: 'Selected payment method',
-    enum: ['cod', 'qr'],
+    enum: PAYMENT_METHODS,
     example: 'cod',
   })
-  @IsIn(['cod', 'qr'])
+  @IsIn(PAYMENT_METHODS)
   paymentMethod: PaymentMethod;
 
   @ApiProperty({
@@ -178,6 +180,7 @@ export class CreateOrderDto implements CreateOrderPayload {
   })
   @IsArray()
   @ArrayMinSize(1)
+  @ArrayMaxSize(50)
   @ValidateNested({ each: true })
   @Type(() => OrderItemDto)
   items: OrderItemDto[];

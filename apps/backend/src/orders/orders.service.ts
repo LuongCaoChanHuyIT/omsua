@@ -14,6 +14,7 @@ import {
   resolveOrderLine,
   type CreateOrderPayload,
   type IceLevel,
+  type OrderItemInput,
   type OrderLineResolved,
   type OrderLineTopping,
   type OrderRecord,
@@ -161,11 +162,44 @@ export class OrdersService {
     if (!Array.isArray(payload.items) || payload.items.length === 0) {
       throw new BadRequestException('Đơn hàng phải có ít nhất 1 món.');
     }
+    if (payload.items.length > 50) {
+      throw new BadRequestException('Đơn hàng không được vượt quá 50 dòng món.');
+    }
+
+    const mergedItems: OrderItemInput[] = [];
+    const mergedIndexByKey = new Map<string, number>();
+
+    for (const item of payload.items) {
+      if (
+        !item ||
+        typeof item !== 'object' ||
+        typeof item.quantity !== 'number' ||
+        !Number.isInteger(item.quantity) ||
+        item.quantity < 1 ||
+        (item.toppingIds !== undefined && !Array.isArray(item.toppingIds))
+      ) {
+        mergedItems.push(item);
+        continue;
+      }
+
+      const key = canonicalizeCartItemKey(item);
+      const existingIndex = mergedIndexByKey.get(key);
+      if (existingIndex === undefined) {
+        mergedIndexByKey.set(key, mergedItems.length);
+        mergedItems.push({ ...item });
+      } else {
+        const existing = mergedItems[existingIndex]!;
+        mergedItems[existingIndex] = {
+          ...existing,
+          quantity: existing.quantity + item.quantity,
+        };
+      }
+    }
 
     const productsMap = this.catalogService.getProductsMap();
     const toppingsMap = this.catalogService.getToppingsMap();
 
-    const resolvedLines: OrderLineResolved[] = payload.items.map((item) => {
+    const resolvedLines: OrderLineResolved[] = mergedItems.map((item) => {
       try {
         return resolveOrderLine(item, productsMap, toppingsMap);
       } catch (error) {

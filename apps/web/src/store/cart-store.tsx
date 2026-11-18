@@ -2,11 +2,13 @@
 
 import {
   OMSUA_BRANCHES,
+  OrderValidationError,
   type BranchInfo,
   type CatalogPayload,
   type OrderItemInput,
   type OrderLineResolved,
   type OrderTotals,
+  type ToppingItem,
   calculateOrderTotals,
   canonicalizeCartItemKey,
   resolveOrderLine,
@@ -25,6 +27,14 @@ import {
 const CART_STORAGE_KEY = 'omsua.cart.v1';
 const DEFAULT_BRANCH_ID = 'cs1-hoang-dieu';
 
+export interface UnavailableCartItem {
+  key: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  reason: string;
+}
+
 export interface CartContextValue {
   branches: BranchInfo[];
   selectedBranch: BranchInfo;
@@ -32,9 +42,11 @@ export interface CartContextValue {
   items: OrderItemInput[];
   lines: OrderLineResolved[];
   totals: OrderTotals;
+  unavailableItems: UnavailableCartItem[];
   addItem: (item: OrderItemInput) => void;
   updateQuantity: (canonicalKey: string, quantity: number) => void;
   removeItem: (canonicalKey: string) => void;
+  removeUnavailableItems: () => void;
   clearCart: () => void;
 }
 
@@ -194,8 +206,38 @@ export function CartProvider({
                   hydratedItems,
                   resolvedLineToOrderItemInput(resolved),
                 );
-              } catch {
-                // Ignore persisted items that fail resolution against current catalog
+              } catch (error) {
+                if (
+                  error instanceof OrderValidationError &&
+                  (error.code === 'PRODUCT_UNAVAILABLE' ||
+                    error.code === 'TOPPING_UNAVAILABLE')
+                ) {
+                  try {
+                    const availableProducts = new Map(
+                      Array.from(productsById.entries()).map(([id, product]) => [
+                        id,
+                        { ...product, isAvailable: true },
+                      ]),
+                    );
+                    const availableToppings = new Map(
+                      Array.from(toppingsById.entries()).map(([id, topping]) => [
+                        id,
+                        { ...topping, isAvailable: true },
+                      ]),
+                    );
+                    const resolvedIgnoringAvailability = resolveOrderLine(
+                      candidate,
+                      availableProducts,
+                      availableToppings,
+                    );
+                    hydratedItems = mergeItemIntoList(
+                      hydratedItems,
+                      resolvedLineToOrderItemInput(resolvedIgnoringAvailability),
+                    );
+                  } catch {
+                    // Ignore persisted items with invalid structure/options
+                  }
+                }
               }
             }
             setRawItems(hydratedItems);
@@ -277,17 +319,66 @@ export function CartProvider({
     );
   }, [branches, selectedBranchId]);
 
-  const lines = useMemo<OrderLineResolved[]>(() => {
+  const { lines, unavailableItems } = useMemo<{
+    lines: OrderLineResolved[];
+    unavailableItems: UnavailableCartItem[];
+  }>(() => {
     const resolvedLines: OrderLineResolved[] = [];
+    const soldOutItems: UnavailableCartItem[] = [];
+
     for (const item of rawItems) {
       try {
         resolvedLines.push(resolveOrderLine(item, productsById, toppingsById));
-      } catch {
-        // Skip items that became unavailable or invalid against live catalog
+      } catch (error) {
+        if (
+          error instanceof OrderValidationError &&
+          (error.code === 'PRODUCT_UNAVAILABLE' ||
+            error.code === 'TOPPING_UNAVAILABLE')
+        ) {
+          const product = productsById.get(item.productId);
+          if (product) {
+            const soldOutToppings = !product.isAvailable
+              ? []
+              : normalizeToppingIds(item.toppingIds)
+                  .map((id) => toppingsById.get(id))
+                  .filter(
+                    (topping): topping is ToppingItem =>
+                      Boolean(topping && !topping.isAvailable),
+                  );
+            const reason = !product.isAvailable
+              ? `Món "${product.name}" hiện đang tạm hết.`
+              : soldOutToppings.length > 1
+                ? `Topping ${soldOutToppings.map((topping) => `"${topping.name}"`).join(', ')} hiện đang tạm hết.`
+                : error.message;
+
+            soldOutItems.push({
+              key: canonicalizeCartItemKey(item),
+              productId: product.id,
+              productName: product.name,
+              quantity: item.quantity,
+              reason,
+            });
+          }
+        }
       }
     }
-    return resolvedLines;
+
+    return { lines: resolvedLines, unavailableItems: soldOutItems };
   }, [rawItems, productsById, toppingsById]);
+
+  const removeUnavailableItems = useCallback(() => {
+    const unavailableKeys = new Set(
+      unavailableItems.map((entry) => entry.key),
+    );
+    if (unavailableKeys.size === 0) {
+      return;
+    }
+    setRawItems((prev) =>
+      prev.filter(
+        (entry) => !unavailableKeys.has(canonicalizeCartItemKey(entry)),
+      ),
+    );
+  }, [unavailableItems]);
 
   const items = useMemo<OrderItemInput[]>(
     () => lines.map((line) => resolvedLineToOrderItemInput(line)),
@@ -307,9 +398,11 @@ export function CartProvider({
       items,
       lines,
       totals,
+      unavailableItems,
       addItem,
       updateQuantity,
       removeItem,
+      removeUnavailableItems,
       clearCart,
     }),
     [
@@ -319,9 +412,11 @@ export function CartProvider({
       items,
       lines,
       removeItem,
+      removeUnavailableItems,
       selectedBranch,
       setSelectedBranchId,
       totals,
+      unavailableItems,
       updateQuantity,
     ],
   );

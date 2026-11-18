@@ -29,7 +29,9 @@ function isCatalogApiResponse(
   const data = candidate.data as Record<string, unknown>;
   return (
     Array.isArray(data.categories) &&
+    data.categories.length > 0 &&
     Array.isArray(data.products) &&
+    data.products.length > 0 &&
     Array.isArray(data.toppings)
   );
 }

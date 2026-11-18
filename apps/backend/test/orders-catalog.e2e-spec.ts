@@ -255,4 +255,52 @@ describe('Orders & Catalog Integration (e2e)', () => {
       .send({ status: 'preparing' })
       .expect(404);
   });
+
+  it('POST /api/orders merges duplicate identical item objects into a single line and rejects payloads with > 50 items', async () => {
+    const mergedRes = await request(app.getHttpServer())
+      .post('/api/orders')
+      .send({
+        ...validOrderPayload,
+        items: [
+          {
+            productId: 'banh-trang-tron-top-mo',
+            quantity: 1,
+            size: 'STD',
+            spiceLevel: 'cay-vua',
+          },
+          {
+            productId: 'banh-trang-tron-top-mo',
+            quantity: 2,
+            size: 'STD',
+            spiceLevel: 'cay-vua',
+          },
+        ],
+      })
+      .expect(201);
+
+    expect(mergedRes.body.data.items).toHaveLength(1);
+    expect(mergedRes.body.data.items[0]).toMatchObject({
+      productId: 'banh-trang-tron-top-mo',
+      quantity: 3,
+      unitPrice: 40000,
+      lineTotal: 120000,
+    });
+    expect(mergedRes.body.data.totalItems).toBe(3);
+    expect(mergedRes.body.data.grandTotal).toBe(120000);
+
+    const oversizedItems = Array.from({ length: 51 }, () => ({
+      productId: 'banh-trang-tron-top-mo',
+      quantity: 1,
+      size: 'STD',
+      spiceLevel: 'cay-vua',
+    }));
+
+    await request(app.getHttpServer())
+      .post('/api/orders')
+      .send({
+        ...validOrderPayload,
+        items: oversizedItems,
+      })
+      .expect(400);
+  });
 });

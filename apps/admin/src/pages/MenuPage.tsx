@@ -100,7 +100,7 @@ export function MenuPage() {
   const [catalog, setCatalog] = useState<CatalogPayload | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [togglingIds, setTogglingIds] = useState<Set<string>>(() => new Set());
 
   const loadCatalog = useCallback(async () => {
     setLoading(true);
@@ -135,29 +135,40 @@ export function MenuPage() {
   }, []);
 
   const handleToggleProduct = async (product: ProductItem) => {
-    setTogglingId(product.id);
+    setTogglingIds((prev) => {
+      const next = new Set(prev);
+      next.add(product.id);
+      return next;
+    });
     setError(null);
     const nextAvailability = !product.isAvailable;
-    const result = await toggleProductAvailability(
-      product.id,
-      nextAvailability,
-    );
-    setTogglingId(null);
+    try {
+      const result = await toggleProductAvailability(
+        product.id,
+        nextAvailability,
+      );
 
-    if (!result.ok) {
-      setError(result.error);
-      return;
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+
+      setCatalog((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          products: prev.products.map((item) =>
+            item.id === product.id ? result.data : item,
+          ),
+        };
+      });
+    } finally {
+      setTogglingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(product.id);
+        return next;
+      });
     }
-
-    setCatalog((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        products: prev.products.map((item) =>
-          item.id === product.id ? result.data : item,
-        ),
-      };
-    });
   };
 
   const totalProducts = catalog?.products.length ?? 0;
@@ -260,7 +271,7 @@ export function MenuPage() {
                     <AdminProductCard
                       key={drink.id}
                       product={drink}
-                      toggling={togglingId === drink.id}
+                      toggling={togglingIds.has(drink.id)}
                       onToggle={(item) => void handleToggleProduct(item)}
                     />
                   ))}
@@ -285,7 +296,7 @@ export function MenuPage() {
                 <AdminProductCard
                   key={snack.id}
                   product={snack}
-                  toggling={togglingId === snack.id}
+                  toggling={togglingIds.has(snack.id)}
                   onToggle={(item) => void handleToggleProduct(item)}
                 />
               ))}

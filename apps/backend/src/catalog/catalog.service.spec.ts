@@ -185,4 +185,59 @@ describe('CatalogService (SQLite :memory:)', () => {
       fs.rmSync(tempDir, { recursive: true, force: true });
     }
   });
+
+  it('resolves relative SQLITE_PATH against backend package root instead of process.cwd() and runs seedDefaults once on cold boot', async () => {
+    const fakeCwd = fs.mkdtempSync(path.join(os.tmpdir(), 'omsua-fake-cwd-'));
+    const backendRoot = path.resolve(__dirname, '../..');
+    const relativeDbDir = path.join(backendRoot, '.tmp-rel-sqlite-spec');
+    const expectedSqliteFile = path.join(relativeDbDir, 'omsua-rel.sqlite');
+    const cwdSpy = jest.spyOn(process, 'cwd').mockReturnValue(fakeCwd);
+    const seedSpy = jest.spyOn(
+      DatabaseService.prototype as unknown as {
+        seedDefaults: (...args: unknown[]) => void;
+      },
+      'seedDefaults',
+    );
+
+    let customModule: TestingModule | undefined;
+    try {
+      customModule = await Test.createTestingModule({
+        imports: [
+          ConfigModule.forRoot({
+            isGlobal: true,
+            ignoreEnvFile: true,
+            load: [
+              () => ({
+                SQLITE_PATH: '.tmp-rel-sqlite-spec/omsua-rel.sqlite',
+              }),
+            ],
+          }),
+          DatabaseModule,
+          CatalogModule,
+        ],
+      }).compile();
+
+      await customModule.init();
+
+      expect(seedSpy).toHaveBeenCalledTimes(1);
+      expect(fs.existsSync(expectedSqliteFile)).toBe(true);
+      expect(
+        fs.existsSync(
+          path.join(fakeCwd, '.tmp-rel-sqlite-spec', 'omsua-rel.sqlite'),
+        ),
+      ).toBe(false);
+
+      const customDb = customModule.get<DatabaseService>(DatabaseService);
+      customDb.onModuleInit();
+      expect(seedSpy).toHaveBeenCalledTimes(2);
+    } finally {
+      seedSpy.mockRestore();
+      cwdSpy.mockRestore();
+      if (customModule) {
+        await customModule.close();
+      }
+      fs.rmSync(relativeDbDir, { recursive: true, force: true });
+      fs.rmSync(fakeCwd, { recursive: true, force: true });
+    }
+  });
 });

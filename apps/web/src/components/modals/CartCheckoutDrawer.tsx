@@ -25,6 +25,7 @@ export interface CartCheckoutDrawerProps {
   onClose: () => void;
   apiBaseUrl?: string;
   submitOrderFn?: SubmitOrderHandler;
+  onOrderError?: (error: string) => void;
 }
 
 const VN_PHONE_REGEX = /^0\d{9,10}$/;
@@ -34,6 +35,7 @@ export function CartCheckoutDrawer({
   onClose,
   apiBaseUrl,
   submitOrderFn,
+  onOrderError,
 }: CartCheckoutDrawerProps) {
   const headingId = useId();
   const nameInputId = useId();
@@ -48,8 +50,10 @@ export function CartCheckoutDrawer({
     items,
     lines,
     totals,
+    unavailableItems,
     updateQuantity,
     removeItem,
+    removeUnavailableItems,
     clearCart,
   } = useCart();
 
@@ -66,11 +70,14 @@ export function CartCheckoutDrawer({
   );
 
   const handleClose = useCallback(() => {
+    if (isSubmitting) {
+      return;
+    }
     setIsBranchPickerOpen(false);
     setErrorMessage(null);
     setConfirmedOrder(null);
     onClose();
-  }, [onClose]);
+  }, [isSubmitting, onClose]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -95,6 +102,13 @@ export function CartCheckoutDrawer({
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setErrorMessage(null);
+
+    if (unavailableItems.length > 0) {
+      setErrorMessage(
+        'Vui lòng gỡ các món đang tạm hết khỏi giỏ hàng trước khi đặt đơn.',
+      );
+      return;
+    }
 
     if (items.length === 0) {
       setErrorMessage('Giỏ hàng của bạn đang trống.');
@@ -125,6 +139,11 @@ export function CartCheckoutDrawer({
     }
 
     const trimmedNote = note.trim();
+    if (trimmedNote.length > 300) {
+      setErrorMessage('Ghi chú không được vượt quá 300 ký tự.');
+      return;
+    }
+
     const payload: CreateOrderPayload = {
       branchId: selectedBranch.id,
       customerName: trimmedName,
@@ -142,6 +161,7 @@ export function CartCheckoutDrawer({
 
       if (!result.ok) {
         setErrorMessage(result.error);
+        onOrderError?.(result.error);
         return;
       }
 
@@ -180,8 +200,9 @@ export function CartCheckoutDrawer({
           <button
             type="button"
             aria-label="Đóng giỏ hàng"
+            disabled={isSubmitting}
             onClick={handleClose}
-            className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-olive-primary/15 bg-canvas-cream text-sm font-bold text-espresso transition hover:bg-card-butter/70"
+            className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-olive-primary/15 bg-canvas-cream text-sm font-bold text-espresso transition hover:bg-card-butter/70 disabled:cursor-not-allowed disabled:opacity-50"
           >
             ✕
           </button>
@@ -250,7 +271,7 @@ export function CartCheckoutDrawer({
               Tiếp tục đặt món
             </button>
           </div>
-        ) : lines.length === 0 ? (
+        ) : lines.length === 0 && unavailableItems.length === 0 ? (
           <div className="rounded-3xl border border-olive-primary/12 bg-canvas-cream/65 p-8 text-center space-y-3">
             <p className="font-display text-lg font-bold text-espresso">
               Giỏ hàng của bạn đang trống
@@ -269,106 +290,167 @@ export function CartCheckoutDrawer({
           </div>
         ) : (
           <form onSubmit={(event) => void handleSubmit(event)} className="space-y-4">
-            <div className="space-y-3">
-              {lines.map((line) => (
-                <article
-                  key={line.canonicalKey}
-                  className="flex gap-3.5 rounded-2xl border border-olive-primary/12 bg-canvas-cream/65 p-3.5"
-                >
-                  <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl">
-                    <ProductIllustration
-                      productId={line.productId}
-                      categoryId={line.kind === 'snack' ? 'snack' : undefined}
-                      variant={line.kind === 'snack' ? 'snack' : 'card'}
-                    />
+            {unavailableItems.length > 0 && (
+              <div className="rounded-2xl border border-coral-sketch bg-coral-sketch/20 p-4 space-y-3">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-bold tracking-wider text-terracotta uppercase">
+                      ⚠ CÓ MÓN TRONG GIỎ VỪA TẠM HẾT
+                    </p>
+                    <p className="text-xs text-espresso">
+                      Vui lòng gỡ món tạm hết để tiếp tục xác nhận đặt đơn.
+                    </p>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      removeUnavailableItems();
+                      setErrorMessage(null);
+                    }}
+                    className="inline-flex cursor-pointer items-center rounded-full bg-terracotta px-3.5 py-1.5 text-xs font-bold text-surface-light transition hover:opacity-92"
+                  >
+                    Gỡ món tạm hết
+                  </button>
+                </div>
 
-                  <div className="flex min-w-0 flex-1 flex-col justify-between">
-                    <div className="space-y-0.5">
-                      <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-editorial text-base leading-snug font-semibold text-espresso">
-                          {line.productName}
-                        </h3>
-                        <span className="shrink-0 text-sm font-bold text-terracotta">
-                          {formatVnd(line.lineTotal)}
-                        </span>
+                <ul className="space-y-2 border-t border-coral-sketch/40 pt-2.5">
+                  {unavailableItems.map((item) => (
+                    <li
+                      key={item.key}
+                      className="flex items-center justify-between gap-3 rounded-xl border border-olive-primary/12 bg-surface-light/85 px-3 py-2 text-xs"
+                    >
+                      <div className="min-w-0">
+                        <p className="font-semibold text-espresso">
+                          {item.productName}{' '}
+                          <span className="font-normal text-warm-muted">
+                            (SL: {item.quantity})
+                          </span>
+                        </p>
+                        <p className="text-warm-muted">{item.reason}</p>
                       </div>
-
-                      {line.kind === 'drink' ? (
-                        <>
-                          <p className="text-xs text-warm-muted">
-                            Size {line.size} • {line.sugarLevel}% đường •{' '}
-                            {line.iceLevel}% đá
-                          </p>
-                          {line.toppings.length > 0 && (
-                            <p className="text-xs font-semibold text-artichoke">
-                              +{' '}
-                              {line.toppings
-                                .map(
-                                  (topping) =>
-                                    `${topping.shortName} (+${formatShortPrice(topping.price)})`,
-                                )
-                                .join(', ')}
-                            </p>
-                          )}
-                        </>
-                      ) : (
-                        <>
-                          <p className="text-xs text-warm-muted">
-                            Độ cay:{' '}
-                            {line.spiceLevel
-                              ? SPICE_LEVEL_LABELS[line.spiceLevel]
-                              : 'Cay vừa'}{' '}
-                            • {line.sizeLabel}
-                          </p>
-                          <p className="text-xs font-semibold text-subhead-ochre">
-                            Ăn kèm sốt tắc hành phi nhà làm
-                          </p>
-                        </>
-                      )}
-                    </div>
-
-                    <div className="mt-2.5 flex items-center justify-between gap-2">
-                      <div className="inline-flex items-center gap-2 rounded-full border border-olive-primary/15 bg-surface-light px-2.5 py-1">
-                        <button
-                          type="button"
-                          aria-label={`Giảm số lượng ${line.productName}`}
-                          onClick={() =>
-                            updateQuantity(line.canonicalKey, line.quantity - 1)
-                          }
-                          className="cursor-pointer px-1 text-xs font-bold text-warm-muted hover:text-espresso"
-                        >
-                          -
-                        </button>
-                        <span className="text-xs font-bold text-espresso">
-                          SL: {line.quantity}{' '}
-                          {line.kind === 'snack' ? 'phần' : 'ly'}
-                        </span>
-                        <button
-                          type="button"
-                          aria-label={`Tăng số lượng ${line.productName}`}
-                          onClick={() =>
-                            updateQuantity(line.canonicalKey, line.quantity + 1)
-                          }
-                          className="cursor-pointer px-1 text-xs font-bold text-terracotta hover:opacity-80"
-                        >
-                          +
-                        </button>
-                      </div>
-
                       <button
                         type="button"
-                        aria-label={`Xóa ${line.productName}`}
-                        onClick={() => removeItem(line.canonicalKey)}
-                        className="cursor-pointer text-xs font-semibold text-warm-muted underline-offset-2 hover:text-terracotta hover:underline"
+                        aria-label={`Xóa món tạm hết ${item.productName}`}
+                        onClick={() => removeItem(item.key)}
+                        className="shrink-0 cursor-pointer text-xs font-semibold text-terracotta underline-offset-2 hover:underline"
                       >
                         Xóa
                       </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {lines.length > 0 && (
+              <div className="space-y-3">
+                {lines.map((line) => (
+                  <article
+                    key={line.canonicalKey}
+                    className="flex gap-3.5 rounded-2xl border border-olive-primary/12 bg-canvas-cream/65 p-3.5"
+                  >
+                    <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl">
+                      <ProductIllustration
+                        productId={line.productId}
+                        categoryId={line.kind === 'snack' ? 'snack' : undefined}
+                        variant={line.kind === 'snack' ? 'snack' : 'card'}
+                      />
                     </div>
-                  </div>
-                </article>
-              ))}
-            </div>
+
+                    <div className="flex min-w-0 flex-1 flex-col justify-between">
+                      <div className="space-y-0.5">
+                        <div className="flex items-start justify-between gap-2">
+                          <h3 className="font-editorial text-base leading-snug font-semibold text-espresso">
+                            {line.productName}
+                          </h3>
+                          <span className="shrink-0 text-sm font-bold text-terracotta">
+                            {formatVnd(line.lineTotal)}
+                          </span>
+                        </div>
+
+                        {line.kind === 'drink' ? (
+                          <>
+                            <p className="text-xs text-warm-muted">
+                              Size {line.size} • {line.sugarLevel}% đường •{' '}
+                              {line.iceLevel}% đá
+                            </p>
+                            {line.toppings.length > 0 && (
+                              <p className="text-xs font-semibold text-artichoke">
+                                +{' '}
+                                {line.toppings
+                                  .map(
+                                    (topping) =>
+                                      `${topping.shortName} (+${formatShortPrice(topping.price)})`,
+                                  )
+                                  .join(', ')}
+                              </p>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-xs text-warm-muted">
+                              Độ cay:{' '}
+                              {line.spiceLevel
+                                ? SPICE_LEVEL_LABELS[line.spiceLevel]
+                                : 'Cay vừa'}{' '}
+                              • {line.sizeLabel}
+                            </p>
+                            <p className="text-xs font-semibold text-subhead-ochre">
+                              Ăn kèm sốt tắc hành phi nhà làm
+                            </p>
+                          </>
+                        )}
+                      </div>
+
+                      <div className="mt-2.5 flex items-center justify-between gap-2">
+                        <div className="inline-flex items-center gap-2 rounded-full border border-olive-primary/15 bg-surface-light px-2.5 py-1">
+                          <button
+                            type="button"
+                            aria-label={`Giảm số lượng ${line.productName}`}
+                            onClick={() =>
+                              updateQuantity(
+                                line.canonicalKey,
+                                line.quantity - 1,
+                              )
+                            }
+                            className="cursor-pointer px-1 text-xs font-bold text-warm-muted hover:text-espresso"
+                          >
+                            -
+                          </button>
+                          <span className="text-xs font-bold text-espresso">
+                            SL: {line.quantity}{' '}
+                            {line.kind === 'snack' ? 'phần' : 'ly'}
+                          </span>
+                          <button
+                            type="button"
+                            aria-label={`Tăng số lượng ${line.productName}`}
+                            disabled={line.quantity >= 99}
+                            onClick={() =>
+                              updateQuantity(
+                                line.canonicalKey,
+                                line.quantity + 1,
+                              )
+                            }
+                            className="cursor-pointer px-1 text-xs font-bold text-terracotta hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <button
+                          type="button"
+                          aria-label={`Xóa ${line.productName}`}
+                          onClick={() => removeItem(line.canonicalKey)}
+                          className="cursor-pointer text-xs font-semibold text-warm-muted underline-offset-2 hover:text-terracotta hover:underline"
+                        >
+                          Xóa
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
 
             <div className="rounded-2xl border border-olive-primary/15 bg-card-butter p-4 space-y-2">
               <p className="text-[11px] font-bold tracking-wider text-olive-primary uppercase">
@@ -491,6 +573,7 @@ export function CartCheckoutDrawer({
                 <input
                   id={noteInputId}
                   type="text"
+                  maxLength={300}
                   value={note}
                   onChange={(event) => setNote(event.target.value)}
                   placeholder="Ví dụ: Ít ngọt hơn, gọi khi tới cổng (không bắt buộc)"
@@ -579,7 +662,11 @@ export function CartCheckoutDrawer({
             <div className="space-y-2 pt-1">
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={
+                  isSubmitting ||
+                  unavailableItems.length > 0 ||
+                  lines.length === 0
+                }
                 className="w-full cursor-pointer rounded-2xl bg-terracotta px-5 py-3.5 text-sm font-bold text-surface-light shadow-xs transition hover:opacity-92 disabled:cursor-not-allowed disabled:opacity-65 sm:text-base"
               >
                 {isSubmitting

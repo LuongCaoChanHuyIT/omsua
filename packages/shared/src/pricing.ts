@@ -33,6 +33,9 @@ export function formatVnd(amount: number): string {
 }
 
 export function formatShortPrice(amount: number): string {
+  if (amount === 0) {
+    return '0đ';
+  }
   if (amount % 1000 === 0) {
     return `${amount / 1000}k`;
   }

@@ -255,4 +255,66 @@ describe('OrdersService (SQLite :memory:)', () => {
     const recovered = ordersService.createOrder(baseOrderPayload);
     expect(recovered.orderCode).toMatch(/^OM-\d{8}-[A-Z0-9]{4}$/);
   });
+
+  it('merges duplicate OrderItemDto inputs sharing canonicalizeCartItemKey into one order_items row and enforces quantity <= 99 after summing', () => {
+    const mergedOrder = ordersService.createOrder({
+      ...baseOrderPayload,
+      items: [
+        {
+          productId: 'tra-sua-atiso',
+          quantity: 1,
+          size: 'M',
+          sugarLevel: '70',
+          iceLevel: '70',
+          toppingIds: ['khuc-bach', 'tran-chau-den'],
+        },
+        {
+          productId: 'tra-sua-atiso',
+          quantity: 2,
+          size: 'M',
+          sugarLevel: '70',
+          iceLevel: '70',
+          toppingIds: ['tran-chau-den', 'khuc-bach'],
+        },
+      ],
+    });
+
+    expect(mergedOrder.items).toHaveLength(1);
+    expect(mergedOrder.items[0]).toMatchObject({
+      productId: 'tra-sua-atiso',
+      quantity: 3,
+      unitPrice: 65000,
+      lineTotal: 195000,
+    });
+    expect(mergedOrder.totalItems).toBe(3);
+    expect(mergedOrder.grandTotal).toBe(195000);
+
+    const rowCount = databaseService.db
+      .prepare('SELECT COUNT(*) AS count FROM order_items WHERE order_id = ?')
+      .get(mergedOrder.id) as { count: number };
+    expect(rowCount.count).toBe(1);
+
+    // Merged quantity > 99 must be rejected by resolveOrderLine
+    expect(() =>
+      ordersService.createOrder({
+        ...baseOrderPayload,
+        items: [
+          {
+            productId: 'tra-sua-atiso',
+            quantity: 60,
+            size: 'M',
+            sugarLevel: '70',
+            iceLevel: '70',
+          },
+          {
+            productId: 'tra-sua-atiso',
+            quantity: 50,
+            size: 'M',
+            sugarLevel: '70',
+            iceLevel: '70',
+          },
+        ],
+      }),
+    ).toThrow(BadRequestException);
+  });
 });

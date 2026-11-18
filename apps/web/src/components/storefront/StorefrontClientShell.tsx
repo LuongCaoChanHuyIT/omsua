@@ -8,7 +8,7 @@ import {
   type SpiceLevel,
   normalizeApiBaseUrl,
 } from '@omsua/shared';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CartCheckoutDrawer } from '@/components/modals/CartCheckoutDrawer';
 import { ProductCustomizerModal } from '@/components/modals/ProductCustomizerModal';
 import { fetchCatalog } from '@/lib/api';
@@ -30,12 +30,14 @@ interface StorefrontShellInnerProps {
   catalog: CatalogPayload;
   branches: BranchInfo[];
   apiBaseUrl: string;
+  onRefreshCatalog: () => Promise<void>;
 }
 
 function StorefrontShellInner({
   catalog,
   branches,
   apiBaseUrl,
+  onRefreshCatalog,
 }: StorefrontShellInnerProps) {
   const { selectedBranch, setSelectedBranchId, totals } = useCart();
 
@@ -73,7 +75,10 @@ function StorefrontShellInner({
         onSelectBranch={setSelectedBranchId}
         cartItemCount={totals.totalItems}
         cartTotal={totals.grandTotal}
-        onOpenCart={() => setIsCartOpen(true)}
+        onOpenCart={() => {
+          setIsCartOpen(true);
+          void onRefreshCatalog();
+        }}
       />
 
       <main className="mx-auto flex max-w-7xl flex-col gap-10 px-4 pt-6 sm:px-6 lg:px-8">
@@ -120,6 +125,9 @@ function StorefrontShellInner({
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
         apiBaseUrl={apiBaseUrl}
+        onOrderError={() => {
+          void onRefreshCatalog();
+        }}
       />
     </div>
   );
@@ -134,6 +142,13 @@ export function StorefrontClientShell({
     apiBaseUrl ?? process.env.NEXT_PUBLIC_API_URL,
   );
   const [catalog, setCatalog] = useState<CatalogPayload>(initialCatalog);
+
+  const refreshCatalog = useCallback(async () => {
+    const result = await fetchCatalog(resolvedApiBaseUrl);
+    if (!result.isFallback) {
+      setCatalog(result.catalog);
+    }
+  }, [resolvedApiBaseUrl]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -155,6 +170,7 @@ export function StorefrontClientShell({
         catalog={catalog}
         branches={initialBranches}
         apiBaseUrl={resolvedApiBaseUrl}
+        onRefreshCatalog={refreshCatalog}
       />
     </CartProvider>
   );

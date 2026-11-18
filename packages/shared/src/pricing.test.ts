@@ -59,6 +59,7 @@ describe('@omsua/shared domain catalog & pricing engine', () => {
     expect(formatVnd(0)).toBe('0đ');
     expect(formatVnd(45000)).toBe('45.000đ');
     expect(formatVnd(1250000)).toBe('1.250.000đ');
+    expect(formatShortPrice(0)).toBe('0đ');
     expect(formatShortPrice(45000)).toBe('45k');
     expect(formatShortPrice(10000)).toBe('10k');
   });
@@ -148,6 +149,9 @@ describe('@omsua/shared domain catalog & pricing engine', () => {
       grandTotal: 95000,
       totalItems: 2,
     });
+    expect(formatCustomizerBreakdown(snack)).toBe(
+      '40k (Phần tiêu chuẩn) = 40.000đ',
+    );
   });
 
   it('produces identical canonical keys regardless of topping selection order while distinguishing different options', () => {

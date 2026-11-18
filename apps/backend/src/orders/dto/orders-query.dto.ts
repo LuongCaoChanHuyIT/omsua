@@ -12,7 +12,7 @@ export class OrdersQueryDto {
     typeof value === 'string' && value.trim() === '' ? undefined : value,
   )
   @IsOptional()
-  @IsIn(['pending', 'preparing', 'delivering', 'completed', 'cancelled'])
+  @IsIn(ORDER_STATUSES)
   status?: OrderStatus;
 
   @ApiPropertyOptional({

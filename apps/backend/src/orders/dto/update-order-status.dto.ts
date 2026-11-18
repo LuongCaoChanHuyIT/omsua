@@ -8,6 +8,6 @@ export class UpdateOrderStatusDto {
     enum: ORDER_STATUSES,
     example: 'preparing',
   })
-  @IsIn(['pending', 'preparing', 'delivering', 'completed', 'cancelled'])
+  @IsIn(ORDER_STATUSES)
   status: OrderStatus;
 }

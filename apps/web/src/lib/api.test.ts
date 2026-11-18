@@ -153,6 +153,43 @@ describe('fetchCatalog (web)', () => {
     );
     expect(shapeResult.isFallback).toBe(true);
     expect(shapeResult.catalog.products).toHaveLength(30);
+
+    const mockEmptyCatalog = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        success: true,
+        data: { categories: [], products: [], toppings: [] },
+        timestamp: '2026-11-18T09:00:00.000Z',
+      }),
+    });
+    const emptyResult = await fetchCatalog(
+      'http://localhost:4000/api',
+      mockEmptyCatalog as unknown as typeof fetch,
+    );
+    expect(emptyResult.isFallback).toBe(true);
+    expect(emptyResult.catalog.categories).toHaveLength(4);
+    expect(emptyResult.catalog.products).toHaveLength(30);
+
+    const mockEmptyProducts = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        success: true,
+        data: {
+          categories: getDefaultCatalog().categories,
+          products: [],
+          toppings: getDefaultCatalog().toppings,
+        },
+        timestamp: '2026-11-18T09:00:00.000Z',
+      }),
+    });
+    const emptyProductsResult = await fetchCatalog(
+      'http://localhost:4000/api',
+      mockEmptyProducts as unknown as typeof fetch,
+    );
+    expect(emptyProductsResult.isFallback).toBe(true);
+    expect(emptyProductsResult.catalog.products).toHaveLength(30);
   });
 });
 

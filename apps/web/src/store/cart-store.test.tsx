@@ -163,4 +163,88 @@ describe('CartProvider & useCart store', () => {
     expect(result.current.lines).toHaveLength(0);
     expect(result.current.totals.grandTotal).toBe(0);
   });
+
+  it('surfaces unavailableItems when a product or selected topping turns isAvailable: false and clears them via removeUnavailableItems()', () => {
+    let activeCatalog = getDefaultCatalog();
+
+    const { result, rerender } = renderHook(() => useCart(), {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <CartProvider catalog={activeCatalog} branches={OMSUA_BRANCHES}>
+          {children}
+        </CartProvider>
+      ),
+    });
+
+    act(() => {
+      result.current.addItem({
+        productId: 'tra-sua-atiso',
+        quantity: 2,
+        size: 'M',
+        sugarLevel: '70',
+        iceLevel: '70',
+        toppingIds: ['khuc-bach'],
+      });
+      result.current.addItem({
+        productId: 'banh-trang-tron-top-mo',
+        quantity: 1,
+        size: 'STD',
+        spiceLevel: 'cay-vua',
+      });
+    });
+
+    expect(result.current.lines).toHaveLength(2);
+    expect(result.current.unavailableItems).toEqual([]);
+
+    // Mark tra-sua-atiso unavailable mid-session
+    activeCatalog = {
+      ...activeCatalog,
+      products: activeCatalog.products.map((product) =>
+        product.id === 'tra-sua-atiso'
+          ? { ...product, isAvailable: false }
+          : product,
+      ),
+    };
+    rerender();
+
+    expect(result.current.lines).toHaveLength(1);
+    expect(result.current.lines[0]?.productId).toBe('banh-trang-tron-top-mo');
+    expect(result.current.totals.totalItems).toBe(1);
+    expect(result.current.totals.grandTotal).toBe(40000);
+    expect(result.current.unavailableItems).toHaveLength(1);
+    expect(result.current.unavailableItems[0]).toMatchObject({
+      productId: 'tra-sua-atiso',
+      productName: 'Trà Sữa Atiso',
+      quantity: 2,
+      reason: 'Món "Trà Sữa Atiso" hiện đang tạm hết.',
+    });
+
+    // Restore product, mark topping khuc-bach unavailable instead
+    activeCatalog = {
+      ...getDefaultCatalog(),
+      toppings: getDefaultCatalog().toppings.map((topping) =>
+        topping.id === 'khuc-bach'
+          ? { ...topping, isAvailable: false }
+          : topping,
+      ),
+    };
+    rerender();
+
+    expect(result.current.lines).toHaveLength(1);
+    expect(result.current.unavailableItems).toHaveLength(1);
+    expect(result.current.unavailableItems[0]).toMatchObject({
+      productId: 'tra-sua-atiso',
+      productName: 'Trà Sữa Atiso',
+      quantity: 2,
+      reason: 'Topping "Khúc bạch hạnh nhân" hiện đang tạm hết.',
+    });
+
+    act(() => {
+      result.current.removeUnavailableItems();
+    });
+
+    expect(result.current.unavailableItems).toEqual([]);
+    expect(result.current.lines).toHaveLength(1);
+    expect(result.current.lines[0]?.productId).toBe('banh-trang-tron-top-mo');
+    expect(result.current.totals.grandTotal).toBe(40000);
+  });
 });

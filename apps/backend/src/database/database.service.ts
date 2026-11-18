@@ -9,6 +9,8 @@ import {
   OMSUA_TOPPINGS,
 } from '@omsua/shared';
 
+const BACKEND_PACKAGE_ROOT = path.resolve(__dirname, '../..');
+
 const SCHEMA_DDL = `
 PRAGMA foreign_keys = ON;
 
@@ -98,9 +100,12 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   }
 
   onModuleInit(): void {
+    const wasInitialized = Boolean(this.database && this.database.isOpen);
     const database = this.ensureDatabase();
-    database.exec(SCHEMA_DDL);
-    this.seedDefaults(database);
+    if (wasInitialized) {
+      database.exec(SCHEMA_DDL);
+      this.seedDefaults(database);
+    }
   }
 
   onModuleDestroy(): void {
@@ -131,8 +136,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
     const resolvedPath =
       configured && configured.length > 0
-        ? path.resolve(process.cwd(), configured)
-        : path.resolve(process.cwd(), 'data/omsua.sqlite');
+        ? path.resolve(BACKEND_PACKAGE_ROOT, configured)
+        : path.resolve(BACKEND_PACKAGE_ROOT, 'data/omsua.sqlite');
 
     fs.mkdirSync(path.dirname(resolvedPath), { recursive: true });
     return resolvedPath;

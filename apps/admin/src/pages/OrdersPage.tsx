@@ -77,7 +77,9 @@ export function OrdersPage() {
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
+  const [updatingOrderIds, setUpdatingOrderIds] = useState<Set<string>>(
+    () => new Set(),
+  );
 
   const loadOrders = useCallback(
     async (statusFilter: StatusFilter, branchId: string) => {
@@ -121,24 +123,35 @@ export function OrdersPage() {
   }, [selectedBranchId, selectedStatus]);
 
   const handleTransition = async (orderId: string, nextStatus: OrderStatus) => {
-    setUpdatingOrderId(orderId);
-    setError(null);
-    const result = await updateOrderStatus(orderId, nextStatus);
-    setUpdatingOrderId(null);
-
-    if (!result.ok) {
-      setError(result.error);
-      return;
-    }
-
-    setOrders((current) => {
-      if (selectedStatus !== 'all' && result.data.status !== selectedStatus) {
-        return current.filter((entry) => entry.id !== orderId);
-      }
-      return current.map((entry) =>
-        entry.id === orderId ? result.data : entry,
-      );
+    setUpdatingOrderIds((prev) => {
+      const next = new Set(prev);
+      next.add(orderId);
+      return next;
     });
+    setError(null);
+    try {
+      const result = await updateOrderStatus(orderId, nextStatus);
+
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+
+      setOrders((current) => {
+        if (selectedStatus !== 'all' && result.data.status !== selectedStatus) {
+          return current.filter((entry) => entry.id !== orderId);
+        }
+        return current.map((entry) =>
+          entry.id === orderId ? result.data : entry,
+        );
+      });
+    } finally {
+      setUpdatingOrderIds((prev) => {
+        const next = new Set(prev);
+        next.delete(orderId);
+        return next;
+      });
+    }
   };
 
   return (
@@ -240,7 +253,7 @@ export function OrdersPage() {
       ) : (
         <div className="space-y-4">
           {orders.map((order) => {
-            const isUpdating = updatingOrderId === order.id;
+            const isUpdating = updatingOrderIds.has(order.id);
 
             return (
               <article

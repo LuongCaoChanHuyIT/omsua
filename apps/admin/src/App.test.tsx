@@ -415,4 +415,195 @@ describe('Admin App routes & operational portals', () => {
       screen.getByRole('heading', { name: /Không tìm thấy trang/i }),
     ).toBeInTheDocument();
   });
+
+  it('tracks concurrent order status transitions and menu availability toggles per card via Set<string>', async () => {
+    const secondPendingOrder: OrderRecord = {
+      ...mockPendingOrder,
+      id: 'ord-concurrent-2',
+      orderCode: 'OM-20261118-Z9Y8',
+    };
+
+    let resolveOrd1!: (res: unknown) => void;
+    let resolveOrd2!: (res: unknown) => void;
+
+    const ordersFetchMock = vi
+      .fn()
+      .mockImplementation((input: string, init?: RequestInit) => {
+        if (input.endsWith('/orders/ord-1/status') && init?.method === 'PATCH') {
+          return new Promise((resolve) => {
+            resolveOrd1 = resolve;
+          });
+        }
+        if (
+          input.endsWith('/orders/ord-concurrent-2/status') &&
+          init?.method === 'PATCH'
+        ) {
+          return new Promise((resolve) => {
+            resolveOrd2 = resolve;
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({
+            success: true,
+            data: [mockPendingOrder, secondPendingOrder],
+            timestamp: '2026-11-18T10:00:00.000Z',
+          }),
+        });
+      });
+
+    vi.stubGlobal('fetch', ordersFetchMock);
+
+    const { unmount } = render(
+      <MemoryRouter initialEntries={['/']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+
+    const card1 = await screen.findByTestId('order-card-ord-1');
+    const card2 = await screen.findByTestId('order-card-ord-concurrent-2');
+
+    const btn1 = within(card1).getByRole('button', {
+      name: 'Xác nhận pha chế',
+    });
+    const btn2 = within(card2).getByRole('button', {
+      name: 'Xác nhận pha chế',
+    });
+
+    fireEvent.click(btn1);
+    fireEvent.click(btn2);
+
+    // Both cards must stay disabled simultaneously while both requests are in flight
+    expect(btn1).toBeDisabled();
+    expect(btn2).toBeDisabled();
+
+    // Finish card 2 first -> card 1 must still remain disabled!
+    resolveOrd2({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        success: true,
+        data: { ...secondPendingOrder, status: 'preparing' },
+        timestamp: '2026-11-18T10:01:00.000Z',
+      }),
+    });
+
+    await waitFor(() => {
+      expect(within(card2).getByText('Đang pha chế')).toBeInTheDocument();
+    });
+    expect(btn1).toBeDisabled();
+
+    resolveOrd1({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        success: true,
+        data: { ...mockPendingOrder, status: 'preparing' },
+        timestamp: '2026-11-18T10:02:00.000Z',
+      }),
+    });
+
+    await waitFor(() => {
+      expect(within(card1).getByText('Đang pha chế')).toBeInTheDocument();
+    });
+
+    unmount();
+
+    // Now verify MenuPage concurrent toggles
+    const catalog = getDefaultCatalog();
+    let resolveMenu1!: (res: unknown) => void;
+    let resolveMenu2!: (res: unknown) => void;
+
+    const menuFetchMock = vi
+      .fn()
+      .mockImplementation((input: string, init?: RequestInit) => {
+        if (
+          input.endsWith('/catalog/products/tra-sua-atiso/availability') &&
+          init?.method === 'PATCH'
+        ) {
+          return new Promise((resolve) => {
+            resolveMenu1 = resolve;
+          });
+        }
+        if (
+          input.endsWith(
+            '/catalog/products/tra-sua-atiso-chuoi/availability',
+          ) &&
+          init?.method === 'PATCH'
+        ) {
+          return new Promise((resolve) => {
+            resolveMenu2 = resolve;
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({
+            success: true,
+            data: catalog,
+            timestamp: '2026-11-18T10:00:00.000Z',
+          }),
+        });
+      });
+
+    vi.stubGlobal('fetch', menuFetchMock);
+
+    render(
+      <MemoryRouter initialEntries={['/menu']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+
+    const prodCard1 = await screen.findByTestId('menu-product-tra-sua-atiso');
+    const prodCard2 = await screen.findByTestId(
+      'menu-product-tra-sua-atiso-chuoi',
+    );
+
+    const toggleBtn1 = within(prodCard1).getByRole('button', {
+      name: 'Tạm hết',
+    });
+    const toggleBtn2 = within(prodCard2).getByRole('button', {
+      name: 'Tạm hết',
+    });
+
+    fireEvent.click(toggleBtn1);
+    fireEvent.click(toggleBtn2);
+
+    expect(toggleBtn1).toBeDisabled();
+    expect(toggleBtn2).toBeDisabled();
+
+    resolveMenu2({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        success: true,
+        data: { ...catalog.products[1]!, isAvailable: false },
+        timestamp: '2026-11-18T10:03:00.000Z',
+      }),
+    });
+
+    await waitFor(() => {
+      expect(
+        within(prodCard2).getByRole('button', { name: 'Mở bán lại' }),
+      ).toBeInTheDocument();
+    });
+    expect(toggleBtn1).toBeDisabled();
+
+    resolveMenu1({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        success: true,
+        data: { ...catalog.products[0]!, isAvailable: false },
+        timestamp: '2026-11-18T10:04:00.000Z',
+      }),
+    });
+
+    await waitFor(() => {
+      expect(
+        within(prodCard1).getByRole('button', { name: 'Mở bán lại' }),
+      ).toBeInTheDocument();
+    });
+  });
 });
