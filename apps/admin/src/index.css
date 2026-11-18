@@ -1,1 +1,33 @@
 @import "tailwindcss";
+
+@theme {
+  --color-canvas-cream: #EEEADF;
+  --color-surface-light: #F7F4EC;
+  --color-card-butter: #F4E3AD;
+  --color-card-sage: #C7CBBD;
+  --color-card-olive-gold: #B6A152;
+  --color-card-taupe: #C8BA9B;
+  --color-hero-espresso: #29261D;
+  --color-olive-primary: #594C00;
+  --color-espresso: #29261D;
+  --color-warm-muted: #6B6255;
+  --color-subhead-ochre: #A67C2E;
+  --color-terracotta: #D96B1E;
+  --color-coral-sketch: #E07D77;
+  --color-artichoke: #7A8B3B;
+
+  --font-display: "Fraunces", Georgia, serif;
+  --font-editorial: "Lora", Georgia, serif;
+  --font-sans: "Be Vietnam Pro", system-ui, sans-serif;
+  --font-snack: "Shantell Sans", cursive, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-canvas-cream);
+  color: var(--color-espresso);
+  font-family: var(--font-sans);
+}

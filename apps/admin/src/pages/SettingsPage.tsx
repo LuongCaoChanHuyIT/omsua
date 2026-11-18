@@ -1,26 +1,120 @@
-import { normalizeApiBaseUrl } from '@omsua/shared';
+import {
+  DEFAULT_PORTS,
+  normalizeApiBaseUrl,
+  type HealthFetchResult,
+} from '@omsua/shared';
+import { useCallback, useEffect, useState } from 'react';
+import { fetchBackendHealth } from '../lib/api';
 
 export function SettingsPage() {
   const apiUrl = normalizeApiBaseUrl(import.meta.env.VITE_API_URL);
+  const [health, setHealth] = useState<HealthFetchResult | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const loadHealth = useCallback(async () => {
+    setLoading(true);
+    const result = await fetchBackendHealth();
+    setHealth(result);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+
+    void fetchBackendHealth().then((result) => {
+      if (active) {
+        setHealth(result);
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-4xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Cài đặt hệ thống</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Thông tin cấu hình môi trường hiện tại của ứng dụng Admin.
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-subhead-ochre">
+          Cấu hình &amp; Kết nối dịch vụ
+        </p>
+        <h1 className="mt-1 font-display text-2xl font-bold text-olive-primary sm:text-3xl">
+          Cài đặt hệ thống
+        </h1>
+        <p className="mt-1 text-sm text-warm-muted">
+          Thông tin cấu hình môi trường hiện tại và trạng thái kết nối máy chủ
+          Backend Ốm Sữa.
         </p>
       </div>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <dl className="divide-y divide-slate-100 text-sm">
-          <div className="flex justify-between py-3">
-            <dt className="font-medium text-slate-600">API Base URL</dt>
-            <dd className="font-mono text-slate-900">{apiUrl}</dd>
+      <section className="rounded-2xl border border-[#DDD4C0] bg-surface-light p-6 shadow-xs">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 className="font-editorial text-lg font-semibold text-espresso">
+              Trạng thái Backend API
+            </h2>
+            <p className="text-sm text-warm-muted">
+              Kiểm tra trực tiếp qua endpoint{' '}
+              <code className="font-mono text-olive-primary">/api/health</code>
+            </p>
           </div>
-          <div className="flex justify-between py-3">
-            <dt className="font-medium text-slate-600">Chế độ Vite</dt>
-            <dd className="font-mono text-slate-900">{import.meta.env.MODE}</dd>
+          <button
+            type="button"
+            onClick={() => void loadHealth()}
+            disabled={loading}
+            className="rounded-xl border border-[#D4C9B0] bg-canvas-cream px-4 py-2 text-sm font-semibold text-espresso transition hover:border-olive-primary hover:bg-card-butter/50 disabled:opacity-60"
+          >
+            {loading ? 'Đang kiểm tra...' : 'Kiểm tra lại'}
+          </button>
+        </div>
+
+        <div className="mt-4">
+          {loading && !health ? (
+            <p className="text-sm text-warm-muted">
+              Đang kết nối tới Backend...
+            </p>
+          ) : health?.ok ? (
+            <div className="rounded-xl border border-[#B4C488] bg-[#E3EAD1] p-4 text-sm text-[#45531B]">
+              <p className="font-semibold">
+                ● Đã kết nối: {health.payload.data.service} (v
+                {health.payload.data.version})
+              </p>
+              <p className="mt-1">
+                Môi trường: {health.payload.data.environment} · Uptime:{' '}
+                {Math.round(health.payload.data.uptime)}s
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-[#E6ABA6] bg-[#F7DFDC] p-4 text-sm text-[#8F3530]">
+              <p className="font-semibold">○ Không thể kết nối Backend</p>
+              <p className="mt-1">Lỗi: {health?.error ?? 'Không xác định'}</p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-[#DDD4C0] bg-surface-light p-6 shadow-xs">
+        <dl className="divide-y divide-[#E5DEC9] text-sm">
+          <div className="flex flex-wrap justify-between gap-2 py-3">
+            <dt className="font-medium text-warm-muted">API Base URL</dt>
+            <dd className="font-mono font-semibold text-espresso">{apiUrl}</dd>
+          </div>
+          <div className="flex flex-wrap justify-between gap-2 py-3">
+            <dt className="font-medium text-warm-muted">Chế độ Vite</dt>
+            <dd className="font-mono font-semibold text-espresso">
+              {import.meta.env.MODE}
+            </dd>
+          </div>
+          <div className="flex flex-wrap justify-between gap-2 py-3">
+            <dt className="font-medium text-warm-muted">
+              Cổng dịch vụ mặc định
+            </dt>
+            <dd className="font-mono text-espresso">
+              Web :{DEFAULT_PORTS.WEB} · Admin :{DEFAULT_PORTS.ADMIN} · Backend :
+              {DEFAULT_PORTS.BACKEND}
+            </dd>
           </div>
         </dl>
       </section>

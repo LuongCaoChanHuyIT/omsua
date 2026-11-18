@@ -1,20 +1,24 @@
 import { BrowserRouter, Link, Route, Routes } from 'react-router-dom';
 import { AdminLayout } from './layouts/AdminLayout';
-import { DashboardPage } from './pages/DashboardPage';
+import { BranchesPage } from './pages/BranchesPage';
+import { MenuPage } from './pages/MenuPage';
+import { OrdersPage } from './pages/OrdersPage';
 import { SettingsPage } from './pages/SettingsPage';
 
 function NotFoundView() {
   return (
-    <div className="mx-auto max-w-xl rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-      <h1 className="text-xl font-bold text-slate-900">Không tìm thấy trang</h1>
-      <p className="mt-2 text-sm text-slate-500">
-        Đường dẫn bạn truy cập không tồn tại trong hệ thống quản trị.
+    <div className="mx-auto max-w-xl rounded-2xl border border-[#DDD4C0] bg-surface-light p-8 text-center shadow-xs">
+      <h1 className="font-display text-2xl font-bold text-olive-primary">
+        Không tìm thấy trang
+      </h1>
+      <p className="mt-2 text-sm text-warm-muted">
+        Đường dẫn bạn truy cập không tồn tại trong hệ thống quản trị Ốm Sữa.
       </p>
       <Link
         to="/"
-        className="mt-4 inline-block rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
+        className="mt-5 inline-block rounded-xl bg-terracotta px-5 py-2.5 text-sm font-semibold text-surface-light shadow-xs transition hover:bg-[#C05C16]"
       >
-        Quay về Tổng quan
+        Quay về Đơn hàng
       </Link>
     </div>
   );
@@ -24,7 +28,9 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<AdminLayout />}>
-        <Route index element={<DashboardPage />} />
+        <Route index element={<OrdersPage />} />
+        <Route path="menu" element={<MenuPage />} />
+        <Route path="branches" element={<BranchesPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="*" element={<NotFoundView />} />
       </Route>
