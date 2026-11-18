@@ -9,6 +9,10 @@ export {
   type SnackMenuSectionProps,
 } from './SnackMenuSection';
 export {
+  StorefrontClientShell,
+  type StorefrontClientShellProps,
+} from './StorefrontClientShell';
+export {
   StorefrontHeader,
   type StorefrontHeaderProps,
 } from './StorefrontHeader';
