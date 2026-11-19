@@ -1246,3 +1246,4 @@ export const Checkout = {
   SubmitSection: CheckoutSubmitSection,
   useCheckoutContext,
 };
+

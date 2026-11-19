@@ -2,7 +2,17 @@
 /* eslint-disable @next/next/no-img-element */
 
 import type { FanpagePhotoItem } from '@omsua/shared';
-import { startTransition, useCallback, useEffect, useId, useState } from 'react';
+import {
+  startTransition,
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useState,
+} from 'react';
+
+const useIsomorphicLayoutEffect =
+  typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 import {
   AppViewTransition,
   addAppTransitionType,
@@ -53,7 +63,7 @@ export function PhotoLightboxModal({
     [activeIndex, items.length, onChangeIndex],
   );
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (!isOpen || activeIndex === null || items.length <= 1) {
       return;
     }

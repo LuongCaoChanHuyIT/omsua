@@ -13,6 +13,7 @@ export interface StorefrontHeaderProps {
   onOpenCart: () => void;
   recentOrderCount?: number;
   onOpenOrderLookup?: () => void;
+  suppressViewTransition?: boolean;
 }
 
 export function StorefrontHeader({
@@ -24,6 +25,7 @@ export function StorefrontHeader({
   onOpenCart,
   recentOrderCount = 0,
   onOpenOrderLookup,
+  suppressViewTransition = false,
 }: StorefrontHeaderProps) {
   const prevCartCountRef = useRef<number>(cartItemCount);
   const [isCartPulsing, setIsCartPulsing] = useState<boolean>(false);
@@ -55,7 +57,11 @@ export function StorefrontHeader({
 
   return (
     <header
-      style={{ viewTransitionName: 'omsua-site-header' }}
+      style={{
+        viewTransitionName: suppressViewTransition
+          ? undefined
+          : 'omsua-site-header',
+      }}
       className="sticky top-0 z-40 border-b border-olive-primary/14 bg-canvas-cream/95 backdrop-blur-md"
     >
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">

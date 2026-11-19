@@ -20,11 +20,22 @@ const GALLERY_FILTERS: ReadonlyArray<{
   { id: 'banh-trang', label: 'Bánh tráng Nhà Ốm' },
 ];
 
-export function FanpageGallerySection() {
+export interface FanpageGallerySectionProps {
+  onLightboxOpenChange?: (isOpen: boolean) => void;
+}
+
+export function FanpageGallerySection({
+  onLightboxOpenChange,
+}: FanpageGallerySectionProps = {}) {
   const [activeFilter, setActiveFilter] =
     useState<FanpageGalleryCategory>('all');
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [failedIds, setFailedIds] = useState<Set<string>>(() => new Set());
+
+  function updateLightboxIndex(nextIndex: number | null) {
+    setLightboxIndex(nextIndex);
+    onLightboxOpenChange?.(nextIndex !== null);
+  }
 
   const counts = useMemo(() => {
     const byCat: Record<FanpageGalleryCategory, number> = {
@@ -90,7 +101,7 @@ export function FanpageGallerySection() {
                 onClick={() => {
                   startTransition(() => {
                     setActiveFilter(filter.id);
-                    setLightboxIndex(null);
+                    updateLightboxIndex(null);
                   });
                 }}
                 className={`relative isolate inline-flex min-h-11 cursor-pointer items-center rounded-full px-4 py-2 text-xs font-bold tabular-nums transition-colors ${
@@ -107,7 +118,7 @@ export function FanpageGallerySection() {
                   >
                     <span
                       aria-hidden="true"
-                      className="pointer-events-none absolute inset-0 -z-10 rounded-full bg-hero-espresso"
+                      className="pointer-events-none absolute inset-x-3.5 bottom-1 h-[2.5px] rounded-full bg-card-butter"
                     />
                   </AppViewTransition>
                 ) : null}
@@ -121,58 +132,65 @@ export function FanpageGallerySection() {
       <div className="mt-6 grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-4">
         {filteredItems.map((item, index) => {
           const isFailed = failedIds.has(item.id);
-          const sharedVtName =
-            lightboxIndex === index ? undefined : `gallery-photo-${item.id}`;
+          const isOpenInLightbox = lightboxIndex === index;
+          const vtName = `gallery-photo-${item.id}`;
+          const thumbnailNode = (
+            <div
+              data-vt-name={isOpenInLightbox ? undefined : vtName}
+              className="relative aspect-[4/5] w-full overflow-hidden bg-hero-espresso/15"
+            >
+              {isFailed ? (
+                <span
+                  aria-hidden="true"
+                  className="flex h-full w-full items-center justify-center bg-card-butter/50 p-3 text-center text-xs font-semibold text-olive-primary"
+                >
+                  {item.title}
+                </span>
+              ) : (
+                <img
+                  src={item.src}
+                  width={800}
+                  height={1000}
+                  alt=""
+                  aria-hidden="true"
+                  loading="lazy"
+                  decoding="async"
+                  onError={() =>
+                    setFailedIds((prev) => {
+                      const next = new Set(prev);
+                      next.add(item.id);
+                      return next;
+                    })
+                  }
+                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+              )}
+            </div>
+          );
 
           return (
-            <AppViewTransition key={item.id}>
+            <AppViewTransition key={item.id} default="none">
               <article className="group flex flex-col overflow-hidden rounded-2xl border border-olive-primary/12 bg-canvas-cream shadow-paper-rest transition-colors hover:border-olive-primary/35">
                 <button
                   type="button"
                   onClick={() => {
                     startTransition(() => {
-                      setLightboxIndex(index);
+                      updateLightboxIndex(index);
                     });
                   }}
                   className="flex cursor-pointer flex-col text-left focus-visible:outline-offset-[-2px]"
                 >
-                  <AppViewTransition
-                    name={sharedVtName}
-                    share="morph"
-                    default="none"
-                  >
-                    <div
-                      data-vt-name={sharedVtName}
-                      className="relative aspect-[4/5] w-full overflow-hidden bg-hero-espresso/15"
+                  {isOpenInLightbox ? (
+                    thumbnailNode
+                  ) : (
+                    <AppViewTransition
+                      name={vtName}
+                      share="morph"
+                      default="none"
                     >
-                      {isFailed ? (
-                        <span
-                          aria-hidden="true"
-                          className="flex h-full w-full items-center justify-center bg-card-butter/50 p-3 text-center text-xs font-semibold text-olive-primary"
-                        >
-                          {item.title}
-                        </span>
-                      ) : (
-                        <img
-                          src={item.src}
-                          width={800}
-                          height={1000}
-                          alt=""
-                          aria-hidden="true"
-                          loading="lazy"
-                          decoding="async"
-                          onError={() =>
-                            setFailedIds((prev) => {
-                              const next = new Set(prev);
-                              next.add(item.id);
-                              return next;
-                            })
-                          }
-                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        />
-                      )}
-                    </div>
-                  </AppViewTransition>
+                      {thumbnailNode}
+                    </AppViewTransition>
+                  )}
 
                   <span className="line-clamp-1 px-3 pt-3 font-editorial text-xs font-semibold text-espresso sm:text-sm">
                     {item.title}
@@ -194,12 +212,12 @@ export function FanpageGallerySection() {
         activeIndex={lightboxIndex}
         onChangeIndex={(nextIdx) => {
           startTransition(() => {
-            setLightboxIndex(nextIdx);
+            updateLightboxIndex(nextIdx);
           });
         }}
         onClose={() => {
           startTransition(() => {
-            setLightboxIndex(null);
+            updateLightboxIndex(null);
           });
         }}
       />

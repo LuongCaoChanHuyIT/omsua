@@ -7,7 +7,14 @@ import {
   formatShortPrice,
   normalizeVietnameseText,
 } from '@omsua/shared';
-import { memo, startTransition, useCallback, useMemo, useState } from 'react';
+import {
+  memo,
+  startTransition,
+  useCallback,
+  useDeferredValue,
+  useMemo,
+  useState,
+} from 'react';
 import { ProductMedia } from '@/components/artwork/ProductMedia';
 import { AppViewTransition } from '@/components/transitions/AppViewTransition';
 
@@ -134,6 +141,7 @@ export function DrinkMenuSection({
 }: DrinkMenuSectionProps) {
   const [uncontrolledQuery, setUncontrolledQuery] = useState<string>('');
   const effectiveQuery = searchQuery ?? uncontrolledQuery;
+  const deferredQuery = useDeferredValue(effectiveQuery);
 
   const drinksById = useMemo(
     () => new Map(drinks.map((drink) => [drink.id, drink])),
@@ -165,8 +173,8 @@ export function DrinkMenuSection({
   }
 
   const normalizedQuery = useMemo(
-    () => normalizeVietnameseText(effectiveQuery),
-    [effectiveQuery],
+    () => normalizeVietnameseText(deferredQuery),
+    [deferredQuery],
   );
 
   const visibleCategoryGroups = useMemo(() => {
@@ -294,7 +302,7 @@ export function DrinkMenuSection({
               >
                 <span
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 -z-10 rounded-full bg-hero-espresso"
+                  className="pointer-events-none absolute inset-x-3.5 bottom-1 h-[2.5px] rounded-full bg-card-butter"
                 />
               </AppViewTransition>
             ) : null}
@@ -327,7 +335,7 @@ export function DrinkMenuSection({
                   >
                     <span
                       aria-hidden="true"
-                      className="pointer-events-none absolute inset-0 -z-10 rounded-full bg-hero-espresso"
+                      className="pointer-events-none absolute inset-x-3.5 bottom-1 h-[2.5px] rounded-full bg-card-butter"
                     />
                   </AppViewTransition>
                 ) : null}

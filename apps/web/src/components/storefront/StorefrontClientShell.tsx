@@ -91,9 +91,13 @@ function StorefrontShellInner({
   >([]);
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
   const [isOrderLookupOpen, setIsOrderLookupOpen] = useState<boolean>(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState<boolean>(false);
   const [trackedOrder, setTrackedOrder] = useState<OrderRecord | null>(null);
   const [recentOrderCount, setRecentOrderCount] = useState<number>(0);
   const [hasHydratedUrl, setHasHydratedUrl] = useState<boolean>(false);
+  const hasOpenOverlay = Boolean(
+    activeProductForModal || isCartOpen || isOrderLookupOpen || isLightboxOpen,
+  );
 
   useEffect(() => {
     setRecentOrderCount(readRecentOrders().length);
@@ -198,6 +202,7 @@ function StorefrontShellInner({
           setTrackedOrder(null);
           setIsOrderLookupOpen(true);
         }}
+        suppressViewTransition={hasOpenOverlay}
       />
 
       <main className="mx-auto flex max-w-7xl flex-col gap-10 px-4 pt-6 sm:px-6 lg:px-8">
@@ -274,7 +279,7 @@ function StorefrontShellInner({
 
         <BrandStorySection />
 
-        <FanpageGallerySection />
+        <FanpageGallerySection onLightboxOpenChange={setIsLightboxOpen} />
       </main>
 
       <BrandFooter
@@ -285,7 +290,11 @@ function StorefrontShellInner({
 
       {showMobileStickyCartBar ? (
         <div
-          style={{ viewTransitionName: 'omsua-sticky-cart' }}
+          style={{
+            viewTransitionName: hasOpenOverlay
+              ? undefined
+              : 'omsua-sticky-cart',
+          }}
           className="fixed inset-x-0 bottom-0 z-30 border-t border-olive-primary/15 bg-hero-espresso/95 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] text-surface-light backdrop-blur-md lg:hidden"
         >
           <button

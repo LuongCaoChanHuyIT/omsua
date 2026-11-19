@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import {
@@ -209,5 +210,33 @@ describe('web config & HomePage Storefront SSR consistency', () => {
       'utf8',
     );
     expect(pageSource).not.toMatch(/process\.env(?:\.NEXT_PUBLIC_API_URL|\[\s*['"`]NEXT_PUBLIC_API_URL['"`]\s*\])/);
+  });
+
+  it('compiles scripts/webapp-playwright-verify.py cleanly with python3 -m py_compile and keeps zero pure B/W tokens in Python scripts', () => {
+    const repoRoot = path.resolve(__dirname, '..', '..', '..', '..');
+    const playwrightScriptPath = path.join(
+      repoRoot,
+      'scripts',
+      'webapp-playwright-verify.py',
+    );
+    const posterScriptPath = path.join(
+      repoRoot,
+      'scripts',
+      'generate-brand-poster.py',
+    );
+
+    expect(existsSync(playwrightScriptPath)).toBe(true);
+    expect(existsSync(posterScriptPath)).toBe(true);
+
+    execFileSync(
+      'python3',
+      ['-B', '-m', 'py_compile', playwrightScriptPath, posterScriptPath],
+      { stdio: 'pipe' },
+    );
+
+    const playwrightSource = readFileSync(playwrightScriptPath, 'utf8');
+    expect(playwrightSource).not.toMatch(
+      /(#fff\b|#ffffff\b|#000\b|#000000\b|rgb\(\s*(255\s*,\s*255\s*,\s*255|0\s*,\s*0\s*,\s*0))/i,
+    );
   });
 });

@@ -68,3 +68,4 @@ Do `@omsua/admin` và Vitest chạy trực tiếp `react@19.3.1` (xuất `React.
 - **0 Mã màu `#FFFFFF` / `#000000`:** Tuyệt đối không xuất hiện `#fff`, `#ffffff`, `#000`, `#000000`, `rgb(255,255,255)`, `rgb(0,0,0)` hay `*-white` / `*-black` trong toàn bộ mã nguồn, CSS và View Transition pseudo-elements.
 - **Bảo toàn Hợp đồng Kiểm thử & A11y:** Giữ xanh toàn bộ **163** bài kiểm thử hiện hữu cùng hợp đồng nhãn nút/hộp thoại WCAG (`Accessibility >= 96`, `CLS = 0`, `LCP < 2.5s`).
 - **Bảo vệ Tiến trình Đang chạy:** Tuyệt đối không dừng hoặc kill các server người dùng đang mở trên cổng `:3000`, `:3001`, `:4000`.
+

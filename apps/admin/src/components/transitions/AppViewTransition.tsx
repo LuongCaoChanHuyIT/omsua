@@ -29,7 +29,7 @@ function FallbackViewTransition({
   return <Fragment>{children}</Fragment>;
 }
 
-const noopAddType = (_type: string): void => {};
+const noopAddType: (type: string) => void = () => {};
 
 function isUsableReactBoundary(candidate: unknown): boolean {
   return (

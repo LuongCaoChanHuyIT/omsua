@@ -1,6 +1,14 @@
 'use client';
 
-import { type RefObject, useEffect, useRef } from 'react';
+import {
+  type RefObject,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+} from 'react';
+
+const useIsomorphicLayoutEffect =
+  typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 export interface UseModalAccessibilityOptions {
   isOpen: boolean;
@@ -61,12 +69,12 @@ export function useModalAccessibility<T extends HTMLElement = HTMLDivElement>({
   const onCloseRef = useRef<() => void>(onClose);
   const isCloseDisabledRef = useRef<boolean>(isCloseDisabled);
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     onCloseRef.current = onClose;
     isCloseDisabledRef.current = isCloseDisabled;
   }, [isCloseDisabled, onClose]);
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (!isOpen) {
       return;
     }

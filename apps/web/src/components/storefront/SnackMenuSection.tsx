@@ -165,7 +165,7 @@ export function SnackMenuSection({
                   >
                     <span
                       aria-hidden="true"
-                      className="pointer-events-none absolute inset-0 -z-10 rounded-full bg-terracotta"
+                      className="pointer-events-none absolute inset-x-3 bottom-1 h-[2.5px] rounded-full bg-card-butter"
                     />
                   </AppViewTransition>
                 ) : null}

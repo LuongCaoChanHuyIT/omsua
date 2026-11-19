@@ -741,7 +741,7 @@ export function OrdersPage() {
                   }
                   className={`relative min-h-11 overflow-hidden rounded-full px-3.5 py-2 text-xs font-semibold transition-colors sm:text-sm ${
                     isSelected
-                      ? 'text-surface-light shadow-xs'
+                      ? 'bg-hero-espresso text-surface-light shadow-xs'
                       : 'border border-[#D8CEB8] bg-canvas-cream text-espresso hover:bg-card-butter/60'
                   }`}
                 >
@@ -753,7 +753,7 @@ export function OrdersPage() {
                     >
                       <span
                         aria-hidden="true"
-                        className="absolute inset-0 rounded-full bg-hero-espresso"
+                        className="pointer-events-none absolute inset-x-3.5 bottom-1 h-[2.5px] rounded-full bg-card-butter"
                       />
                     </AppViewTransition>
                   ) : null}
