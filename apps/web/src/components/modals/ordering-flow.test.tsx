@@ -1430,12 +1430,25 @@ describe('Interactive Customizer Modal & Cart Checkout Flow', () => {
     expect(addressInput).toHaveAttribute('autocomplete', 'street-address');
     expect(noteInput).toHaveAttribute('autocomplete', 'off');
 
-    // Submit with all fields invalid -> focuses first invalid input (nameInput)
+    // Submit with all fields invalid (including overlong note) -> focuses first invalid input (nameInput) and wires inline aria-describedby error messages
+    fireEvent.change(noteInput, { target: { value: 'g'.repeat(305) } });
     fireEvent.click(
       screen.getByRole('button', { name: /Xác nhận đặt món/i }),
     );
     expect(nameInput).toHaveAttribute('aria-invalid', 'true');
+    expect(phoneInput).toHaveAttribute('aria-invalid', 'true');
+    expect(addressInput).toHaveAttribute('aria-invalid', 'true');
+    expect(noteInput).toHaveAttribute('aria-invalid', 'true');
+    expect(noteInput.className).toContain('border-terracotta');
     expect(document.activeElement).toBe(nameInput);
+
+    for (const field of [nameInput, phoneInput, addressInput, noteInput]) {
+      const describedById = field.getAttribute('aria-describedby');
+      expect(describedById).toBeTruthy();
+      const inlineError = document.getElementById(describedById!);
+      expect(inlineError).not.toBeNull();
+      expect(inlineError!.textContent?.trim().length).toBeGreaterThan(5);
+    }
 
     // Fix name, submit again -> focuses second invalid input (phoneInput)
     fireEvent.change(nameInput, { target: { value: 'Nguyễn Minh Anh' } });
@@ -1443,6 +1456,7 @@ describe('Interactive Customizer Modal & Cart Checkout Flow', () => {
       screen.getByRole('button', { name: /Xác nhận đặt món/i }),
     );
     expect(nameInput).not.toHaveAttribute('aria-invalid', 'true');
+    expect(nameInput).not.toHaveAttribute('aria-describedby');
     expect(phoneInput).toHaveAttribute('aria-invalid', 'true');
     expect(document.activeElement).toBe(phoneInput);
   });

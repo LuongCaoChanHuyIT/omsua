@@ -229,5 +229,21 @@ describe('Fanpage local WebP assets & sharp validation pipeline', () => {
     const pngMeta = await sharp(pngBytes).metadata();
     expect(pngMeta.width ?? 0).toBeGreaterThanOrEqual(1200);
     expect(pngMeta.height ?? 0).toBeGreaterThanOrEqual(1600);
+
+    const posterScript = readFileSync(
+      path.resolve(
+        __dirname,
+        '..',
+        '..',
+        '..',
+        '..',
+        'scripts',
+        'generate-brand-poster.py',
+      ),
+      'utf8',
+    );
+    expect(posterScript).toContain('"Cà Phê Muối / Bạc Xỉu"');
+    expect(posterScript).toContain('"40k • 35k"');
+    expect(posterScript).not.toContain('"35k • 40k"');
   });
 });

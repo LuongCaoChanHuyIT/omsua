@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom/vitest';
+import { StrictMode } from 'react';
 import {
   OMSUA_BRANCHES,
   type SpiceLevel,
@@ -511,6 +512,9 @@ describe('Storefront Sections', () => {
       name: /Tìm nhanh thức uống/i,
     });
     expect(searchbox).toHaveValue('khuc bach');
+    const discoveryBar = searchbox.parentElement?.parentElement as HTMLElement;
+    expect(discoveryBar.className).toContain('lg:sticky');
+    expect(discoveryBar.className).not.toMatch(/(?:^|\s)sticky(?:\s|$)/);
     expect(screen.getByText('Trà Sữa Gạo Rang Khúc Bạch')).toBeInTheDocument();
     expect(screen.queryByText('Cà Phê Muối')).not.toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent(/1 món/i);
@@ -577,10 +581,12 @@ describe('Storefront Sections', () => {
         '/?cat=coffee&q=muoi&media=studio',
       );
       render(
-        <StorefrontClientShell
-          initialCatalog={getDefaultCatalog()}
-          initialBranches={[...OMSUA_BRANCHES]}
-        />,
+        <StrictMode>
+          <StorefrontClientShell
+            initialCatalog={getDefaultCatalog()}
+            initialBranches={[...OMSUA_BRANCHES]}
+          />
+        </StrictMode>,
       );
 
       expect(
@@ -595,6 +601,7 @@ describe('Storefront Sections', () => {
       expect(
         screen.getByRole('searchbox', { name: /Tìm nhanh thức uống/i }),
       ).toHaveValue('muoi');
+      expect(window.location.search).toBe('?cat=coffee&q=muoi&media=studio');
     } finally {
       window.history.replaceState(null, '', originalUrl);
       vi.unstubAllGlobals();

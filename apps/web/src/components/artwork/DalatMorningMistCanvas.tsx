@@ -59,19 +59,8 @@ export function DalatMorningMistCanvas({
 }: DalatMorningMistCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isPaused, setIsPaused] = useState<boolean>(defaultPaused);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState<boolean>(
-    () => {
-      if (
-        typeof window === 'undefined' ||
-        typeof window.matchMedia !== 'function'
-      ) {
-        return false;
-      }
-      return (
-        window.matchMedia('(prefers-reduced-motion: reduce)')?.matches ?? false
-      );
-    },
-  );
+  const [prefersReducedMotion, setPrefersReducedMotion] =
+    useState<boolean>(false);
   const [isInView, setIsInView] = useState<boolean>(true);
 
   useEffect(() => {
@@ -120,10 +109,15 @@ export function DalatMorningMistCanvas({
 
     observer.observe(canvas);
     return () => observer.disconnect();
-  }, []);
+  }, [prefersReducedMotion]);
 
   useEffect(() => {
-    if (prefersReducedMotion || isPaused || !isInView) {
+    const syncReducedMotion =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      Boolean(window.matchMedia('(prefers-reduced-motion: reduce)')?.matches);
+
+    if (prefersReducedMotion || syncReducedMotion || isPaused || !isInView) {
       return;
     }
 

@@ -85,7 +85,7 @@ function StorefrontShellInner({
   const [isOrderLookupOpen, setIsOrderLookupOpen] = useState<boolean>(false);
   const [trackedOrder, setTrackedOrder] = useState<OrderRecord | null>(null);
   const [recentOrderCount, setRecentOrderCount] = useState<number>(0);
-  const hasHydratedUrlRef = useRef<boolean>(false);
+  const [hasHydratedUrl, setHasHydratedUrl] = useState<boolean>(false);
 
   useEffect(() => {
     setRecentOrderCount(readRecentOrders().length);
@@ -99,11 +99,11 @@ function StorefrontShellInner({
     setActiveCategory(parsed.category);
     setSearchQuery(parsed.query);
     setPreferIllustration(parsed.preferIllustration);
-    hasHydratedUrlRef.current = true;
+    setHasHydratedUrl(true);
   }, []);
 
   useEffect(() => {
-    if (!hasHydratedUrlRef.current || typeof window === 'undefined') {
+    if (!hasHydratedUrl || typeof window === 'undefined') {
       return;
     }
     const params = new URLSearchParams(window.location.search);
@@ -132,7 +132,7 @@ function StorefrontShellInner({
     if (nextUrl !== currentUrl) {
       window.history.replaceState(null, '', nextUrl);
     }
-  }, [activeCategory, preferIllustration, searchQuery]);
+  }, [activeCategory, hasHydratedUrl, preferIllustration, searchQuery]);
 
   const syncRecentOrderCount = useCallback(() => {
     setRecentOrderCount(readRecentOrders().length);

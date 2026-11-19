@@ -150,7 +150,7 @@ export function DrinkMenuSection({
         )}
       </div>
 
-      <div className="sticky top-[68px] z-30 flex flex-col gap-3 rounded-2xl border border-olive-primary/15 bg-canvas-cream/95 p-3 shadow-paper-rest backdrop-blur-md lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-3 rounded-2xl border border-olive-primary/15 bg-canvas-cream/95 p-3 shadow-paper-rest backdrop-blur-md lg:sticky lg:top-[69px] lg:z-30 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-1 items-center gap-2">
           <input
             type="search"

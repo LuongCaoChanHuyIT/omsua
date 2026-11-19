@@ -1,5 +1,8 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
+import { act } from 'react';
+import { hydrateRoot } from 'react-dom/client';
+import { renderToString } from 'react-dom/server';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DalatMorningMistCanvas } from './DalatMorningMistCanvas';
@@ -85,5 +88,44 @@ describe('DalatMorningMistCanvas seeded flow-field & a11y safety', () => {
     frameCallback!(16);
     expect(strokeSpy).toHaveBeenCalledTimes(36);
     expect(fillSpy).toHaveBeenCalledTimes(36);
+  });
+
+  it('hydrates SSR markup cleanly without mismatch when prefers-reduced-motion is reduce on the client', async () => {
+    const ssrHtml = renderToString(<DalatMorningMistCanvas seed={2017} />);
+
+    const rafSpy = vi.spyOn(window, 'requestAnimationFrame');
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockImplementation((query: string) => ({
+        matches: query.includes('prefers-reduced-motion: reduce'),
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
+
+    const host = document.createElement('div');
+    host.innerHTML = ssrHtml;
+    document.body.appendChild(host);
+
+    const recoverableErrors: unknown[] = [];
+    (globalThis as Record<string, unknown>).IS_REACT_ACT_ENVIRONMENT = true;
+    let root: ReturnType<typeof hydrateRoot> | null = null;
+    try {
+      await act(async () => {
+        root = hydrateRoot(host, <DalatMorningMistCanvas seed={2017} />, {
+          onRecoverableError: (err) => recoverableErrors.push(err),
+        });
+      });
+
+      expect(recoverableErrors).toEqual([]);
+      expect(host.querySelector('[data-reduced-motion="true"]')).not.toBeNull();
+      expect(rafSpy).not.toHaveBeenCalled();
+    } finally {
+      await act(async () => {
+        root?.unmount();
+      });
+      host.remove();
+    }
   });
 });

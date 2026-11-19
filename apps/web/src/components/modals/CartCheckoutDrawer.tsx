@@ -119,11 +119,17 @@ export function CartCheckoutDrawer({
     ? 'Phí giao hàng khu vực Đức Trọng:'
     : 'Phí giao hàng nội thành Đà Lạt:';
 
+  const FORM_VALIDATION_SUMMARY =
+    'Vui lòng kiểm tra lại thông tin giao hàng bên trên.';
+
   function clearFieldError(key: CheckoutFieldKey) {
     setFieldErrors((prev) => {
       if (!prev[key]) return prev;
       const next = { ...prev };
       delete next[key];
+      if (Object.keys(next).length === 0) {
+        setErrorMessage((msg) => (msg === FORM_VALIDATION_SUMMARY ? null : msg));
+      }
       return next;
     });
   }
@@ -168,22 +174,22 @@ export function CartCheckoutDrawer({
     setFieldErrors(nextFieldErrors);
 
     if (nextFieldErrors.name) {
-      setErrorMessage(nextFieldErrors.name);
+      setErrorMessage(FORM_VALIDATION_SUMMARY);
       nameRef.current?.focus();
       return;
     }
     if (nextFieldErrors.phone) {
-      setErrorMessage(nextFieldErrors.phone);
+      setErrorMessage(FORM_VALIDATION_SUMMARY);
       phoneRef.current?.focus();
       return;
     }
     if (nextFieldErrors.address) {
-      setErrorMessage(nextFieldErrors.address);
+      setErrorMessage(FORM_VALIDATION_SUMMARY);
       addressRef.current?.focus();
       return;
     }
     if (nextFieldErrors.note) {
-      setErrorMessage(nextFieldErrors.note);
+      setErrorMessage(FORM_VALIDATION_SUMMARY);
       noteRef.current?.focus();
       return;
     }
@@ -675,6 +681,9 @@ export function CartCheckoutDrawer({
                       type="text"
                       autoComplete="name"
                       aria-invalid={fieldErrors.name ? 'true' : undefined}
+                      aria-describedby={
+                        fieldErrors.name ? `${nameInputId}-error` : undefined
+                      }
                       value={customerName}
                       onChange={(event) => {
                         setCustomerName(event.target.value);
@@ -687,6 +696,14 @@ export function CartCheckoutDrawer({
                           : 'border-olive-primary/20 focus:border-olive-primary'
                       }`}
                     />
+                    {fieldErrors.name && (
+                      <p
+                        id={`${nameInputId}-error`}
+                        className="text-xs font-medium text-terracotta"
+                      >
+                        {fieldErrors.name}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-1">
@@ -705,6 +722,9 @@ export function CartCheckoutDrawer({
                       autoComplete="tel"
                       spellCheck={false}
                       aria-invalid={fieldErrors.phone ? 'true' : undefined}
+                      aria-describedby={
+                        fieldErrors.phone ? `${phoneInputId}-error` : undefined
+                      }
                       value={customerPhone}
                       onChange={(event) => {
                         setCustomerPhone(event.target.value);
@@ -717,6 +737,14 @@ export function CartCheckoutDrawer({
                           : 'border-olive-primary/20 focus:border-olive-primary'
                       }`}
                     />
+                    {fieldErrors.phone && (
+                      <p
+                        id={`${phoneInputId}-error`}
+                        className="text-xs font-medium text-terracotta"
+                      >
+                        {fieldErrors.phone}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -734,6 +762,9 @@ export function CartCheckoutDrawer({
                     type="text"
                     autoComplete="street-address"
                     aria-invalid={fieldErrors.address ? 'true' : undefined}
+                    aria-describedby={
+                      fieldErrors.address ? `${addressInputId}-error` : undefined
+                    }
                     value={deliveryAddress}
                     onChange={(event) => {
                       setDeliveryAddress(event.target.value);
@@ -746,6 +777,14 @@ export function CartCheckoutDrawer({
                         : 'border-olive-primary/20 focus:border-olive-primary'
                     }`}
                   />
+                  {fieldErrors.address && (
+                    <p
+                      id={`${addressInputId}-error`}
+                      className="text-xs font-medium text-terracotta"
+                    >
+                      {fieldErrors.address}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-1">
@@ -763,14 +802,29 @@ export function CartCheckoutDrawer({
                     autoComplete="off"
                     maxLength={300}
                     aria-invalid={fieldErrors.note ? 'true' : undefined}
+                    aria-describedby={
+                      fieldErrors.note ? `${noteInputId}-error` : undefined
+                    }
                     value={note}
                     onChange={(event) => {
                       setNote(event.target.value);
                       clearFieldError('note');
                     }}
                     placeholder="Ví dụ: Ít ngọt hơn, gọi khi tới cổng (không bắt buộc)…"
-                    className="min-h-11 w-full rounded-xl border border-olive-primary/20 bg-surface-light px-3 py-2 text-base text-espresso placeholder:text-warm-muted/70 focus:border-olive-primary focus:outline-none sm:text-sm"
+                    className={`min-h-11 w-full rounded-xl border bg-surface-light px-3 py-2 text-base text-espresso placeholder:text-warm-muted/70 focus:outline-none sm:text-sm ${
+                      fieldErrors.note
+                        ? 'border-terracotta'
+                        : 'border-olive-primary/20 focus:border-olive-primary'
+                    }`}
                   />
+                  {fieldErrors.note && (
+                    <p
+                      id={`${noteInputId}-error`}
+                      className="text-xs font-medium text-terracotta"
+                    >
+                      {fieldErrors.note}
+                    </p>
+                  )}
                 </div>
               </div>
 

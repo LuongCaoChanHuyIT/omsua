@@ -335,7 +335,7 @@ def generate() -> None:
     )
     right_items = [
         ("Cold Brew Me", "Cà phê ủ lạnh hạt Cầu Đất & cốt me rừng", "45k"),
-        ("Cà Phê Muối / Bạc Xỉu", "Phin đậm Đà Lạt phủ kem muối biển dịu", "35k • 40k"),
+        ("Cà Phê Muối / Bạc Xỉu", "Phin đậm Đà Lạt phủ kem muối biển dịu", "40k • 35k"),
         ("Cà Phê Kem Tiramisu", "Lớp kem phô mai cacao phủ cà phê phin", "45k"),
         ("Bánh Tráng Trộn Tóp Mỡ", "Tóp mỡ nhà thắng giòn rụm & sốt tắc", "40k"),
         ("Cơm Cháy Chà Bông", "Cơm cháy đáy nồi sốt mắm cay ngọt", "45k"),
