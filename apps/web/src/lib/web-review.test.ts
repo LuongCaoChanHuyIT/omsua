@@ -149,5 +149,11 @@ describe('web config & HomePage Storefront SSR consistency', () => {
       '@omsua/shared',
     );
     expect(homePageDynamic).toBe('force-dynamic');
+
+    const pageSource = readFileSync(
+      path.resolve(__dirname, '..', 'app', 'page.tsx'),
+      'utf8',
+    );
+    expect(pageSource).not.toMatch(/process\.env(?:\.NEXT_PUBLIC_API_URL|\[\s*['"`]NEXT_PUBLIC_API_URL['"`]\s*\])/);
   });
 });
