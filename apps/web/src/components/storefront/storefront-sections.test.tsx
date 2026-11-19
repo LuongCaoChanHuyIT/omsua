@@ -76,6 +76,14 @@ describe('Storefront Sections', () => {
 
     const orderButtons = screen.getAllByRole('button', { name: /\+ Đặt ngay/i });
     expect(orderButtons).toHaveLength(2);
+    for (const btn of orderButtons) {
+      expect(btn.className).toContain('min-h-11');
+      expect(btn.className).not.toContain('sm:min-h-9');
+    }
+    expect(screen.getByText(/ĐÀ LẠT • 1\.500M/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /hiệu ứng sương sớm/i }),
+    ).toBeInTheDocument();
     fireEvent.click(orderButtons[0]!);
     expect(onSelectProduct).toHaveBeenCalledWith(spotlightProducts[0]);
   });
@@ -342,6 +350,9 @@ describe('Storefront Sections', () => {
     expect(
       screen.getByRole('button', { name: 'Đơn đã đặt (3)' }),
     ).toBeInTheDocument();
+    expect(screen.getByText('Ốm sữa')).toHaveAttribute('translate', 'no');
+    const cartBtn1 = screen.getByRole('button', { name: /Giỏ hàng \(1\)/i });
+    expect(cartBtn1).toHaveAttribute('data-cart-pulse', 'true');
   });
 
   it('renders interactive + Chọn buttons and Tạm hết state in ToppingStripSection when onSelectTopping is provided', () => {

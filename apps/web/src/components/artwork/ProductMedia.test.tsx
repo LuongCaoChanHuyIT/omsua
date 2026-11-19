@@ -17,6 +17,9 @@ describe('ProductMedia hybrid photo + studio SVG fallback', () => {
     );
     expect(img).toHaveAttribute('alt', '');
     expect(img).toHaveAttribute('aria-hidden', 'true');
+    expect(img).toHaveAttribute('width', '320');
+    expect(img).toHaveAttribute('height', '380');
+    expect(img).toHaveAttribute('loading', 'lazy');
 
     fireEvent.error(img!);
     expect(container.querySelector('img')).toBeNull();
@@ -62,9 +65,19 @@ describe('ProductMedia hybrid photo + studio SVG fallback', () => {
     expect(container.querySelector('svg')).not.toBeNull();
 
     rerender(<ProductMedia toppingId="hat-sen" variant="topping" />);
-    expect(container.querySelector('img')).toHaveAttribute(
+    const toppingImg = container.querySelector('img');
+    expect(toppingImg).toHaveAttribute(
       'src',
       '/images/fanpage/products/topping-hat-sen.webp',
     );
+    expect(toppingImg).toHaveAttribute('width', '256');
+    expect(toppingImg).toHaveAttribute('height', '256');
+
+    rerender(<ProductMedia productId="tra-sua-atiso" variant="spotlight" />);
+    const spotlightImg = container.querySelector('img');
+    expect(spotlightImg).toHaveAttribute('width', '640');
+    expect(spotlightImg).toHaveAttribute('height', '480');
+    expect(spotlightImg).toHaveAttribute('loading', 'eager');
+    expect(spotlightImg).toHaveAttribute('fetchpriority', 'high');
   });
 });

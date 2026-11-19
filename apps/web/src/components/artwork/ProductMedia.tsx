@@ -12,6 +12,16 @@ export interface ProductMediaProps extends ProductIllustrationProps {
   preferIllustration?: boolean;
 }
 
+const DIMENSIONS_BY_VARIANT: Record<
+  NonNullable<ProductIllustrationProps['variant']>,
+  { width: number; height: number }
+> = {
+  spotlight: { width: 640, height: 480 },
+  card: { width: 320, height: 380 },
+  snack: { width: 480, height: 480 },
+  topping: { width: 256, height: 256 },
+};
+
 export function ProductMedia({
   preferIllustration = false,
   productId,
@@ -43,13 +53,18 @@ export function ProductMedia({
   }
 
   const accessibleLabel = title?.trim() || alt?.trim() || undefined;
+  const dims = DIMENSIONS_BY_VARIANT[variant] ?? DIMENSIONS_BY_VARIANT.card;
+  const isSpotlight = variant === 'spotlight';
 
   return (
     <img
       src={photo.src}
+      width={dims.width}
+      height={dims.height}
       alt={accessibleLabel ?? ''}
       aria-hidden={accessibleLabel ? undefined : 'true'}
-      loading="lazy"
+      loading={isSpotlight ? 'eager' : 'lazy'}
+      fetchPriority={isSpotlight ? 'high' : undefined}
       decoding="async"
       onError={() => setFailedSrc(photo.src)}
       style={
