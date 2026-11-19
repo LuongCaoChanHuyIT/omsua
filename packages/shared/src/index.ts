@@ -71,3 +71,18 @@ export {
   formatVnd,
   resolveOrderLine,
 } from './pricing';
+
+export {
+  BRANCH_PHOTO_BY_ID,
+  FANPAGE_GALLERY_ITEMS,
+  OMSUA_SOCIAL_LINKS,
+  PRODUCT_PHOTO_BY_ID,
+  getBranchPhoto,
+  getProductPhoto,
+} from './fanpage-media';
+export type {
+  BranchPhotoMeta,
+  FanpageGalleryCategory,
+  FanpagePhotoItem,
+  ProductPhotoMeta,
+} from './fanpage-media';
