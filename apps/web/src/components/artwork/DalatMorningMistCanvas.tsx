@@ -178,8 +178,42 @@ export function DalatMorningMistCanvas({
       rafId = window.requestAnimationFrame(renderFrame);
     };
 
-    rafId = window.requestAnimationFrame(renderFrame);
-    return () => window.cancelAnimationFrame(rafId);
+    type IdleWindow = Window & {
+      requestIdleCallback?: (
+        callback: () => void,
+        options?: { timeout: number },
+      ) => number;
+      cancelIdleCallback?: (handle: number) => void;
+    };
+    const idleWin = window as IdleWindow;
+    let idleHandle = 0;
+    let timeoutHandle = 0;
+    let cancelled = false;
+
+    const startLoop = () => {
+      if (!cancelled) {
+        rafId = window.requestAnimationFrame(renderFrame);
+      }
+    };
+
+    if (typeof idleWin.requestIdleCallback === 'function') {
+      idleHandle = idleWin.requestIdleCallback(startLoop, { timeout: 180 });
+    } else {
+      timeoutHandle = window.setTimeout(startLoop, 120);
+    }
+
+    return () => {
+      cancelled = true;
+      if (idleHandle && typeof idleWin.cancelIdleCallback === 'function') {
+        idleWin.cancelIdleCallback(idleHandle);
+      }
+      if (timeoutHandle) {
+        window.clearTimeout(timeoutHandle);
+      }
+      if (rafId) {
+        window.cancelAnimationFrame(rafId);
+      }
+    };
   }, [isInView, isPaused, prefersReducedMotion, seed]);
 
   return (

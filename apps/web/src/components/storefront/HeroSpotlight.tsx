@@ -87,7 +87,7 @@ export function HeroSpotlight({
           <DalatMorningMistCanvas seed={2017} />
 
           <div className="relative z-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {spotlightProducts.map((product) => {
+            {spotlightProducts.map((product, index) => {
               const badgeLabel = product.isBestSeller
                 ? '★ BEST SELLER'
                 : product.isNew
@@ -107,6 +107,7 @@ export function HeroSpotlight({
                       productId={product.id}
                       categoryId={product.categoryId}
                       variant="spotlight"
+                      priority={index === 0}
                       preferIllustration={preferIllustration}
                     />
                     <span

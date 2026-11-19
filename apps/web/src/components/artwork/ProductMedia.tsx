@@ -10,6 +10,7 @@ import {
 
 export interface ProductMediaProps extends ProductIllustrationProps {
   preferIllustration?: boolean;
+  priority?: boolean;
 }
 
 const DIMENSIONS_BY_VARIANT: Record<
@@ -24,6 +25,7 @@ const DIMENSIONS_BY_VARIANT: Record<
 
 export function ProductMedia({
   preferIllustration = false,
+  priority = false,
   productId,
   toppingId,
   id,
@@ -63,9 +65,9 @@ export function ProductMedia({
       height={dims.height}
       alt={accessibleLabel ?? ''}
       aria-hidden={accessibleLabel ? undefined : 'true'}
-      loading={isSpotlight ? 'eager' : 'lazy'}
-      fetchPriority={isSpotlight ? 'high' : undefined}
-      decoding="async"
+      loading={isSpotlight || priority ? 'eager' : 'lazy'}
+      fetchPriority={priority ? 'high' : undefined}
+      decoding={priority ? 'sync' : 'async'}
       onError={() => setFailedSrc(photo.src)}
       style={
         photo.objectPosition

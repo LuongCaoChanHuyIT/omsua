@@ -89,11 +89,17 @@ function extractNestErrorMessage(body: unknown, status: number): string {
 export async function fetchCatalog(
   baseUrl: string | undefined = process.env.NEXT_PUBLIC_API_URL,
   fetchImpl: typeof fetch = fetch,
+  timeoutMs = 1500,
 ): Promise<{ catalog: CatalogPayload; isFallback: boolean }> {
   const endpoint = `${normalizeApiBaseUrl(baseUrl)}/catalog`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const response = await fetchImpl(endpoint, { cache: 'no-store' });
+    const response = await fetchImpl(endpoint, {
+      cache: 'no-store',
+      signal: controller.signal,
+    });
     if (!response.ok) {
       return { catalog: getDefaultCatalog(), isFallback: true };
     }
@@ -106,17 +112,25 @@ export async function fetchCatalog(
     return { catalog: payload.data, isFallback: false };
   } catch {
     return { catalog: getDefaultCatalog(), isFallback: true };
+  } finally {
+    clearTimeout(timer);
   }
 }
 
 export async function fetchBranches(
   baseUrl: string | undefined = process.env.NEXT_PUBLIC_API_URL,
   fetchImpl: typeof fetch = fetch,
+  timeoutMs = 1500,
 ): Promise<{ branches: BranchInfo[]; isFallback: boolean }> {
   const endpoint = `${normalizeApiBaseUrl(baseUrl)}/branches`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const response = await fetchImpl(endpoint, { cache: 'no-store' });
+    const response = await fetchImpl(endpoint, {
+      cache: 'no-store',
+      signal: controller.signal,
+    });
     if (!response.ok) {
       return {
         branches: OMSUA_BRANCHES.map((branch) => ({ ...branch })),
@@ -138,6 +152,8 @@ export async function fetchBranches(
       branches: OMSUA_BRANCHES.map((branch) => ({ ...branch })),
       isFallback: true,
     };
+  } finally {
+    clearTimeout(timer);
   }
 }
 

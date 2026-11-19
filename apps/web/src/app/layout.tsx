@@ -20,12 +20,13 @@ const lora = Lora({
   weight: ['400', '600'],
   style: ['normal', 'italic'],
   display: 'swap',
+  preload: false,
   variable: '--font-lora',
 });
 
 const beVietnamPro = Be_Vietnam_Pro({
   subsets: ['latin', 'vietnamese'],
-  weight: ['400', '500', '600', '700', '800'],
+  weight: ['400', '500', '600', '700'],
   display: 'swap',
   variable: '--font-be-vietnam-pro',
 });
@@ -34,6 +35,7 @@ const dancingScript = Dancing_Script({
   subsets: ['latin', 'vietnamese'],
   weight: ['700'],
   display: 'swap',
+  preload: false,
   variable: '--font-dancing-script',
 });
 
@@ -41,6 +43,7 @@ const shantellSans = Shantell_Sans({
   subsets: ['latin', 'vietnamese'],
   weight: ['700', '800'],
   display: 'swap',
+  preload: false,
   variable: '--font-shantell-sans',
 });
 

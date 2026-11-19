@@ -114,6 +114,7 @@ describe('web config & HomePage Storefront SSR consistency', () => {
     );
     expect(layoutSource).toContain('export const viewport: Viewport');
     expect(layoutSource).toMatch(/themeColor:\s*['"]#EEEADF['"]/);
+    expect(layoutSource.match(/preload:\s*false/g)?.length ?? 0).toBe(3);
 
     const forbiddenPatterns: Array<{ label: string; regex: RegExp }> = [
       { label: 'hex #fff/#ffffff/#000/#000000', regex: /(#fff\b|#ffffff\b|#000\b|#000000\b)/i },

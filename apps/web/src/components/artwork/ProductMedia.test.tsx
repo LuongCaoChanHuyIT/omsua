@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
+import { getDefaultCatalog } from '@omsua/shared';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { HeroSpotlight } from '@/components/storefront/HeroSpotlight';
 import { ProductMedia } from './ProductMedia';
 
 afterEach(() => cleanup());
@@ -73,11 +75,44 @@ describe('ProductMedia hybrid photo + studio SVG fallback', () => {
     expect(toppingImg).toHaveAttribute('width', '256');
     expect(toppingImg).toHaveAttribute('height', '256');
 
-    rerender(<ProductMedia productId="tra-sua-atiso" variant="spotlight" />);
-    const spotlightImg = container.querySelector('img');
-    expect(spotlightImg).toHaveAttribute('width', '640');
-    expect(spotlightImg).toHaveAttribute('height', '480');
-    expect(spotlightImg).toHaveAttribute('loading', 'eager');
-    expect(spotlightImg).toHaveAttribute('fetchpriority', 'high');
+    rerender(
+      <ProductMedia
+        productId="tra-sua-atiso"
+        variant="spotlight"
+        priority={true}
+      />,
+    );
+    const primarySpotlightImg = container.querySelector('img');
+    expect(primarySpotlightImg).toHaveAttribute('width', '640');
+    expect(primarySpotlightImg).toHaveAttribute('height', '480');
+    expect(primarySpotlightImg).toHaveAttribute('loading', 'eager');
+    expect(primarySpotlightImg).toHaveAttribute('fetchpriority', 'high');
+    expect(primarySpotlightImg).toHaveAttribute('decoding', 'sync');
+
+    rerender(
+      <ProductMedia productId="quyt-nhai-cat-tuong" variant="spotlight" />,
+    );
+    const secondarySpotlightImg = container.querySelector('img');
+    expect(secondarySpotlightImg).toHaveAttribute('loading', 'eager');
+    expect(secondarySpotlightImg).toHaveAttribute('decoding', 'async');
+    expect(secondarySpotlightImg).not.toHaveAttribute('fetchpriority', 'high');
+
+    const spotlightProducts = getDefaultCatalog().products.filter(
+      (p) => p.isSpotlight,
+    );
+    const { container: heroContainer } = render(
+      <HeroSpotlight
+        spotlightProducts={spotlightProducts}
+        onSelectProduct={vi.fn()}
+      />,
+    );
+    const highPriorityImgs = heroContainer.querySelectorAll(
+      'img[fetchpriority="high"]',
+    );
+    expect(highPriorityImgs).toHaveLength(1);
+    expect(highPriorityImgs[0]).toHaveAttribute(
+      'src',
+      '/images/fanpage/products/drink-tra-sua-atiso.webp',
+    );
   });
 });

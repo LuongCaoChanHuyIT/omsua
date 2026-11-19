@@ -107,7 +107,10 @@ describe('fetchCatalog (web)', () => {
 
     expect(mockFetch).toHaveBeenCalledWith(
       'http://localhost:4000/api/catalog',
-      { cache: 'no-store' },
+      expect.objectContaining({
+        cache: 'no-store',
+        signal: expect.any(AbortSignal),
+      }),
     );
     expect(result.isFallback).toBe(false);
     expect(result.catalog.products[0]?.isAvailable).toBe(false);
@@ -213,7 +216,10 @@ describe('fetchBranches (web)', () => {
 
     expect(mockFetch).toHaveBeenCalledWith(
       'http://localhost:4000/api/branches',
-      { cache: 'no-store' },
+      expect.objectContaining({
+        cache: 'no-store',
+        signal: expect.any(AbortSignal),
+      }),
     );
     expect(result.isFallback).toBe(false);
     expect(result.branches).toHaveLength(4);
@@ -234,6 +240,28 @@ describe('fetchBranches (web)', () => {
     expect(result.branches.map((branch) => branch.id)).toEqual(
       OMSUA_BRANCHES.map((branch) => branch.id),
     );
+  });
+
+  it('aborts hanging fetchCatalog and fetchBranches calls within timeoutMs and returns fallback data without stalling SSR TTFB', async () => {
+    const hangingFetch: typeof fetch = (_input, init) =>
+      new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => {
+          reject(new DOMException('The operation was aborted.', 'AbortError'));
+        });
+      });
+
+    const start = Date.now();
+    const [catRes, branchRes] = await Promise.all([
+      fetchCatalog('http://localhost:4000/api', hangingFetch, 25),
+      fetchBranches('http://localhost:4000/api', hangingFetch, 25),
+    ]);
+    const elapsed = Date.now() - start;
+
+    expect(elapsed).toBeLessThan(200);
+    expect(catRes.isFallback).toBe(true);
+    expect(catRes.catalog.products).toHaveLength(30);
+    expect(branchRes.isFallback).toBe(true);
+    expect(branchRes.branches).toHaveLength(4);
   });
 });
 

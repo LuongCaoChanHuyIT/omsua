@@ -55,39 +55,50 @@ describe('DalatMorningMistCanvas seeded flow-field & a11y safety', () => {
     expect(rafSpy).not.toHaveBeenCalled();
   });
 
-  it('draws deterministic mist ribbons and motes onto a 2D context when active', () => {
-    const strokeSpy = vi.fn();
-    const fillSpy = vi.fn();
-    const mockCtx = {
-      clearRect: vi.fn(),
-      beginPath: vi.fn(),
-      moveTo: vi.fn(),
-      lineTo: vi.fn(),
-      stroke: strokeSpy,
-      arc: vi.fn(),
-      fill: fillSpy,
-      strokeStyle: '',
-      fillStyle: '',
-      lineWidth: 1,
-    } as unknown as CanvasRenderingContext2D;
+  it('defers requestAnimationFrame kickoff until post-paint idle/timer and draws deterministic mist ribbons and motes when active', () => {
+    vi.useFakeTimers();
+    try {
+      const strokeSpy = vi.fn();
+      const fillSpy = vi.fn();
+      const mockCtx = {
+        clearRect: vi.fn(),
+        beginPath: vi.fn(),
+        moveTo: vi.fn(),
+        lineTo: vi.fn(),
+        stroke: strokeSpy,
+        arc: vi.fn(),
+        fill: fillSpy,
+        strokeStyle: '',
+        fillStyle: '',
+        lineWidth: 1,
+      } as unknown as CanvasRenderingContext2D;
 
-    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(
-      (() => mockCtx) as unknown as typeof HTMLCanvasElement.prototype.getContext,
-    );
+      vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(
+        (() => mockCtx) as unknown as typeof HTMLCanvasElement.prototype.getContext,
+      );
 
-    let frameCallback: FrameRequestCallback | null = null;
-    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
-      if (!frameCallback) {
-        frameCallback = cb;
-      }
-      return 1;
-    });
+      let frameCallback: FrameRequestCallback | null = null;
+      const rafSpy = vi
+        .spyOn(window, 'requestAnimationFrame')
+        .mockImplementation((cb) => {
+          if (!frameCallback) {
+            frameCallback = cb;
+          }
+          return 1;
+        });
 
-    render(<DalatMorningMistCanvas seed={2017} />);
-    expect(frameCallback).not.toBeNull();
-    frameCallback!(16);
-    expect(strokeSpy).toHaveBeenCalledTimes(36);
-    expect(fillSpy).toHaveBeenCalledTimes(36);
+      render(<DalatMorningMistCanvas seed={2017} />);
+      // Zero RAF calls synchronously during LCP paint!
+      expect(rafSpy).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(150);
+      expect(frameCallback).not.toBeNull();
+      frameCallback!(16);
+      expect(strokeSpy).toHaveBeenCalledTimes(36);
+      expect(fillSpy).toHaveBeenCalledTimes(36);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('hydrates SSR markup cleanly without mismatch when prefers-reduced-motion is reduce on the client', async () => {
