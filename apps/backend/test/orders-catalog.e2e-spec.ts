@@ -310,6 +310,31 @@ describe('Orders & Catalog Integration (e2e)', () => {
         items: oversizedItems,
       })
       .expect(400);
+
+    // > 20 toppingIds on a single item rejected with 400 (@ArrayMaxSize(20))
+    await request(app.getHttpServer())
+      .post('/api/orders')
+      .send({
+        ...validOrderPayload,
+        items: [
+          {
+            productId: 'tra-sua-atiso',
+            quantity: 1,
+            size: 'M',
+            sugarLevel: '70',
+            iceLevel: '70',
+            toppingIds: Array.from({ length: 21 }, () => 'tran-chau-den'),
+          },
+        ],
+      })
+      .expect(400);
+
+    // Trims leading/trailing whitespace on status query parameter in GET /api/orders
+    const trimmedStatusRes = await request(app.getHttpServer())
+      .get('/api/orders?status=%20pending%20&branchId=%20cs1-hoang-dieu%20')
+      .expect(200);
+    expect(trimmedStatusRes.body.success).toBe(true);
+    expect(Array.isArray(trimmedStatusRes.body.data)).toBe(true);
   });
 
   it('enforces boundary limits, rejects invalid quantities, prevents SQLi/XSS table corruption, and resolves GET /api/orders/code/:orderCode (200/400/404)', async () => {

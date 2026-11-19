@@ -9,7 +9,7 @@ import {
   type OrderRecord,
   type OrderStatus,
 } from '@omsua/shared';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { fetchOrders, updateOrderStatus } from '../lib/api';
 import { normalizeVietnameseSearch } from '../lib/text';
 
@@ -82,9 +82,11 @@ function matchesOrderQuery(order: OrderRecord, normalizedQuery: string): boolean
 
   const topLevelFields = [
     order.orderCode,
+    order.branchName,
     order.customerName,
     order.customerPhone,
     order.deliveryAddress,
+    order.note ?? '',
   ];
   for (const field of topLevelFields) {
     if (normalizeVietnameseSearch(field).includes(normalizedQuery)) {
@@ -92,8 +94,14 @@ function matchesOrderQuery(order: OrderRecord, normalizedQuery: string): boolean
     }
   }
 
-  return order.items.some((item) =>
-    normalizeVietnameseSearch(item.productName).includes(normalizedQuery),
+  return order.items.some(
+    (item) =>
+      normalizeVietnameseSearch(item.productName).includes(normalizedQuery) ||
+      item.toppings.some((topping) =>
+        normalizeVietnameseSearch(
+          `${topping.name} ${topping.shortName}`,
+        ).includes(normalizedQuery),
+      ),
   );
 }
 
@@ -162,16 +170,32 @@ export function OrdersPage() {
   const [updatingOrderIds, setUpdatingOrderIds] = useState<Set<string>>(
     () => new Set(),
   );
+  const fetchSeqRef = useRef<number>(0);
+  const mutationEpochRef = useRef<number>(0);
+  const inFlightMutationsRef = useRef<number>(0);
+  const activeForegroundSeqRef = useRef<number>(0);
 
   const loadOrders = useCallback(async (branchId: string) => {
+    const seq = ++fetchSeqRef.current;
+    const mutEpoch = mutationEpochRef.current;
+    activeForegroundSeqRef.current = seq;
     setLoading(true);
     setError(null);
     setConfirmingCancelOrderId(null);
     const result = await fetchOrders({
       branchId: branchId || undefined,
     });
+    if (seq !== fetchSeqRef.current) {
+      return;
+    }
+    activeForegroundSeqRef.current = 0;
     if (result.ok) {
-      setOrders(result.data);
+      if (
+        mutEpoch === mutationEpochRef.current &&
+        inFlightMutationsRef.current === 0
+      ) {
+        setOrders(result.data);
+      }
     } else {
       setError(result.error);
     }
@@ -180,6 +204,9 @@ export function OrdersPage() {
 
   useEffect(() => {
     let active = true;
+    const initialSeq = ++fetchSeqRef.current;
+    const initialMutEpoch = mutationEpochRef.current;
+    activeForegroundSeqRef.current = initialSeq;
     setLoading(true);
     setError(null);
     setConfirmingCancelOrderId(null);
@@ -187,9 +214,15 @@ export function OrdersPage() {
     void fetchOrders({
       branchId: selectedBranchId || undefined,
     }).then((result) => {
-      if (!active) return;
+      if (!active || initialSeq !== fetchSeqRef.current) return;
+      activeForegroundSeqRef.current = 0;
       if (result.ok) {
-        setOrders(result.data);
+        if (
+          initialMutEpoch === mutationEpochRef.current &&
+          inFlightMutationsRef.current === 0
+        ) {
+          setOrders(result.data);
+        }
       } else {
         setError(result.error);
       }
@@ -203,14 +236,29 @@ export function OrdersPage() {
       ) {
         return;
       }
+      if (
+        inFlightMutationsRef.current > 0 ||
+        activeForegroundSeqRef.current !== 0
+      ) {
+        return;
+      }
+
+      const seq = ++fetchSeqRef.current;
+      const mutEpoch = mutationEpochRef.current;
 
       void fetchOrders({
         branchId: selectedBranchId || undefined,
       }).then((result) => {
-        if (!active) return;
+        if (
+          !active ||
+          seq !== fetchSeqRef.current ||
+          mutEpoch !== mutationEpochRef.current ||
+          inFlightMutationsRef.current > 0
+        ) {
+          return;
+        }
         if (result.ok) {
           setOrders(result.data);
-          setError(null);
         }
       });
     }, AUTO_REFRESH_INTERVAL_MS);
@@ -257,6 +305,8 @@ export function OrdersPage() {
   }, [orders, selectedStatus, normalizedQuery]);
 
   const handleTransition = async (orderId: string, nextStatus: OrderStatus) => {
+    mutationEpochRef.current += 1;
+    inFlightMutationsRef.current += 1;
     setConfirmingCancelOrderId((current) =>
       current === orderId ? null : current,
     );
@@ -278,6 +328,8 @@ export function OrdersPage() {
         current.map((entry) => (entry.id === orderId ? result.data : entry)),
       );
     } finally {
+      mutationEpochRef.current += 1;
+      inFlightMutationsRef.current -= 1;
       setUpdatingOrderIds((prev) => {
         const next = new Set(prev);
         next.delete(orderId);
@@ -361,7 +413,7 @@ export function OrdersPage() {
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="Tìm mã OM-..., tên khách, SĐT, món..."
-              className="min-h-11 w-full rounded-xl border border-[#D4C9B0] bg-canvas-cream px-3.5 py-2.5 text-sm text-espresso placeholder:text-warm-muted focus:border-olive-primary focus:outline-none"
+              className="min-h-11 w-full rounded-xl border border-[#D4C9B0] bg-canvas-cream px-3.5 py-2.5 text-base text-espresso placeholder:text-warm-muted focus:border-olive-primary focus:outline-none sm:text-sm"
             />
             {searchQuery.length > 0 ? (
               <button
@@ -386,7 +438,7 @@ export function OrdersPage() {
               aria-label="Lọc theo chi nhánh"
               value={selectedBranchId}
               onChange={(event) => setSelectedBranchId(event.target.value)}
-              className="min-h-11 w-full rounded-xl border border-[#D4C9B0] bg-canvas-cream px-3.5 py-2 text-sm font-medium text-espresso focus:border-olive-primary focus:outline-none md:w-64"
+              className="min-h-11 w-full rounded-xl border border-[#D4C9B0] bg-canvas-cream px-3.5 py-2 text-base font-medium text-espresso focus:border-olive-primary focus:outline-none sm:text-sm md:w-64"
             >
               <option value="">Tất cả chi nhánh</option>
               {OMSUA_BRANCHES.map((branch) => (
@@ -615,16 +667,30 @@ export function OrdersPage() {
                     ) : null}
 
                     {order.status === 'delivering' ? (
-                      <button
-                        type="button"
-                        disabled={isUpdating}
-                        onClick={() =>
-                          void handleTransition(order.id, 'completed')
-                        }
-                        className="min-h-11 rounded-xl bg-artichoke px-4 py-2.5 text-sm font-semibold text-surface-light shadow-xs transition hover:bg-[#66762F] disabled:opacity-60"
-                      >
-                        Hoàn tất
-                      </button>
+                      <>
+                        <CancelActionControls
+                          orderId={order.id}
+                          isConfirming={isConfirmingCancel}
+                          isUpdating={isUpdating}
+                          onRequestCancel={setConfirmingCancelOrderId}
+                          onDismissCancel={() =>
+                            setConfirmingCancelOrderId(null)
+                          }
+                          onConfirmCancel={(id) =>
+                            void handleTransition(id, 'cancelled')
+                          }
+                        />
+                        <button
+                          type="button"
+                          disabled={isUpdating}
+                          onClick={() =>
+                            void handleTransition(order.id, 'completed')
+                          }
+                          className="min-h-11 rounded-xl bg-artichoke px-4 py-2.5 text-sm font-semibold text-surface-light shadow-xs transition hover:bg-[#66762F] disabled:opacity-60"
+                        >
+                          Hoàn tất
+                        </button>
+                      </>
                     ) : null}
                   </div>
                 ) : null}

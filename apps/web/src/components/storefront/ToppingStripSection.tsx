@@ -51,7 +51,7 @@ export function ToppingStripSection({
                     type="button"
                     aria-label={`Chọn topping ${topping.shortName}`}
                     onClick={() => onSelectTopping(topping)}
-                    className="inline-flex min-h-10 w-full cursor-pointer items-center justify-center rounded-full bg-artichoke px-3 py-1.5 text-xs font-bold text-surface-light shadow-2xs transition hover:opacity-92 sm:min-h-9"
+                    className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center rounded-full bg-artichoke px-3 py-1.5 text-xs font-bold text-surface-light shadow-2xs transition hover:opacity-92"
                   >
                     + Chọn
                   </button>
@@ -59,7 +59,7 @@ export function ToppingStripSection({
                   <button
                     type="button"
                     disabled
-                    className="inline-flex min-h-10 w-full cursor-not-allowed items-center justify-center rounded-full bg-warm-muted/25 px-3 py-1.5 text-xs font-semibold text-warm-muted sm:min-h-9"
+                    className="inline-flex min-h-11 w-full cursor-not-allowed items-center justify-center rounded-full bg-warm-muted/25 px-3 py-1.5 text-xs font-semibold text-warm-muted"
                   >
                     Tạm hết
                   </button>

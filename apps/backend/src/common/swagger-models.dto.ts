@@ -97,16 +97,19 @@ export class CategoryInfoDto implements CategoryInfo {
   @ApiProperty({ example: 1 })
   index: number;
 
-  @ApiProperty({ example: 'Trà Sữa Bản Địa' })
+  @ApiProperty({ example: '1. TRÀ SỮA ĐÀ LẠT (MILK TEA)' })
   title: string;
 
   @ApiProperty({ example: 'Trà Sữa' })
   shortLabel: string;
 
-  @ApiProperty({ example: 'Trà đậm Đà Lạt kết hợp sữa thơm thanh nhẹ' })
+  @ApiProperty({
+    example:
+      'Nền trà nguyên lá ủ chậm kết hợp Atiso xanh, gạo rang & kem phô mai thủ công',
+  })
   subtitle: string;
 
-  @ApiProperty({ example: '#F5ECE0' })
+  @ApiProperty({ example: '#F4E3AD' })
   accentBg: string;
 }
 
@@ -165,7 +168,7 @@ export class ToppingItemDto implements ToppingItem {
   @ApiProperty({ example: 'tran-chau-den' })
   id: string;
 
-  @ApiProperty({ example: 'Trân Châu Đen Đường Đen' })
+  @ApiProperty({ example: 'Trân châu đen nấu mật' })
   name: string;
 
   @ApiProperty({ example: 'Trân châu đen' })
@@ -218,13 +221,13 @@ export class BranchInfoDto implements BranchInfo {
   @ApiProperty({ example: 'Cơ sở 1 — Hoàng Diệu' })
   name: string;
 
-  @ApiProperty({ example: '28A Hoàng Diệu, Phường 5, Đà Lạt' })
+  @ApiProperty({ example: '28A Hoàng Diệu, Phường Cam Ly, TP. Đà Lạt, Lâm Đồng' })
   address: string;
 
   @ApiProperty({ example: '28A Hoàng Diệu, ĐL' })
   shortLabel: string;
 
-  @ApiProperty({ example: '0263 3822 889' })
+  @ApiProperty({ example: '0945 396 117' })
   hotline: string;
 }
 
@@ -243,7 +246,7 @@ export class OrderLineToppingDto implements OrderLineTopping {
   @ApiProperty({ example: 'tran-chau-den' })
   id: string;
 
-  @ApiProperty({ example: 'Trân Châu Đen Đường Đen' })
+  @ApiProperty({ example: 'Trân châu đen nấu mật' })
   name: string;
 
   @ApiProperty({ example: 'Trân châu đen' })
@@ -255,7 +258,8 @@ export class OrderLineToppingDto implements OrderLineTopping {
 
 export class OrderLineResolvedDto implements OrderLineResolved {
   @ApiProperty({
-    example: 'tra-sua-atiso|M|sugar:70|ice:70|spice:-|toppings:tran-chau-den',
+    example:
+      'tra-sua-atiso|size:M|sugar:70|ice:70|spice:-|toppings:tran-chau-den',
   })
   canonicalKey: string;
 

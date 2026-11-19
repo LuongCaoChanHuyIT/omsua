@@ -193,6 +193,25 @@ describe('Backend App (e2e)', () => {
       doc.paths['/api/orders/code/{orderCode}']?.get?.responses?.['404']
         ?.content?.['application/json']?.schema?.$ref,
     ).toMatch(/^#\/components\/schemas\/.+/);
+
+    const categoryProps = schemas['CategoryInfoDto']?.properties as Record<
+      string,
+      { example?: unknown }
+    >;
+    const branchProps = schemas['BranchInfoDto']?.properties as Record<
+      string,
+      { example?: unknown }
+    >;
+    const lineProps = schemas['OrderLineResolvedDto']?.properties as Record<
+      string,
+      { example?: unknown }
+    >;
+
+    expect(categoryProps?.['accentBg']?.example).toBe('#F4E3AD');
+    expect(branchProps?.['hotline']?.example).toBe('0945 396 117');
+    expect(lineProps?.['canonicalKey']?.example).toBe(
+      'tra-sua-atiso|size:M|sugar:70|ice:70|spice:-|toppings:tran-chau-den',
+    );
   });
 
   it('GET /api/catalog returns 200 ApiResponse<CatalogPayload> with 4 categories, 30 products, and 8 toppings', async () => {

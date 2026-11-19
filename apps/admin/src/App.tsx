@@ -16,7 +16,7 @@ function NotFoundView() {
       </p>
       <Link
         to="/"
-        className="mt-5 inline-block rounded-xl bg-terracotta px-5 py-2.5 text-sm font-semibold text-surface-light shadow-xs transition hover:bg-[#C05C16]"
+        className="mt-5 inline-flex min-h-11 items-center rounded-xl bg-terracotta px-5 py-2.5 text-sm font-semibold text-surface-light shadow-xs transition hover:bg-[#C05C16]"
       >
         Quay về Đơn hàng
       </Link>

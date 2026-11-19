@@ -315,6 +315,12 @@ describe('Storefront Sections', () => {
     const branchSelect = screen.getByLabelText(/Chọn chi nhánh/i);
     expect(branchSelect).toHaveAttribute('id', 'storefront-branch-select');
     expect(branchSelect).toHaveAttribute('name', 'branchId');
+    expect(branchSelect.className).toContain('min-h-11');
+    expect(branchSelect.className).toContain('text-base');
+    expect(branchSelect.className).toContain('sm:text-xs');
+
+    const menuNavLink = screen.getByRole('link', { name: 'Thực đơn' });
+    expect(menuNavLink.className).toContain('min-h-11');
 
     const lookupBtnZero = screen.getByRole('button', { name: 'Đơn đã đặt' });
     expect(lookupBtnZero.className).toContain('min-h-11');
@@ -356,15 +362,20 @@ describe('Storefront Sections', () => {
       name: 'Chọn topping Trân châu đen',
     });
     expect(chooseBobaBtn).toHaveTextContent('+ Chọn');
+    expect(chooseBobaBtn.className).toContain('min-h-11');
+    expect(chooseBobaBtn.className).not.toContain('sm:min-h-9');
     fireEvent.click(chooseBobaBtn);
     expect(onSelectTopping).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'tran-chau-den' }),
     );
 
     const kemTrungCard = screen.getByText('Kem trứng').closest('div')!;
-    expect(
-      within(kemTrungCard).getByRole('button', { name: 'Tạm hết' }),
-    ).toBeDisabled();
+    const soldOutToppingBtn = within(kemTrungCard).getByRole('button', {
+      name: 'Tạm hết',
+    });
+    expect(soldOutToppingBtn).toBeDisabled();
+    expect(soldOutToppingBtn.className).toContain('min-h-11');
+    expect(soldOutToppingBtn.className).not.toContain('sm:min-h-9');
   });
 
   it('renders BrandStorySection owning unique #cau-chuyen id, WCAG AA contrast on badges, and aria-pressed on BrandFooter branch cards', () => {
@@ -416,6 +427,12 @@ describe('Storefront Sections', () => {
     const creamBadge = screen.getByText('CREAM & BLENDED');
     expect(creamBadge.className).toContain('text-espresso');
     expect(creamBadge.className).not.toContain('text-surface-light');
+
+    const categorySubtitle = screen.getByText(
+      /Sữa tươi thanh trùng béo dịu/i,
+    );
+    expect(categorySubtitle.className).toContain('text-espresso/85');
+    expect(categorySubtitle.className).not.toContain('text-warm-muted');
 
     const spiceBadges = screen.getAllByText('Cay vừa');
     const coralBadge = spiceBadges.find((el) =>

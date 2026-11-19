@@ -440,7 +440,7 @@ export function CartCheckoutDrawer({
                               );
                             }
                           }}
-                          className="inline-flex min-h-9 shrink-0 cursor-pointer items-center px-1.5 text-xs font-semibold text-terracotta underline-offset-2 hover:underline"
+                          className="inline-flex min-h-11 shrink-0 cursor-pointer items-center px-3 text-xs font-semibold text-terracotta underline-offset-2 hover:underline"
                         >
                           Xóa
                         </button>
@@ -513,7 +513,7 @@ export function CartCheckoutDrawer({
                         </div>
 
                         <div className="mt-2.5 flex items-center justify-between gap-2">
-                          <div className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-olive-primary/15 bg-surface-light px-2 py-0.5">
+                          <div className="inline-flex min-h-11 items-center gap-1 rounded-full border border-olive-primary/15 bg-surface-light px-1.5 py-0.5">
                             <button
                               type="button"
                               aria-label={`Giảm số lượng ${line.productName}`}
@@ -523,7 +523,7 @@ export function CartCheckoutDrawer({
                                   line.quantity - 1,
                                 )
                               }
-                              className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-xs font-bold text-warm-muted hover:text-espresso"
+                              className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-xs font-bold text-warm-muted hover:text-espresso"
                             >
                               -
                             </button>
@@ -541,7 +541,7 @@ export function CartCheckoutDrawer({
                                   line.quantity + 1,
                                 )
                               }
-                              className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-xs font-bold text-terracotta hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
+                              className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-xs font-bold text-terracotta hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
                             >
                               +
                             </button>
@@ -551,7 +551,7 @@ export function CartCheckoutDrawer({
                             type="button"
                             aria-label={`Xóa ${line.productName}`}
                             onClick={() => removeItem(line.canonicalKey)}
-                            className="inline-flex min-h-9 cursor-pointer items-center px-1.5 text-xs font-semibold text-warm-muted underline-offset-2 hover:text-terracotta hover:underline"
+                            className="inline-flex min-h-11 cursor-pointer items-center px-3 text-xs font-semibold text-warm-muted underline-offset-2 hover:text-terracotta hover:underline"
                           >
                             Xóa
                           </button>
@@ -576,7 +576,7 @@ export function CartCheckoutDrawer({
                   <button
                     type="button"
                     onClick={() => setIsBranchPickerOpen((prev) => !prev)}
-                    className="mt-1 inline-flex min-h-10 cursor-pointer items-center rounded-full border border-olive-primary/20 bg-surface-light px-3.5 py-1.5 text-xs font-semibold text-espresso transition hover:bg-canvas-cream sm:min-h-9"
+                    className="mt-1 inline-flex min-h-11 cursor-pointer items-center rounded-full border border-olive-primary/20 bg-surface-light px-3.5 py-1.5 text-xs font-semibold text-espresso transition hover:bg-canvas-cream"
                   >
                     Đổi chi nhánh khác
                   </button>
@@ -751,7 +751,7 @@ export function CartCheckoutDrawer({
                   })}
                 </div>
 
-                {paymentMethod === 'qr' && (
+                {paymentMethod === 'qr' && totals.grandTotal > 0 && (
                   <VietQrTransferCard
                     amount={totals.grandTotal}
                     transferContent={`OMSUA ${normalizedPhone || 'SDT'}`}

@@ -410,9 +410,11 @@ describe('Admin App routes & operational portals', () => {
     );
 
     expect(screen.getByRole('link', { name: 'Đơn hàng' })).toBeInTheDocument();
-    expect(
-      screen.getByRole('link', { name: 'Quay về Đơn hàng' }),
-    ).toBeInTheDocument();
+    const notFoundBackLink = screen.getByRole('link', {
+      name: 'Quay về Đơn hàng',
+    });
+    expect(notFoundBackLink).toBeInTheDocument();
+    expect(notFoundBackLink.className).toContain('min-h-11');
     expect(
       screen.getByRole('heading', { name: /Không tìm thấy trang/i }),
     ).toBeInTheDocument();
@@ -772,6 +774,11 @@ describe('Admin App routes & operational portals', () => {
     const searchInput = screen.getByLabelText('Tìm kiếm đơn hàng');
     expect(searchInput).toHaveAttribute('id', 'order-search');
     expect(searchInput).toHaveAttribute('name', 'orderSearch');
+    expect(searchInput.className).toContain('text-base');
+    expect(searchInput.className).toContain('sm:text-sm');
+    expect(
+      screen.getByLabelText('Lọc theo chi nhánh').className,
+    ).toContain('text-base');
 
     fireEvent.change(searchInput, { target: { value: 'nguyen minh anh' } });
     expect(screen.getByTestId('order-card-ord-1')).toBeInTheDocument();
@@ -977,11 +984,17 @@ describe('Admin App routes & operational portals', () => {
 
     const atisoCard = await screen.findByTestId('menu-product-tra-sua-atiso');
 
-    // WCAG AA contrast check on Signature badge (text-espresso on bg-card-olive-gold)
+    // WCAG AA contrast check on Signature badge (text-espresso on bg-card-olive-gold) & Món mới badge
     const signatureBadge = within(atisoCard).getByText('Signature');
     expect(signatureBadge.className).toContain('bg-card-olive-gold');
     expect(signatureBadge.className).toContain('text-espresso');
     expect(signatureBadge.className).not.toContain('text-surface-light');
+
+    const quytCard = screen.getByTestId('menu-product-quyt-nhai-cat-tuong');
+    const newBadge = within(quytCard).getByText('Món mới');
+    expect(newBadge.className).toContain('bg-[#F6DFCE]');
+    expect(newBadge.className).toContain('text-[#9A460B]');
+    expect(newBadge.className).not.toContain('text-terracotta');
 
     // Availability filter pills with counts & aria-pressed
     const availabilityGroup = screen.getByRole('group', {
@@ -1027,6 +1040,8 @@ describe('Admin App routes & operational portals', () => {
     const menuSearch = screen.getByLabelText('Tìm món trong thực đơn');
     expect(menuSearch).toHaveAttribute('id', 'menu-search');
     expect(menuSearch).toHaveAttribute('name', 'menuSearch');
+    expect(menuSearch.className).toContain('text-base');
+    expect(menuSearch.className).toContain('sm:text-sm');
 
     fireEvent.change(menuSearch, { target: { value: 'banh trang tron' } });
     expect(
@@ -1164,6 +1179,320 @@ describe('Admin App routes & operational portals', () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(/Web :3000 · Admin :3001 · Backend :4000/),
+    ).toBeInTheDocument();
+  });
+
+  it('prevents stale background poll or out-of-order branch GET from overwriting PATCH status updates and preserves PATCH error banner across silent polls', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      get: () => 'visible',
+    });
+
+    let resolveSlowPollGet!: (res: unknown) => void;
+    let resolveSlowCs1Get!: (res: unknown) => void;
+    let getCallIndex = 0;
+    let patchShouldFail = false;
+
+    const cs4Order: OrderRecord = {
+      ...mockPendingOrder,
+      id: 'ord-cs4',
+      orderCode: 'OM-20261119-DT04',
+      branchId: 'cs4-duc-trong',
+      branchName: 'Cơ sở 4 — Đức Trọng',
+      status: 'delivering',
+    };
+
+    const fetchMock = vi
+      .fn()
+      .mockImplementation((input: string, init?: RequestInit) => {
+        if (input.endsWith('/orders/ord-1/status') && init?.method === 'PATCH') {
+          if (patchShouldFail) {
+            return Promise.resolve({
+              ok: false,
+              status: 500,
+              json: async () => ({
+                message: 'Không thể cập nhật trạng thái đơn do lỗi kết nối.',
+              }),
+            });
+          }
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({
+              success: true,
+              data: {
+                ...mockPendingOrder,
+                status: 'preparing',
+                updatedAt: '2026-11-19T05:01:00.000Z',
+              },
+              timestamp: '2026-11-19T05:01:00.000Z',
+            }),
+          });
+        }
+
+        if (input.includes('branchId=cs1-hoang-dieu')) {
+          return new Promise((resolve) => {
+            resolveSlowCs1Get = resolve;
+          });
+        }
+
+        if (input.includes('branchId=cs4-duc-trong')) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({
+              success: true,
+              data: [cs4Order],
+              timestamp: '2026-11-19T05:02:00.000Z',
+            }),
+          });
+        }
+
+        if (input.includes('/orders')) {
+          getCallIndex += 1;
+          // 1st GET: initial mount
+          if (getCallIndex === 1) {
+            return Promise.resolve({
+              ok: true,
+              status: 200,
+              json: async () => ({
+                success: true,
+                data: [mockPendingOrder],
+                timestamp: '2026-11-19T05:00:00.000Z',
+              }),
+            });
+          }
+          // 2nd GET: 12s silent poll starts BEFORE PATCH and resolves AFTER PATCH
+          if (getCallIndex === 2) {
+            return new Promise((resolve) => {
+              resolveSlowPollGet = resolve;
+            });
+          }
+          // Subsequent polls return updated state
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({
+              success: true,
+              data: [{ ...mockPendingOrder, status: 'preparing' }],
+              timestamp: '2026-11-19T05:03:00.000Z',
+            }),
+          });
+        }
+
+        return Promise.resolve({ ok: false, status: 404, json: async () => ({}) });
+      });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+
+    const card = await screen.findByTestId('order-card-ord-1');
+    expect(within(card).getByTestId('order-status-ord-1')).toHaveTextContent(
+      'Chờ xác nhận',
+    );
+
+    // Trigger 12s silent background poll (getCallIndex === 2, stays pending)
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(12_000);
+    });
+    expect(resolveSlowPollGet).toBeDefined();
+
+    // Operator clicks "Xác nhận pha chế" -> PATCH succeeds -> status becomes 'Đang pha chế'
+    fireEvent.click(
+      within(card).getByRole('button', { name: 'Xác nhận pha chế' }),
+    );
+    await waitFor(() => {
+      expect(within(card).getByTestId('order-status-ord-1')).toHaveTextContent(
+        'Đang pha chế',
+      );
+    });
+
+    // Now the stale pre-PATCH background poll resolves with OLD status 'pending'
+    await act(async () => {
+      resolveSlowPollGet({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: [mockPendingOrder],
+          timestamp: '2026-11-19T05:00:30.000Z',
+        }),
+      });
+    });
+
+    // Status MUST remain 'Đang pha chế' (NOT overwritten back to 'Chờ xác nhận')!
+    expect(within(card).getByTestId('order-status-ord-1')).toHaveTextContent(
+      'Đang pha chế',
+    );
+
+    // Next: simulate failed PATCH ("Giao hàng" fails 500) -> shows error alert
+    patchShouldFail = true;
+    fireEvent.click(within(card).getByRole('button', { name: 'Giao hàng' }));
+    const errorAlert = await screen.findByRole('alert');
+    expect(errorAlert).toHaveTextContent(
+      'Không thể cập nhật trạng thái đơn do lỗi kết nối.',
+    );
+
+    // Advance 12s so silent background poll runs and succeeds -> MUST NOT erase errorAlert!
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(12_000);
+    });
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Không thể cập nhật trạng thái đơn do lỗi kết nối.',
+    );
+
+    // Rapid branch switch: cs1 (slow) -> cs4 (fast); when cs1 resolves late, cs4 order must remain!
+    const branchSelect = screen.getByLabelText('Lọc theo chi nhánh');
+    fireEvent.change(branchSelect, { target: { value: 'cs1-hoang-dieu' } });
+    fireEvent.change(branchSelect, { target: { value: 'cs4-duc-trong' } });
+
+    const cs4Card = await screen.findByTestId('order-card-ord-cs4');
+    expect(cs4Card).toBeInTheDocument();
+
+    await act(async () => {
+      resolveSlowCs1Get({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: [mockPendingOrder],
+          timestamp: '2026-11-19T05:02:10.000Z',
+        }),
+      });
+    });
+
+    expect(screen.getByTestId('order-card-ord-cs4')).toBeInTheDocument();
+    expect(screen.queryByTestId('order-card-ord-1')).not.toBeInTheDocument();
+
+    // Delivering order also exposes 2-step "Hủy đơn" alongside "Hoàn tất"
+    expect(
+      within(cs4Card).getByRole('button', { name: 'Hoàn tất' }),
+    ).toBeInTheDocument();
+    fireEvent.click(within(cs4Card).getByRole('button', { name: 'Hủy đơn' }));
+    expect(
+      within(cs4Card).getByRole('button', { name: 'Xác nhận hủy đơn' }),
+    ).toBeInTheDocument();
+  });
+
+  it('matches branchName, order note, and topping names in OrdersPage search and guards MenuPage against stale catalog reloads', async () => {
+    const baseCatalog = getDefaultCatalog();
+    let resolveStaleCatalog!: (res: unknown) => void;
+    let catalogFetchCount = 0;
+
+    const fetchMock = vi
+      .fn()
+      .mockImplementation((input: string, init?: RequestInit) => {
+        if (input.includes('/orders')) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({
+              success: true,
+              data: [mockPendingOrder],
+              timestamp: '2026-11-19T05:00:00.000Z',
+            }),
+          });
+        }
+        if (
+          input.endsWith('/catalog/products/tra-sua-atiso/availability') &&
+          init?.method === 'PATCH'
+        ) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({
+              success: true,
+              data: { ...baseCatalog.products[0]!, isAvailable: false },
+              timestamp: '2026-11-19T05:01:00.000Z',
+            }),
+          });
+        }
+        if (input.endsWith('/catalog')) {
+          catalogFetchCount += 1;
+          if (catalogFetchCount === 2) {
+            return new Promise((resolve) => {
+              resolveStaleCatalog = resolve;
+            });
+          }
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({
+              success: true,
+              data: baseCatalog,
+              timestamp: '2026-11-19T05:00:00.000Z',
+            }),
+          });
+        }
+        return Promise.resolve({ ok: false, status: 404, json: async () => ({}) });
+      });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { unmount } = render(
+      <MemoryRouter initialEntries={['/']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+
+    await screen.findByTestId('order-card-ord-1');
+    const searchInput = screen.getByLabelText('Tìm kiếm đơn hàng');
+
+    // Match branchName ("Hoàng Diệu")
+    fireEvent.change(searchInput, { target: { value: 'hoang dieu' } });
+    expect(screen.getByTestId('order-card-ord-1')).toBeInTheDocument();
+
+    // Match note ("giao cổng chính")
+    fireEvent.change(searchInput, { target: { value: 'cong chinh' } });
+    expect(screen.getByTestId('order-card-ord-1')).toBeInTheDocument();
+
+    // Match topping ("nấu mật")
+    fireEvent.change(searchInput, { target: { value: 'nau mat' } });
+    expect(screen.getByTestId('order-card-ord-1')).toBeInTheDocument();
+
+    unmount();
+
+    // Verify MenuPage monotonic sequence + mutationEpoch guard
+    render(
+      <MemoryRouter initialEntries={['/menu']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+
+    const atisoCard = await screen.findByTestId('menu-product-tra-sua-atiso');
+    // Click manual "Làm mới" -> starts slow catalog fetch #2
+    fireEvent.click(screen.getByRole('button', { name: 'Làm mới' }));
+    expect(resolveStaleCatalog).toBeDefined();
+
+    // While catalog fetch #2 is in flight, toggle Trà Sữa Atiso -> false
+    fireEvent.click(within(atisoCard).getByRole('button', { name: 'Tạm hết' }));
+    await waitFor(() => {
+      expect(
+        within(atisoCard).getByRole('button', { name: 'Mở bán lại' }),
+      ).toBeInTheDocument();
+    });
+
+    // Stale catalog fetch #2 resolves with isAvailable: true -> must NOT overwrite toggled state!
+    await act(async () => {
+      resolveStaleCatalog({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: baseCatalog,
+          timestamp: '2026-11-19T05:00:30.000Z',
+        }),
+      });
+    });
+
+    expect(
+      within(atisoCard).getByRole('button', { name: 'Mở bán lại' }),
     ).toBeInTheDocument();
   });
 });

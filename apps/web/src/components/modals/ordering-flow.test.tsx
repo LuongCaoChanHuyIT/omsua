@@ -135,6 +135,26 @@ describe('Interactive Customizer Modal & Cart Checkout Flow', () => {
       name: /Giỏ hàng của bạn \(1 món\)/i,
     });
     expect(
+      within(cartDialog).getByRole('button', {
+        name: 'Giảm số lượng Trà Sữa Atiso',
+      }).className,
+    ).toContain('h-11 w-11');
+    expect(
+      within(cartDialog).getByRole('button', {
+        name: 'Tăng số lượng Trà Sữa Atiso',
+      }).className,
+    ).toContain('h-11 w-11');
+    expect(
+      within(cartDialog).getByRole('button', {
+        name: 'Xóa Trà Sữa Atiso',
+      }).className,
+    ).toContain('min-h-11');
+    expect(
+      within(cartDialog).getByRole('button', {
+        name: 'Xóa Trà Sữa Atiso',
+      }).className,
+    ).toContain('px-3');
+    expect(
       within(cartDialog).getByText('Size M • 70% đường • 70% đá'),
     ).toBeInTheDocument();
     expect(
@@ -1047,5 +1067,311 @@ describe('Interactive Customizer Modal & Cart Checkout Flow', () => {
     expect(await within(modal).findByRole('alert')).toHaveTextContent(
       'Không tìm thấy đơn.',
     );
+  });
+
+  it('keeps fetched order details and typed codeInput visible in OrderLookupModal when first lookup updates parent recentOrderCount from 0 to 1', async () => {
+    const lookedUpOrder: OrderRecord = {
+      id: 'ord-lookup-new-1',
+      orderCode: 'OM-20261119-NEW1',
+      branchId: 'cs1-hoang-dieu',
+      branchName: 'Cơ sở 1 — Hoàng Diệu',
+      customerName: 'Vũ Ngọc Bích',
+      customerPhone: '0945396117',
+      deliveryAddress: '18 Đường 3 Tháng 2, Đà Lạt',
+      paymentMethod: 'cod',
+      status: 'preparing',
+      items: [
+        {
+          canonicalKey:
+            'tra-sua-atiso|size:M|sugar:70|ice:70|spice:-|toppings:tran-chau-den',
+          productId: 'tra-sua-atiso',
+          productName: 'Trà Sữa Atiso',
+          kind: 'drink',
+          quantity: 1,
+          size: 'M',
+          sizeLabel: 'Size M (Chuẩn)',
+          basePrice: 45000,
+          sugarLevel: '70',
+          iceLevel: '70',
+          toppings: [
+            {
+              id: 'tran-chau-den',
+              name: 'Trân châu đen nấu mật',
+              shortName: 'Trân châu đen',
+              price: 10000,
+            },
+          ],
+          unitPrice: 55000,
+          lineTotal: 55000,
+        },
+      ],
+      subtotal: 55000,
+      shippingFee: 0,
+      ecoFee: 0,
+      grandTotal: 55000,
+      totalItems: 1,
+      createdAt: '2026-11-19T05:00:00.000Z',
+      updatedAt: '2026-11-19T05:05:00.000Z',
+    };
+
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const url =
+        typeof input === 'string'
+          ? input
+          : input instanceof URL
+            ? input.toString()
+            : input.url;
+
+      if (url.endsWith('/api/orders/code/OM-20261119-NEW1')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            success: true,
+            data: lookedUpOrder,
+            timestamp: '2026-11-19T05:06:00.000Z',
+          }),
+        } as Response;
+      }
+
+      return { ok: false, status: 503, json: async () => ({}) } as Response;
+    });
+
+    render(
+      <StorefrontClientShell
+        initialCatalog={getDefaultCatalog()}
+        initialBranches={OMSUA_BRANCHES}
+        apiBaseUrl="http://localhost:4000/api"
+      />,
+    );
+
+    const openLookupBtn = screen.getByRole('button', { name: 'Đơn đã đặt' });
+    fireEvent.click(openLookupBtn);
+
+    const modal = screen.getByRole('dialog', {
+      name: /Tra cứu & theo dõi đơn hàng/i,
+    });
+    const codeInput = within(modal).getByLabelText(/Mã đơn hàng/i);
+    fireEvent.change(codeInput, { target: { value: 'OM-20261119-NEW1' } });
+    fireEvent.click(
+      within(modal).getByRole('button', { name: 'Tra cứu đơn' }),
+    );
+
+    expect(
+      await screen.findByRole('button', { name: 'Đơn đã đặt (1)' }),
+    ).toBeInTheDocument();
+    expect(codeInput).toHaveValue('OM-20261119-NEW1');
+    expect(within(modal).getByText('OM-20261119-NEW1')).toBeInTheDocument();
+    expect(
+      within(modal).getByText(/Vũ Ngọc Bích • 0945396117/),
+    ).toBeInTheDocument();
+    expect(
+      within(modal).getByText('18 Đường 3 Tháng 2, Đà Lạt'),
+    ).toBeInTheDocument();
+  });
+
+  it('ignores out-of-order stale fetchCatalog responses in StorefrontClientShell using monotonic requestSeqRef', async () => {
+    let resolveFirstCatalog!: (res: Response) => void;
+    let catalogCallCount = 0;
+
+    vi.spyOn(globalThis, 'fetch').mockImplementation((input) => {
+      const url =
+        typeof input === 'string'
+          ? input
+          : input instanceof URL
+            ? input.toString()
+            : input.url;
+
+      if (url.endsWith('/api/catalog')) {
+        catalogCallCount += 1;
+        if (catalogCallCount === 1) {
+          // 1st fetch (mount) is slow and returns Atiso available
+          return new Promise<Response>((resolve) => {
+            resolveFirstCatalog = resolve;
+          });
+        }
+        // 2nd fetch (drawer open) resolves quickly and marks Atiso unavailable
+        const updatedCatalog = getDefaultCatalog();
+        updatedCatalog.products = updatedCatalog.products.map((p) =>
+          p.id === 'tra-sua-atiso' ? { ...p, isAvailable: false } : p,
+        );
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({
+            success: true,
+            data: updatedCatalog,
+            timestamp: '2026-11-19T06:01:00.000Z',
+          }),
+        } as Response);
+      }
+
+      return Promise.resolve({
+        ok: false,
+        status: 503,
+        json: async () => ({}),
+      } as Response);
+    });
+
+    const { container } = render(
+      <StorefrontClientShell
+        initialCatalog={getDefaultCatalog()}
+        initialBranches={OMSUA_BRANCHES}
+        apiBaseUrl="http://localhost:4000/api"
+      />,
+    );
+
+    expect(resolveFirstCatalog).toBeDefined();
+
+    // Open cart drawer -> triggers 2nd catalog fetch which resolves immediately with Atiso sold out
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Giỏ hàng (0) • 0đ' }),
+    );
+
+    const menuSection = container.querySelector('#thuc-don') as HTMLElement;
+    const atisoCard = within(menuSection)
+      .getByText('Trà Sữa Atiso')
+      .closest('article') as HTMLElement;
+
+    await waitFor(() => {
+      expect(
+        within(atisoCard).getByRole('button', { name: 'Tạm hết' }),
+      ).toBeDisabled();
+    });
+
+    // Now the stale 1st catalog fetch resolves with Atiso available -> must NOT overwrite!
+    resolveFirstCatalog({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        success: true,
+        data: getDefaultCatalog(),
+        timestamp: '2026-11-19T06:00:00.000Z',
+      }),
+    } as Response);
+
+    await new Promise((r) => setTimeout(r, 20));
+    expect(
+      within(atisoCard).getByRole('button', { name: 'Tạm hết' }),
+    ).toBeDisabled();
+  });
+
+  it('supports WAI-ARIA arrow key navigation + focus management on Size radiogroup, full-width single-size grid, >=44px cart controls, 0đ VietQR guard, and sold-out mobile sticky bar', async () => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('offline'));
+
+    const singleSizeDrink = catalog.products.find(
+      (p) => p.id === 'quyt-nhai-cat-tuong',
+    )!;
+
+    // 1. Single-size drink uses grid-cols-1 (no sm:grid-cols-2)
+    const { unmount: unmountSingle } = render(
+      <ProductCustomizerModal
+        product={singleSizeDrink}
+        toppings={catalog.toppings}
+        onClose={vi.fn()}
+      />,
+    );
+    const singleGroup = screen.getByRole('radiogroup', {
+      name: 'Chọn size ly',
+    });
+    expect(singleGroup.className).toContain('grid-cols-1');
+    expect(singleGroup.className).not.toContain('sm:grid-cols-2');
+    unmountSingle();
+
+    // 2. Multi-size drink supports ArrowRight / ArrowDown / ArrowLeft / ArrowUp with focus shift
+    const { unmount: unmountMulti } = render(
+      <ProductCustomizerModal
+        product={traSuaAtiso}
+        toppings={catalog.toppings}
+        onClose={vi.fn()}
+      />,
+    );
+    const multiGroup = screen.getByRole('radiogroup', {
+      name: 'Chọn size ly',
+    });
+    expect(multiGroup.className).toContain('sm:grid-cols-2');
+    const radios = within(multiGroup).getAllByRole('radio');
+    expect(radios).toHaveLength(2);
+    expect(radios[0]).toHaveAttribute('aria-checked', 'true');
+
+    radios[0]!.focus();
+    fireEvent.keyDown(radios[0]!, { key: 'ArrowRight' });
+    expect(radios[1]).toHaveAttribute('aria-checked', 'true');
+    expect(document.activeElement).toBe(radios[1]);
+    expect(screen.getByText('Giá gốc: 50.000đ')).toBeInTheDocument();
+
+    fireEvent.keyDown(radios[1]!, { key: 'ArrowLeft' });
+    expect(radios[0]).toHaveAttribute('aria-checked', 'true');
+    expect(document.activeElement).toBe(radios[0]);
+    expect(screen.getByText('Giá gốc: 45.000đ')).toBeInTheDocument();
+
+    fireEvent.keyDown(radios[0]!, { key: 'ArrowDown' });
+    expect(radios[1]).toHaveAttribute('aria-checked', 'true');
+    expect(document.activeElement).toBe(radios[1]);
+
+    fireEvent.keyDown(radios[1]!, { key: 'ArrowUp' });
+    expect(radios[0]).toHaveAttribute('aria-checked', 'true');
+    expect(document.activeElement).toBe(radios[0]);
+    unmountMulti();
+
+    // 3. CartCheckoutDrawer >=44px touch targets + 0đ VietQR guard + sold-out mobile sticky bar
+    window.localStorage.setItem(
+      'omsua.cart.v1',
+      JSON.stringify({
+        selectedBranchId: 'cs1-hoang-dieu',
+        items: [
+          {
+            productId: 'tra-sua-atiso',
+            quantity: 1,
+            size: 'M',
+            sugarLevel: '70',
+            iceLevel: '70',
+            toppingIds: [],
+          },
+        ],
+      }),
+    );
+
+    const catalogSoldOutAtiso = getDefaultCatalog();
+    catalogSoldOutAtiso.products = catalogSoldOutAtiso.products.map((p) =>
+      p.id === 'tra-sua-atiso' ? { ...p, isAvailable: false } : p,
+    );
+
+    render(
+      <StorefrontClientShell
+        initialCatalog={catalogSoldOutAtiso}
+        initialBranches={OMSUA_BRANCHES}
+      />,
+    );
+
+    // Mobile sticky bar stays accessible when totals.totalItems === 0 && unavailableItems.length === 1!
+    const soldOutStickyBtn = await screen.findByRole('button', {
+      name: 'Xem giỏ hàng (1 món tạm hết) →',
+    });
+    expect(soldOutStickyBtn).toBeInTheDocument();
+    fireEvent.click(soldOutStickyBtn);
+
+    const drawer = screen.getByRole('dialog', {
+      name: /Giỏ hàng của bạn/i,
+    });
+    const unavailableDeleteBtn = within(drawer).getByRole('button', {
+      name: 'Xóa món tạm hết Trà Sữa Atiso',
+    });
+    expect(unavailableDeleteBtn.className).toContain('min-h-11');
+    expect(unavailableDeleteBtn.className).toContain('px-3');
+
+    const switchBranchBtn = within(drawer).getByRole('button', {
+      name: 'Đổi chi nhánh khác',
+    });
+    expect(switchBranchBtn.className).toContain('min-h-11');
+    expect(switchBranchBtn.className).not.toContain('sm:min-h-9');
+
+    // Selecting QR payment when grandTotal === 0 MUST NOT render a 0đ VietQrTransferCard!
+    fireEvent.click(
+      within(drawer).getByRole('button', { name: /Chuyển khoản QR/i }),
+    );
+    expect(
+      within(drawer).queryByText(/Vietcombank — CN Lâm Đồng/i),
+    ).not.toBeInTheDocument();
   });
 });

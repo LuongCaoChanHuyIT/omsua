@@ -10,7 +10,7 @@ import {
   formatVnd,
   normalizeApiBaseUrl,
 } from '@omsua/shared';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CartCheckoutDrawer } from '@/components/modals/CartCheckoutDrawer';
 import { OrderLookupModal } from '@/components/modals/OrderLookupModal';
 import { ProductCustomizerModal } from '@/components/modals/ProductCustomizerModal';
@@ -44,7 +44,12 @@ function StorefrontShellInner({
   apiBaseUrl,
   onRefreshCatalog,
 }: StorefrontShellInnerProps) {
-  const { selectedBranch, setSelectedBranchId, totals } = useCart();
+  const {
+    selectedBranch,
+    setSelectedBranchId,
+    totals,
+    unavailableItems,
+  } = useCart();
 
   const [activeCategory, setActiveCategory] = useState<DrinkCategoryId | 'all'>(
     'all',
@@ -84,7 +89,7 @@ function StorefrontShellInner({
   );
 
   const showMobileStickyCartBar =
-    totals.totalItems > 0 &&
+    (totals.totalItems > 0 || unavailableItems.length > 0) &&
     !isCartOpen &&
     !activeProductForModal &&
     !isOrderLookupOpen;
@@ -187,7 +192,9 @@ function StorefrontShellInner({
             onClick={openCartDrawer}
             className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center rounded-2xl bg-terracotta px-4 py-3 text-sm font-bold text-surface-light shadow-xs transition hover:opacity-92"
           >
-            {`Xem giỏ hàng (${totals.totalItems} món) • ${formatVnd(totals.grandTotal)} →`}
+            {totals.totalItems > 0
+              ? `Xem giỏ hàng (${totals.totalItems} món) • ${formatVnd(totals.grandTotal)} →`
+              : `Xem giỏ hàng (${unavailableItems.length} món tạm hết) →`}
           </button>
         </div>
       )}
@@ -210,9 +217,7 @@ function StorefrontShellInner({
         onOrderError={() => {
           void onRefreshCatalog();
         }}
-        onOrderCreated={() => {
-          syncRecentOrderCount();
-        }}
+        onOrderCreated={syncRecentOrderCount}
         onTrackOrder={(order) => {
           setTrackedOrder(order);
           setIsOrderLookupOpen(true);
@@ -227,9 +232,7 @@ function StorefrontShellInner({
         }}
         apiBaseUrl={apiBaseUrl}
         initialOrder={trackedOrder}
-        onOrderLoaded={() => {
-          syncRecentOrderCount();
-        }}
+        onOrderLoaded={syncRecentOrderCount}
       />
     </div>
   );
@@ -244,19 +247,22 @@ export function StorefrontClientShell({
     apiBaseUrl ?? process.env.NEXT_PUBLIC_API_URL,
   );
   const [catalog, setCatalog] = useState<CatalogPayload>(initialCatalog);
+  const requestSeqRef = useRef<number>(0);
 
   const refreshCatalog = useCallback(async () => {
+    const seq = ++requestSeqRef.current;
     const result = await fetchCatalog(resolvedApiBaseUrl);
-    if (!result.isFallback) {
+    if (seq === requestSeqRef.current && !result.isFallback) {
       setCatalog(result.catalog);
     }
   }, [resolvedApiBaseUrl]);
 
   useEffect(() => {
     let isCancelled = false;
+    const seq = ++requestSeqRef.current;
 
     void fetchCatalog(resolvedApiBaseUrl).then((result) => {
-      if (!isCancelled && !result.isFallback) {
+      if (!isCancelled && seq === requestSeqRef.current && !result.isFallback) {
         setCatalog(result.catalog);
       }
     });

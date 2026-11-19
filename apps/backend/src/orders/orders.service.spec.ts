@@ -407,4 +407,138 @@ describe('OrdersService (SQLite :memory:)', () => {
       .get() as { count: number };
     expect(countRow.count).toBe(2);
   });
+
+  it('reads branches, products, and toppings INSIDE BEGIN IMMEDIATE transaction and rolls back cleanly on BadRequestException', () => {
+    const callLog: string[] = [];
+
+    const origExec = databaseService.db.exec.bind(databaseService.db);
+    jest.spyOn(databaseService.db, 'exec').mockImplementation((sql: string) => {
+      const normalized = sql.trim().toUpperCase();
+      if (
+        normalized === 'BEGIN IMMEDIATE' ||
+        normalized === 'COMMIT' ||
+        normalized === 'ROLLBACK'
+      ) {
+        callLog.push(normalized);
+      }
+      return origExec(sql);
+    });
+
+    const origGetBranches = catalogService.getBranches.bind(catalogService);
+    jest.spyOn(catalogService, 'getBranches').mockImplementation(() => {
+      callLog.push('getBranches');
+      return origGetBranches();
+    });
+
+    const origGetProducts = catalogService.getProductsMap.bind(catalogService);
+    jest.spyOn(catalogService, 'getProductsMap').mockImplementation(() => {
+      callLog.push('getProductsMap');
+      return origGetProducts();
+    });
+
+    const origGetToppings = catalogService.getToppingsMap.bind(catalogService);
+    jest.spyOn(catalogService, 'getToppingsMap').mockImplementation(() => {
+      callLog.push('getToppingsMap');
+      return origGetToppings();
+    });
+
+    const order = ordersService.createOrder(baseOrderPayload);
+    expect(order.orderCode).toMatch(/^OM-\d{8}-[A-Z0-9]{4}$/);
+    expect(callLog).toEqual([
+      'BEGIN IMMEDIATE',
+      'getBranches',
+      'getProductsMap',
+      'getToppingsMap',
+      'COMMIT',
+    ]);
+
+    // Now test validation BadRequestException inside transaction rolls back cleanly so write lock is released
+    callLog.length = 0;
+    catalogService.setProductAvailability('tra-sua-atiso', false);
+    expect(() => ordersService.createOrder(baseOrderPayload)).toThrow(
+      BadRequestException,
+    );
+    expect(callLog[0]).toBe('BEGIN IMMEDIATE');
+    expect(callLog[callLog.length - 1]).toBe('ROLLBACK');
+
+    // Re-enabling product and creating another order succeeds immediately without locked transaction error
+    catalogService.setProductAvailability('tra-sua-atiso', true);
+    const afterRollback = ordersService.createOrder(baseOrderPayload);
+    expect(afterRollback.grandTotal).toBe(95000);
+  });
+
+  it('chunks hydrateOrders IN (...) queries into slices of <= 500 order IDs when listing > 500 orders', () => {
+    const db = databaseService.db;
+    const insertOrder = db.prepare(`
+      INSERT INTO orders (
+        id, order_code, branch_id, branch_name, customer_name, customer_phone,
+        delivery_address, note, payment_method, status, subtotal, shipping_fee,
+        eco_fee, grand_total, total_items, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    const insertItem = db.prepare(`
+      INSERT INTO order_items (
+        order_id, product_id, product_name, kind, quantity, size,
+        sugar_level, ice_level, toppings_json, spice_level, unit_price, line_total
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const totalOrders = 525;
+    db.exec('BEGIN IMMEDIATE');
+    for (let idx = 0; idx < totalOrders; idx += 1) {
+      const id = `bulk-ord-${String(idx).padStart(4, '0')}`;
+      const code = `OM-20261119-${String(idx).padStart(4, '0')}`;
+      const ts = new Date(Date.UTC(2026, 10, 19, 0, 0, idx)).toISOString();
+      insertOrder.run(
+        id,
+        code,
+        'cs1-hoang-dieu',
+        'Cơ sở 1 — Hoàng Diệu',
+        `Khách ${idx}`,
+        '0945396117',
+        '28A Hoàng Diệu, Đà Lạt',
+        '',
+        'cod',
+        'pending',
+        45000,
+        0,
+        0,
+        45000,
+        1,
+        ts,
+        ts,
+      );
+      insertItem.run(
+        id,
+        'tra-sua-atiso',
+        'Trà Sữa Atiso',
+        'drink',
+        1,
+        'M',
+        '70',
+        '70',
+        '[]',
+        null,
+        45000,
+        45000,
+      );
+    }
+    db.exec('COMMIT');
+
+    const inPlaceholderCounts: number[] = [];
+    const origPrepare = db.prepare.bind(db);
+    jest.spyOn(db, 'prepare').mockImplementation((sql: string) => {
+      if (sql.includes('FROM order_items WHERE order_id IN')) {
+        const count = (sql.match(/\?/g) ?? []).length;
+        inPlaceholderCounts.push(count);
+      }
+      return origPrepare(sql);
+    });
+
+    const listed = ordersService.listOrders();
+    expect(listed).toHaveLength(totalOrders);
+    expect(inPlaceholderCounts).toEqual([500, 25]);
+    expect(listed[0]?.items).toHaveLength(1);
+    expect(listed[totalOrders - 1]?.items).toHaveLength(1);
+  });
 });

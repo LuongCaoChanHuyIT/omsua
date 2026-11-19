@@ -83,10 +83,14 @@ export class OrderItemDto implements OrderItemInput {
   @ApiPropertyOptional({
     description: 'Optional topping IDs for drinks',
     type: [String],
+    maxItems: 20,
     example: ['tran-chau-den'],
   })
   @IsOptional()
   @IsArray()
+  @ArrayMaxSize(20, {
+    message: 'Mỗi món không được chọn quá 20 topping.',
+  })
   @IsString({ each: true })
   toppingIds?: string[];
 

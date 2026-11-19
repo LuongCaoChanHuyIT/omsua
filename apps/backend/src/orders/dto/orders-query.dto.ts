@@ -9,7 +9,11 @@ export class OrdersQueryDto {
     enum: ORDER_STATUSES,
   })
   @Transform(({ value }: { value: unknown }) =>
-    typeof value === 'string' && value.trim() === '' ? undefined : value,
+    typeof value === 'string' && value.trim() === ''
+      ? undefined
+      : typeof value === 'string'
+        ? value.trim()
+        : value,
   )
   @IsOptional()
   @IsIn(ORDER_STATUSES)

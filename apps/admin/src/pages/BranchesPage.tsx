@@ -4,7 +4,7 @@ import {
   type BranchInfo,
   type OrderRecord,
 } from '@omsua/shared';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { fetchAdminBranches, fetchOrders } from '../lib/api';
 
 interface BranchOrderStats {
@@ -52,14 +52,20 @@ export function BranchesPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [isFallbackBranches, setIsFallbackBranches] = useState<boolean>(false);
   const [ordersError, setOrdersError] = useState<string | null>(null);
+  const requestSeqRef = useRef<number>(0);
 
   const loadData = useCallback(async () => {
+    const seq = ++requestSeqRef.current;
     setLoading(true);
     setOrdersError(null);
     const [branchesResult, ordersResult] = await Promise.all([
       fetchAdminBranches(),
       fetchOrders(),
     ]);
+
+    if (seq !== requestSeqRef.current) {
+      return;
+    }
 
     const branchesSucceeded =
       branchesResult.ok && branchesResult.data.length > 0;
@@ -83,12 +89,13 @@ export function BranchesPage() {
 
   useEffect(() => {
     let active = true;
+    const seq = ++requestSeqRef.current;
     setLoading(true);
     setOrdersError(null);
 
     void Promise.all([fetchAdminBranches(), fetchOrders()]).then(
       ([branchesResult, ordersResult]) => {
-        if (!active) return;
+        if (!active || seq !== requestSeqRef.current) return;
 
         const branchesSucceeded =
           branchesResult.ok && branchesResult.data.length > 0;

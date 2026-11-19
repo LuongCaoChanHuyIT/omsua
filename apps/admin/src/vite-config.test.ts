@@ -93,9 +93,11 @@ describe('Admin brand favicon, typography, a11y CSS, and zero pure B/W rule', ()
       '<link rel="icon" type="image/svg+xml" href="/favicon.svg" />',
     );
     expect(indexHtml).toContain('Dancing+Script:wght@700');
+    expect(indexHtml).toContain('Be+Vietnam+Pro:wght@400;500;600;700;800');
+    expect(indexHtml).toContain('Lora:ital,wght@0,400;0,500;0,600;1,400');
   });
 
-  it('defines --font-quote, :focus-visible outline, and prefers-reduced-motion in src/index.css', () => {
+  it('defines --font-quote, :focus-visible outline, dark surface focus contrast, and prefers-reduced-motion in src/index.css', () => {
     const indexCss = fs.readFileSync(
       path.join(ADMIN_ROOT, 'src', 'index.css'),
       'utf8',
@@ -103,6 +105,8 @@ describe('Admin brand favicon, typography, a11y CSS, and zero pure B/W rule', ()
     expect(indexCss).toContain('--font-quote: "Dancing Script", cursive;');
     expect(indexCss).toContain(':focus-visible');
     expect(indexCss).toContain('2px solid var(--color-olive-primary)');
+    expect(indexCss).toContain('.bg-hero-espresso :focus-visible');
+    expect(indexCss).toContain('var(--color-card-butter)');
     expect(indexCss).toContain('prefers-reduced-motion: reduce');
   });
 

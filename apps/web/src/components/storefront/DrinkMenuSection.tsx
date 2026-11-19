@@ -122,7 +122,7 @@ export function DrinkMenuSection({
                     {category.title}
                   </h3>
                 </div>
-                <p className="text-xs text-warm-muted sm:text-sm">
+                <p className="text-xs text-espresso/85 sm:text-sm">
                   {category.subtitle}
                 </p>
               </div>

@@ -97,13 +97,6 @@ export class OrdersService {
   createOrder(payload: CreateOrderPayload): OrderRecord {
     const branchId =
       typeof payload.branchId === 'string' ? payload.branchId.trim() : '';
-    const branch = this.catalogService
-      .getBranches()
-      .find((candidate) => candidate.id === branchId);
-
-    if (!branch) {
-      throw new BadRequestException(`Chi nhánh "${branchId}" không tồn tại.`);
-    }
 
     const customerName =
       typeof payload.customerName === 'string'
@@ -171,6 +164,15 @@ export class OrdersService {
 
     for (const item of payload.items) {
       if (
+        item &&
+        typeof item === 'object' &&
+        Array.isArray(item.toppingIds) &&
+        item.toppingIds.length > 20
+      ) {
+        throw new BadRequestException('Mỗi món không được chọn quá 20 topping.');
+      }
+
+      if (
         !item ||
         typeof item !== 'object' ||
         typeof item.quantity !== 'number' ||
@@ -196,21 +198,6 @@ export class OrdersService {
       }
     }
 
-    const productsMap = this.catalogService.getProductsMap();
-    const toppingsMap = this.catalogService.getToppingsMap();
-
-    const resolvedLines: OrderLineResolved[] = mergedItems.map((item) => {
-      try {
-        return resolveOrderLine(item, productsMap, toppingsMap);
-      } catch (error) {
-        if (error instanceof OrderValidationError) {
-          throw new BadRequestException(error.message);
-        }
-        throw error;
-      }
-    });
-
-    const totals = calculateOrderTotals(resolvedLines);
     const id = randomUUID();
     const now = new Date();
     const timestamp = now.toISOString();
@@ -259,6 +246,30 @@ export class OrdersService {
 
     db.exec('BEGIN IMMEDIATE');
     try {
+      const branch = this.catalogService
+        .getBranches()
+        .find((candidate) => candidate.id === branchId);
+
+      if (!branch) {
+        throw new BadRequestException(`Chi nhánh "${branchId}" không tồn tại.`);
+      }
+
+      const productsMap = this.catalogService.getProductsMap();
+      const toppingsMap = this.catalogService.getToppingsMap();
+
+      const resolvedLines: OrderLineResolved[] = mergedItems.map((item) => {
+        try {
+          return resolveOrderLine(item, productsMap, toppingsMap);
+        } catch (error) {
+          if (error instanceof OrderValidationError) {
+            throw new BadRequestException(error.message);
+          }
+          throw error;
+        }
+      });
+
+      const totals = calculateOrderTotals(resolvedLines);
+
       const orderCode = this.generateUniqueOrderCode(now, (candidate) =>
         Boolean(existsByOrderCode.get(candidate)),
       );
@@ -418,18 +429,23 @@ export class OrdersService {
       return [];
     }
 
-    const placeholders = orderRows.map(() => '?').join(', ');
-    const itemRows = this.databaseService.db
-      .prepare(
-        `SELECT * FROM order_items WHERE order_id IN (${placeholders}) ORDER BY id ASC`,
-      )
-      .all(...orderRows.map((row) => row.id)) as unknown as OrderItemRow[];
-
+    const CHUNK_SIZE = 500;
     const itemsByOrderId = new Map<string, OrderLineResolved[]>();
-    for (const itemRow of itemRows) {
-      const list = itemsByOrderId.get(itemRow.order_id) ?? [];
-      list.push(this.mapOrderItemRow(itemRow));
-      itemsByOrderId.set(itemRow.order_id, list);
+
+    for (let offset = 0; offset < orderRows.length; offset += CHUNK_SIZE) {
+      const chunk = orderRows.slice(offset, offset + CHUNK_SIZE);
+      const placeholders = chunk.map(() => '?').join(', ');
+      const itemRows = this.databaseService.db
+        .prepare(
+          `SELECT * FROM order_items WHERE order_id IN (${placeholders}) ORDER BY id ASC`,
+        )
+        .all(...chunk.map((row) => row.id)) as unknown as OrderItemRow[];
+
+      for (const itemRow of itemRows) {
+        const list = itemsByOrderId.get(itemRow.order_id) ?? [];
+        list.push(this.mapOrderItemRow(itemRow));
+        itemsByOrderId.set(itemRow.order_id, list);
+      }
     }
 
     return orderRows.map((row) => ({

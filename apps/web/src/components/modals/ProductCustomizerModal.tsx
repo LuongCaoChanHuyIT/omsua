@@ -19,7 +19,7 @@ import {
   formatVnd,
   resolveOrderLine,
 } from '@omsua/shared';
-import { useId, useMemo, useState } from 'react';
+import { type KeyboardEvent, useId, useMemo, useRef, useState } from 'react';
 import { ProductIllustration } from '@/components/artwork/OmSuaArtwork';
 import { useModalAccessibility } from '@/hooks/use-modal-accessibility';
 import { useOptionalCart } from '@/store/cart-store';
@@ -80,6 +80,7 @@ function CustomizerDialogBody({
     useState<string[]>(seededToppingIds);
   const [spiceLevel, setSpiceLevel] = useState<SpiceLevel>(defaultSpice);
   const [quantity, setQuantity] = useState<number>(1);
+  const sizeButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const selectedSizeOption = useMemo(() => {
     return (
@@ -142,6 +143,30 @@ function CustomizerDialogBody({
         ? prev.filter((id) => id !== toppingId)
         : [...prev, toppingId],
     );
+  }
+
+  function handleSizeKeyDown(
+    event: KeyboardEvent<HTMLButtonElement>,
+    currentIndex: number,
+  ) {
+    let targetIndex = -1;
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+      targetIndex = (currentIndex + 1) % product.sizes.length;
+    } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+      targetIndex =
+        (currentIndex - 1 + product.sizes.length) % product.sizes.length;
+    }
+
+    if (targetIndex < 0) {
+      return;
+    }
+
+    event.preventDefault();
+    const targetOption = product.sizes[targetIndex];
+    if (targetOption) {
+      setSelectedSize(targetOption.size);
+      sizeButtonRefs.current[targetIndex]?.focus();
+    }
   }
 
   function handleConfirm() {
@@ -228,17 +253,26 @@ function CustomizerDialogBody({
                 <div
                   role="radiogroup"
                   aria-label="Chọn size ly"
-                  className="grid grid-cols-1 gap-2.5 sm:grid-cols-2"
+                  className={`grid gap-2.5 ${
+                    product.sizes.length === 1
+                      ? 'grid-cols-1'
+                      : 'grid-cols-1 sm:grid-cols-2'
+                  }`}
                 >
-                  {product.sizes.map((option) => {
+                  {product.sizes.map((option, index) => {
                     const isActive = selectedSizeOption.size === option.size;
                     return (
                       <button
                         key={option.size}
+                        ref={(el) => {
+                          sizeButtonRefs.current[index] = el;
+                        }}
                         type="button"
                         role="radio"
                         aria-checked={isActive}
+                        tabIndex={isActive ? 0 : -1}
                         onClick={() => setSelectedSize(option.size)}
+                        onKeyDown={(event) => handleSizeKeyDown(event, index)}
                         className={`inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-2xl border px-4 py-2.5 text-xs font-bold transition sm:text-sm ${
                           isActive
                             ? 'border-hero-espresso bg-hero-espresso text-surface-light shadow-2xs'

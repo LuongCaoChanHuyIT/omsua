@@ -64,6 +64,13 @@ export function OrderLookupModal({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const requestIdRef = useRef<number>(0);
+  const onOrderLoadedRef = useRef(onOrderLoaded);
+  const wasOpenRef = useRef<boolean>(false);
+  const lastInitialOrderCodeRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    onOrderLoadedRef.current = onOrderLoaded;
+  }, [onOrderLoaded]);
 
   const handleClose = useCallback(() => {
     requestIdRef.current += 1;
@@ -117,18 +124,32 @@ export function OrderLookupModal({
         setErrorMessage(null);
         const updatedRecents = saveRecentOrder(result.order);
         setRecentOrders(updatedRecents);
-        onOrderLoaded?.(result.order);
+        onOrderLoadedRef.current?.(result.order);
       } finally {
         if (requestIdRef.current === currentRequestId) {
           setIsLoading(false);
         }
       }
     },
-    [apiBaseUrl, fetchOrderByCodeFn, onOrderLoaded],
+    [apiBaseUrl, fetchOrderByCodeFn],
   );
 
   useEffect(() => {
     if (!isOpen) {
+      wasOpenRef.current = false;
+      lastInitialOrderCodeRef.current = null;
+      return;
+    }
+
+    const justOpened = !wasOpenRef.current;
+    const nextInitialCode = initialOrder?.orderCode ?? null;
+    const initialCodeChanged =
+      lastInitialOrderCodeRef.current !== nextInitialCode;
+
+    wasOpenRef.current = true;
+    lastInitialOrderCodeRef.current = nextInitialCode;
+
+    if (!justOpened && !initialCodeChanged) {
       return;
     }
 

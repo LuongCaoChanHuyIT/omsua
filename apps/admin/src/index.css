@@ -38,6 +38,10 @@ body {
   outline-offset: 2px;
 }
 
+.bg-hero-espresso :focus-visible {
+  outline-color: var(--color-card-butter);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

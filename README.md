@@ -7,7 +7,7 @@
 
 ## 1. Giới thiệu dự án Ốm Sữa (*Since 2017*)
 
-**Ốm Sữa** là thương hiệu trà sữa thủ công ra đời từ năm **2017** tại thành phố sương mù **Đà Lạt**, nổi tiếng với dòng **Trà Sữa Atiso xanh nấu tươi**, trà trái cây & Kombucha thanh mát, cà phê — cacao ấm nóng, Matcha Uji Nhật Bản và quầy **Bánh tráng Snack Đà Lạt** nhâm nhi tại chỗ hoặc giao tận nơi.
+**Ốm Sữa** là thương hiệu trà sữa thủ công ra đời từ năm **2017** tại thành phố sương mù **Đà Lạt**, nổi tiếng với dòng **Trà Sữa Atiso xanh nấu tươi**, trà trái cây & Kombucha giữ dáng thanh mát, sữa tươi thanh trùng & đá xay cao nguyên, cà phê pha phin & Cold Brew hạt Cầu Đất cùng quầy **Bánh tráng Snack Đà Lạt** nhâm nhi tại chỗ hoặc giao tận nơi.
 
 Hệ sinh thái phần mềm **Ốm Sữa** được thiết kế chuẩn thương mại nhằm số hóa trọn vẹn chuỗi giá trị từ trải nghiệm đặt món trực tuyến của khách hàng (**Storefront Web**) đến điều phối pha chế — giao nhận thời gian thực tại quầy (**Admin Portal**), vận hành trên nền tảng dữ liệu tập trung (**NestJS + SQLite WAL**).
 
@@ -22,7 +22,7 @@ Toàn bộ giao diện trên cả `@omsua/web` và `@omsua/admin` tuân thủ **
 | **Nền & Thẻ** | `bgCardButter` | `--color-card-butter` | `#F4E3AD` | Nền nhấn nhóm Trà Sữa, huy hiệu & thông báo ấm |
 | **Nền & Thẻ** | `bgCardSage` | `--color-card-sage` | `#C7CBBD` | Nền nhấn nhóm Giữ Dáng (Fruit Tea & Kombucha) |
 | **Nền & Thẻ** | `bgCardOliveGold` | `--color-card-olive-gold` | `#B6A152` | Nhãn Signature (chữ `#29261D` đạt tương phản WCAG AA `5.88:1`) |
-| **Nền & Thẻ** | `bgCardTaupe` | `--color-card-taupe` | `#C8BA9B` | Nền nhấn nhóm Cà Phê & Cacao, đường viền phụ |
+| **Nền & Thẻ** | `bgCardTaupe` | `--color-card-taupe` | `#C8BA9B` | Nền nhấn nhóm Cà Phê Pha Phin & Cold Brew, đường viền phụ |
 | **Nền & Thẻ** | `bgHeroEspresso` | `--color-hero-espresso` | `#29261D` | Nền Spotlight, Sidebar quản trị & Footer |
 | **Chữ & Thương hiệu** | `brandOlivePrimary` | `--color-olive-primary` | `#594C00` | Tiêu đề chính `H1`/`H2`, viền nhấn & `:focus-visible` |
 | **Chữ & Thương hiệu** | `textEspresso` | `--color-espresso` | `#29261D` | Chữ nội dung chính sắc nét, ấm mắt |
@@ -37,8 +37,8 @@ Toàn bộ giao diện trên cả `@omsua/web` và `@omsua/admin` tuân thủ **
 | Vai trò | Phông chữ | Biến CSS | Ứng dụng |
 |---|---|---|---|
 | **Display & Hero** | `Fraunces` (600, 700) | `--font-display` | Tiêu đề lớn, con số KPI doanh thu, tên thương hiệu |
-| **Editorial & Menu** | `Lora` (500, 600, Italic 400) | `--font-editorial` | Tên món thực đơn, phụ đề tiếng Anh & câu chuyện thương hiệu |
-| **UI & Controls** | `Be Vietnam Pro` (400–700) | `--font-sans` | Giao diện điều khiển, bộ lọc, nút bấm, biểu mẫu thanh toán |
+| **Editorial & Menu** | `Lora` (400, 500, 600, Italic 400) | `--font-editorial` | Tên món thực đơn, phụ đề tiếng Anh & câu chuyện thương hiệu |
+| **UI & Controls** | `Be Vietnam Pro` (400–800) | `--font-sans` | Giao diện điều khiển, bộ lọc, nút bấm, biểu mẫu thanh toán |
 | **Emotional Quote** | `Dancing Script` (700) | `--font-quote` | Câu trích dẫn cảm xúc chủ đạo của người Đà Lạt |
 | **Playful Snack** | `Shantell Sans` (700, 800) | `--font-snack` | Tiêu đề khu vực Bánh Tráng Snack Đà Lạt |
 
@@ -69,11 +69,11 @@ OmSua/
 
 - **`@omsua/shared`**: Nguồn chân lý duy nhất (*Single Source of Truth*) cho `OMSUA_COLORS`, `OMSUA_BRAND`, danh mục chuẩn (`OMSUA_CATEGORIES`, `OMSUA_PRODUCTS`, `OMSUA_TOPPINGS`, `OMSUA_BRANCHES`), hàm chuẩn hóa khóa giỏ hàng `canonicalizeCartItemKey`, cùng bộ giải quyết dòng đơn `resolveOrderLine` và tổng tiền `calculateOrderTotals`.
 - **`@omsua/backend`**: Sử dụng mô-đun gốc `node:sqlite` (`DatabaseSync`) của Node.js 22 (không phụ thuộc addon C++ bên ngoài), tự động khởi tạo lược đồ & seed dữ liệu chuẩn khi khởi động, kiểm tra tính hợp lệ đầu vào bằng `class-validator` (`whitelist: true`, `forbidNonWhitelisted: true`) và cung cấp tài liệu tương tác OpenAPI tại `/api/docs`.
-- **`@omsua/web`**: Trang đặt món thương mại mang đậm hơi thở Đà Lạt với bộ minh họa SVG thủ công riêng biệt cho từng món (búp Atiso, linh vật Bé Búp Atiso, khay topping macro), hộp tùy chỉnh Size / Đường / Đá / Độ cay / Topping tính giá trực tiếp, ngăn giỏ hàng lưu trữ bền vững (`localStorage`), đặt hàng kèm mã chuyển khoản VietQR tự động và tra cứu trạng thái đơn theo mã `OM-YYYYMMDD-XXXX`.
+- **`@omsua/web`**: Trang đặt món thương mại mang đậm hơi thở Đà Lạt với bộ minh họa SVG thủ công riêng biệt cho từng món (búp Atiso, linh vật Bé Búp Atiso, khay topping macro), hộp tùy chỉnh Size / Đường / Đá / Độ cay / Topping tính giá trực tiếp, ngăn giỏ hàng lưu trữ bền vững (`localStorage`), đặt hàng kèm mã chuyển khoản VietQR tự động, tra cứu trạng thái đơn theo mã `OM-YYYYMMDD-XXXX`, trang 404 tiếng Việt đồng bộ thương hiệu và tách thư mục biên dịch `.next-dev` (khi chạy `next dev`) độc lập khỏi `.next` (`next build`).
 - **`@omsua/admin`**: Bảng điều phối vận hành chuyên dụng cho thu ngân & barista:
-  - Tải đơn toàn chi nhánh kèm **bộ đếm trực tiếp trên từng tab trạng thái**, **4 thẻ KPI doanh thu hợp lệ** và **tự động làm mới ngầm mỗi `12s`** không gây nhấp nháy giao diện (*zero-flicker background polling*).
-  - **Tìm kiếm tức thì không phân biệt dấu tiếng Việt** (tìm `"nguyen minh anh"`, `"duc trong"`, `"atiso"`, SĐT hoặc mã đơn).
-  - **Khóa xác nhận 2 bước khi `Hủy đơn`** (`Hủy đơn` -> `Xác nhận hủy đơn` / `Giữ lại`) tránh thao tác nhầm giờ cao điểm, đồng thời giữ 1 chạm nhanh cho `Xác nhận pha chế`, `Giao hàng`, `Hoàn tất` và hiển thị sẵn cú pháp đối soát `CK: OMSUA <Mã đơn> <SĐT>` cho đơn QR.
+  - Tải đơn toàn chi nhánh kèm **bộ đếm trực tiếp trên từng tab trạng thái**, **4 thẻ KPI doanh thu hợp lệ** và **tự động làm mới ngầm mỗi `12s`** không gây nhấp nháy giao diện (*zero-flicker background polling* có khóa chống ghi đè khi đang chuyển trạng thái).
+  - **Tìm kiếm tức thì không phân biệt dấu tiếng Việt** trên mã đơn, tên cơ sở, tên khách, SĐT, địa chỉ, ghi chú đơn, tên món và topping (ví dụ: `"nguyen minh anh"`, `"duc trong"`, `"atiso"`, `"nau mat"`).
+  - **Khóa xác nhận 2 bước khi `Hủy đơn`** (`Hủy đơn` -> `Xác nhận hủy đơn` / `Giữ lại`) trên các đơn `pending`, `preparing`, `delivering` tránh thao tác nhầm giờ cao điểm, đồng thời giữ 1 chạm nhanh cho `Xác nhận pha chế`, `Giao hàng`, `Hoàn tất` và hiển thị sẵn cú pháp đối soát `CK: OMSUA <Mã đơn> <SĐT>` cho đơn QR.
   - Quản lý **Thực đơn 30 món** với bộ lọc trạng thái / nhóm món, tìm kiếm nhanh và nút bật/tắt `Còn món` ↔ `Tạm hết` đồng bộ tức thì sang Storefront.
 
 ---
@@ -103,26 +103,26 @@ Hệ thống gồm **5 bảng quan hệ** và **2 chỉ mục tăng tốc truy v
 | `idx_order_items_order_id` | `ON order_items(order_id)` | Tăng tốc nạp chi tiết dòng món khi truy vấn danh sách đơn |
 | `idx_orders_branch_status_created` | `ON orders(branch_id, status, created_at DESC)` | Tối ưu lọc đơn theo cơ sở, trạng thái và sắp xếp mới nhất trước |
 
-### Danh mục Thực đơn & Cơ sở Chuẩn (Seed Data)
+### Danh mục Thực đơn & Cơ sở Chuẩn (`@omsua/shared/src/seed-data.ts`)
 
-- **24 Đồ uống** chia làm 4 chuyên mục:
-  1. **Trà Sữa Đà Lạt (`milk-tea`, 6 món)**: *Trà Sữa Atiso (Signature)*, *Trà Sữa Atiso Chuối*, *Trà Sữa Ô Long Nướng*, *Trà Sữa Gạo Rang*, *Trà Sữa Nguyên Lá Ốm*, *Hồng Trà Kem Phô Mai*.
-  2. **Giữ Dáng — Fruit Tea & Kombucha (`fruit-tea`, 6 món)**: *Quýt Nhài Cát Tường (Spotlight)*, *Kombucha Dâu Tằm Đà Lạt*, *Trà Atiso Đỏ Hạt Đác*, *Trà Đào Cam Sả Đồi Cao*, *Trà Ổi Hồng Chanh Dây*, *Trà Vải Hoa Hồng*.
-  3. **Cà Phê & Cacao Ấm (`coffee-cacao`, 6 món)**: *Cà Phê Sữa Đà Lạt Phin Nhôm*, *Bạc Xỉu Kem Muối*, *Cà Phê Kem Trứng Khò*, *Cacao Nóng Nguyên Chất*, *Cacao Dầm Trân Châu Đen*, *Cold Brew Mơ Má Đào*.
-  4. **Matcha Uji Nhật Bản (`matcha`, 6 món)**: *Matcha Latte Sữa Yến Mạch*, *Matcha Kem Phô Mai*, *Matcha Đậu Đỏ Nhà Nấu*, *Matcha Dâu Tây Đà Lạt*, *Matcha Dừa Nướng*, *Hojicha Sữa Hạt*.
-- **8 Topping nhà làm**: Trân châu đen (`10.000đ`), Trân châu trắng (`10.000đ`), Kem trứng khò (`20.000đ`), Bánh flan trứng caramel (`15.000đ`), Hạt sen (`15.000đ`), Khúc bạch hạnh nhân (`10.000đ`), Hạt đác rim (`15.000đ`), Thạch củ năng (`10.000đ`).
-- **6 Món Bánh Tráng Snack Đà Lạt (`snack`, phần tiêu chuẩn `STD`)**: *Bánh Tráng Trộn Tóp Mỡ*, *Bánh Tráng Cuốn Bơ Lòng Đào*, *Bánh Tráng Chấm Sốt Me Lòng Đào*, *Cơm Cháy Chà Bông Mỡ Hành*, *Bánh Tráng Nướng Mắm Ruốc Đà Lạt*, *Khô Gà Lá Chanh Đà Lạt*.
+- **24 Đồ uống** chia làm 4 chuyên mục chính thức:
+  1. ***1. TRÀ SỮA ĐÀ LẠT (MILK TEA)*** (`milk-tea`, 6 món): *Trà Sữa Atiso* (`45k` / `50k`, Signature · Best Seller · Spotlight), *Trà Sữa Atiso Chuối* (`48k` / `53k`, Signature), *Trà Sữa Gạo Rang Khúc Bạch* (`40k` / `45k`), *Trà Sữa Tiramisu* (`40k` / `45k`, Signature), *Trà Sữa Flan Cháy Cạnh* (`45k` / `50k`), *Oolong Sen Gừng* (`45k`, Size L, Signature).
+  2. ***2. GIỮ DÁNG — FRUIT TEA & KOMBUCHA*** (`fruit-tea`, 6 món): *Trà Quýt Nhài Cát Tường* (`45k`, Size L, Signature · Món mới · Spotlight), *Trà Atiso Sen Chia* (`45k`, Size L, Signature), *Trà Dâu Tằm Đà Lạt* (`45k`, Size L, Signature), *Trà Me Thốt Nốt* (`45k`, Size L), *Trà Sơ Ri Bưởi Hồng* (`45k`, Size L), *Kombucha Chanh Vàng* (`48k`, Size L, Signature).
+  3. ***3. SỮA TƯƠI & ĐÁ XAY CAO NGUYÊN*** (`fresh-milk-blended`, 6 món): *Sữa Tươi Kem Trứng Nướng* (`45k` / `50k`), *Sữa Tươi Đường Đen* (`35k` / `40k`), *Matcha Latte* (`40k` / `45k`), *Oreo Trà Đá Xay* (`45k` / `50k`, Signature), *Matcha Oreo Đá Xay* (`48k` / `53k`), *Yogurt Dâu Tằm* (`45k` / `50k`, Signature).
+  4. ***4. CÀ PHÊ PHA PHIN & COLD BREW*** (`coffee`, 6 món): *Cold Brew Me* (`45k`, Size S, Signature), *Cà Phê Muối* (`40k`, Size S, Signature), *Cà Phê Kem Tiramisu* (`45k`, Size S, Signature), *Cà Phê Sữa* (`30k`, Size S), *Bạc Xỉu Đà Lạt* (`35k`, Size S), *Cà Phê Đen* (`28k`, Size S).
+- **8 Topping nhà làm**: *Trân châu đen nấu mật* (`tran-chau-den`, `10.000đ`), *Trân châu trắng* (`tran-chau-trang`, `10.000đ`), *Kem trứng khò béo mịn* (`kem-trung`, `20.000đ`), *Bánh flan trứng caramel* (`banh-flan`, `15.000đ`), *Hạt sen* (`hat-sen`, `15.000đ`), *Khúc bạch hạnh nhân* (`khuc-bach`, `10.000đ`), *Hạt đác rim* (`hat-dac-rim`, `15.000đ`), *Thạch củ năng* (`thach-cu-nang`, `10.000đ`).
+- **6 Món Bánh Tráng Snack Đà Lạt (`snack`, phần tiêu chuẩn `STD`)**: *Bánh Tráng Trộn Tóp Mỡ* (`banh-trang-tron-top-mo`, `40.000đ`), *Cơm Cháy Chà Bông* (`com-chay-cha-bong`, `45.000đ`), *Bánh Tráng Cuốn Bơ* (`banh-trang-cuon-bo`, `45.000đ`, Best Seller), *Bánh Tráng Sốt Tắc* (`banh-trang-sot-tac`, `35.000đ`), *Phơi Sương Tỏi Ớt* (`phoi-suong-toi-ot`, `35.000đ`), *Bánh Chấm Lòng Đào* (`banh-cham-long-dao`, `45.000đ`).
 - **4 Cơ sở Chính thức**:
-  1. **Cơ sở 1 — Hoàng Diệu**: `28A Hoàng Diệu, Phường Cam Ly, TP. Đà Lạt` (`0945 396 117`)
-  2. **Cơ sở 2 — Hẻm 33 Nguyễn Công Trứ**: `Hẻm 33 Nguyễn Công Trứ, P. Lâm Viên, TP. Đà Lạt` (`0945 396 117`)
-  3. **Cơ sở 3 — 158 Nguyễn Công Trứ**: `158 Nguyễn Công Trứ, P. Lâm Viên, TP. Đà Lạt` (`0945 396 117`)
-  4. **Cơ sở 4 — Đức Trọng**: `544 Quốc lộ 20, Thị trấn Liên Nghĩa, Huyện Đức Trọng` (`037 444 0869`)
+  1. **Cơ sở 1 — Hoàng Diệu** (`cs1-hoang-dieu`): `28A Hoàng Diệu, Phường Cam Ly, TP. Đà Lạt, Lâm Đồng` (`0945 396 117`)
+  2. **Cơ sở 2 — Hẻm 33 Nguyễn Công Trứ** (`cs2-hem-33-nct`): `Hẻm 33 Nguyễn Công Trứ, P. Lâm Viên, TP. Đà Lạt, Lâm Đồng` (`0945 396 117`)
+  3. **Cơ sở 3 — 158 Nguyễn Công Trứ** (`cs3-158-nct`): `158 Nguyễn Công Trứ, P. Lâm Viên, TP. Đà Lạt, Lâm Đồng` (`0945 396 117`)
+  4. **Cơ sở 4 — Đức Trọng** (`cs4-duc-trong`): `544 Quốc lộ 20, Thị trấn Liên Nghĩa, Huyện Đức Trọng, Lâm Đồng` (`037 444 0869`)
 
 ### Định giá VND Tất định & Giao dịch Nguyên tử (`BEGIN IMMEDIATE`)
 
-- **Không bao giờ tin giá gửi từ phía trình duyệt**: Khi nhận `POST /api/orders`, Backend chỉ đọc `productId`, `size`, `quantity`, `sugarLevel`/`iceLevel` (cho đồ uống) hoặc `spiceLevel` (cho bánh tráng snack) và `toppingIds`, sau đó đối chiếu trực tiếp trạng thái `is_available` và bảng giá trong SQLite thông qua `resolveOrderLine`.
-- **Gộp dòng thông minh**: Các dòng giỏ hàng trùng khóa chuẩn hóa (`productId|size|sugar|ice|spice|sortedToppings`) được tự động hợp nhất số lượng trước khi lưu.
-- **Giao dịch `BEGIN IMMEDIATE`**: Quá trình sinh mã đơn `OM-YYYYMMDD-XXXX` (theo múi giờ Việt Nam `UTC+7`), ghi `orders` và ghi toàn bộ `order_items` diễn ra bên trong một giao dịch `BEGIN IMMEDIATE ... COMMIT` (tự động `ROLLBACK` nếu có bất kỳ lỗi nào), đảm bảo tính toàn vẹn tuyệt đối dưới tải đồng thời.
+- **Không bao giờ tin giá gửi từ phía trình duyệt**: Khi nhận `POST /api/orders`, Backend chỉ đọc `productId`, `size`, `quantity`, `sugarLevel`/`iceLevel` (cho đồ uống) hoặc `spiceLevel` (cho bánh tráng snack) và `toppingIds` (tối đa 20 topping/món), sau đó đối chiếu trực tiếp trạng thái `is_available` và bảng giá trong SQLite thông qua `resolveOrderLine`.
+- **Gộp dòng thông minh**: Các dòng giỏ hàng trùng khóa chuẩn hóa (`productId|size:...|sugar:...|ice:...|spice:...|toppings:...`) được tự động hợp nhất số lượng trước khi lưu.
+- **Giao dịch `BEGIN IMMEDIATE` không cửa sổ TOCTOU**: Toàn bộ bước đọc `branches` / `products` / `toppings` (`is_available` & giá tiền), sinh mã đơn `OM-YYYYMMDD-XXXX` (theo múi giờ Việt Nam `UTC+7`), ghi `orders` và ghi toàn bộ `order_items` diễn ra bên trong khóa ghi `BEGIN IMMEDIATE ... COMMIT` (tự động `ROLLBACK` sạch sẽ khi có bất kỳ lỗi nghiệp vụ nào), đảm bảo tính toàn vẹn tuyệt đối dưới tải đồng thời.
 
 ---
 
@@ -279,7 +279,7 @@ Sau khi khởi chạy thành công:
 | `ADMIN_PORT` | `@omsua/admin` | `3001` | Cổng Vite dev & preview với `strictPort: true` (`ADMIN_PORT` -> `PORT` -> `3001`) |
 | `SQLITE_PATH` | `@omsua/backend` | `data/omsua.sqlite` | Đường dẫn tệp cơ sở dữ liệu SQLite (tương đối từ `apps/backend`, hoặc `:memory:` khi chạy kiểm thử cô lập) |
 | `CORS_ORIGINS` | `@omsua/backend` | `http://localhost:3000,http://localhost:3001` | Danh sách Origin được phép gọi API, phân tách bằng dấu phẩy |
-| `NEXT_PUBLIC_API_URL` | `@omsua/web` | `http://localhost:4000/api` | URL gốc của Backend API cho ứng dụng Storefront Next.js |
+| `NEXT_PUBLIC_API_URL` | `@omsua/web` | `http://localhost:4000/api` | URL gốc của Backend API cho Storefront Next.js (đọc động lúc runtime trên SSR `force-dynamic`) |
 | `VITE_API_URL` | `@omsua/admin` | `http://localhost:4000/api` | URL gốc của Backend API cho ứng dụng Quản trị Vite |
 
 #### Ví dụ chạy toàn bộ hệ thống trên bộ cổng tùy chỉnh (`4100` / `3100` / `3101`)

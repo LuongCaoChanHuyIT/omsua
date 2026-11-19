@@ -1,9 +1,16 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
+import {
+  PHASE_DEVELOPMENT_SERVER,
+  PHASE_PRODUCTION_BUILD,
+} from 'next/constants';
+import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import eslintConfig from '../../eslint.config.mjs';
-import HomePage from '../app/page';
+import nextConfig from '../../next.config';
+import NotFound from '../app/not-found';
+import HomePage, { dynamic as homePageDynamic } from '../app/page';
 
 function collectSourceFiles(dir: string): string[] {
   const results: string[] = [];
@@ -87,6 +94,8 @@ describe('web config & HomePage Storefront SSR consistency', () => {
       'utf8',
     );
     expect(globalsCss).toContain(':focus-visible');
+    expect(globalsCss).toContain('.bg-hero-espresso :focus-visible');
+    expect(globalsCss).toContain('var(--color-card-butter)');
     expect(globalsCss).toContain('prefers-reduced-motion: reduce');
 
     const forbiddenPatterns: Array<{ label: string; regex: RegExp }> = [
@@ -111,5 +120,34 @@ describe('web config & HomePage Storefront SSR consistency', () => {
         ).not.toMatch(regex);
       }
     }
+  });
+
+  it('renders branded warm Vietnamese NotFound page with link to / and zero pure white/black tokens', () => {
+    const html = renderToStaticMarkup(createElement(NotFound));
+
+    expect(html).toContain('Không tìm thấy trang này');
+    expect(html).toContain(
+      'Trang bạn tìm kiếm không tồn tại hoặc đã chuyển về quầy thực đơn chính của Ốm Sữa.',
+    );
+    expect(html).toContain('Quay về Thực đơn Ốm Sữa');
+    expect(html).toContain('href="/"');
+    expect(html).toContain('min-h-11');
+    expect(html).not.toMatch(
+      /(#fff\b|#ffffff\b|#000\b|#000000\b|bg-white|text-white|bg-black|text-black)/i,
+    );
+  });
+
+  it('isolates next dev into .next-dev while keeping production builds in .next and forces dynamic runtime rendering on HomePage', () => {
+    expect(typeof nextConfig).toBe('function');
+    const configFn = nextConfig as unknown as (phase: string) => {
+      distDir?: string;
+      transpilePackages?: string[];
+    };
+    expect(configFn(PHASE_DEVELOPMENT_SERVER).distDir).toBe('.next-dev');
+    expect(configFn(PHASE_PRODUCTION_BUILD).distDir).toBe('.next');
+    expect(configFn(PHASE_PRODUCTION_BUILD).transpilePackages).toContain(
+      '@omsua/shared',
+    );
+    expect(homePageDynamic).toBe('force-dynamic');
   });
 });

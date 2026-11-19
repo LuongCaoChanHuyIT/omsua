@@ -61,7 +61,7 @@ export function StorefrontHeader({
             <a
               key={item.href}
               href={item.href}
-              className="inline-flex min-h-9 items-center text-sm font-medium text-espresso transition hover:text-olive-primary"
+              className="inline-flex min-h-11 items-center text-sm font-medium text-espresso transition hover:text-olive-primary"
             >
               {item.label}
             </a>
@@ -79,7 +79,7 @@ export function StorefrontHeader({
               aria-label="Chọn chi nhánh"
               value={selectedBranch.id}
               onChange={(event) => onSelectBranch(event.target.value)}
-              className="min-h-9 cursor-pointer appearance-none bg-transparent pr-4 text-xs font-semibold text-espresso focus:outline-none"
+              className="min-h-11 cursor-pointer appearance-none bg-transparent pr-4 text-base font-semibold text-espresso focus:outline-none sm:text-xs"
             >
               {branches.map((branch) => (
                 <option key={branch.id} value={branch.id}>

@@ -4,7 +4,7 @@ import {
   type ProductCategoryId,
   type ProductItem,
 } from '@omsua/shared';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { fetchAdminCatalog, toggleProductAvailability } from '../lib/api';
 import { normalizeVietnameseSearch } from '../lib/text';
 
@@ -73,7 +73,7 @@ function AdminProductCard({ product, toggling, onToggle }: ProductCardProps) {
               </span>
             ) : null}
             {product.isNew ? (
-              <span className="rounded-full bg-terracotta/15 px-2.5 py-0.5 text-[11px] font-semibold text-terracotta">
+              <span className="rounded-full border border-[#E6B38E] bg-[#F6DFCE] px-2.5 py-0.5 text-[11px] font-semibold text-[#9A460B]">
                 Món mới
               </span>
             ) : null}
@@ -133,13 +133,22 @@ export function MenuPage() {
   const [selectedCategory, setSelectedCategory] =
     useState<CategoryFilter>('all');
   const [togglingIds, setTogglingIds] = useState<Set<string>>(() => new Set());
+  const requestSeqRef = useRef<number>(0);
+  const mutationEpochRef = useRef<number>(0);
 
   const loadCatalog = useCallback(async () => {
+    const seq = ++requestSeqRef.current;
+    const mutEpoch = mutationEpochRef.current;
     setLoading(true);
     setError(null);
     const result = await fetchAdminCatalog();
+    if (seq !== requestSeqRef.current) {
+      return;
+    }
     if (result.ok) {
-      setCatalog(result.data);
+      if (mutEpoch === mutationEpochRef.current) {
+        setCatalog(result.data);
+      }
     } else {
       setError(result.error);
     }
@@ -148,13 +157,17 @@ export function MenuPage() {
 
   useEffect(() => {
     let active = true;
+    const seq = ++requestSeqRef.current;
+    const mutEpoch = mutationEpochRef.current;
     setLoading(true);
     setError(null);
 
     void fetchAdminCatalog().then((result) => {
-      if (!active) return;
+      if (!active || seq !== requestSeqRef.current) return;
       if (result.ok) {
-        setCatalog(result.data);
+        if (mutEpoch === mutationEpochRef.current) {
+          setCatalog(result.data);
+        }
       } else {
         setError(result.error);
       }
@@ -167,6 +180,7 @@ export function MenuPage() {
   }, []);
 
   const handleToggleProduct = async (product: ProductItem) => {
+    mutationEpochRef.current += 1;
     setTogglingIds((prev) => {
       const next = new Set(prev);
       next.add(product.id);
@@ -195,6 +209,7 @@ export function MenuPage() {
         };
       });
     } finally {
+      mutationEpochRef.current += 1;
       setTogglingIds((prev) => {
         const next = new Set(prev);
         next.delete(product.id);
@@ -347,7 +362,7 @@ export function MenuPage() {
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
                   placeholder="Tìm tên món tiếng Việt, tiếng Anh, nguyên liệu..."
-                  className="min-h-11 w-full rounded-xl border border-[#D4C9B0] bg-canvas-cream px-3.5 py-2.5 text-sm text-espresso placeholder:text-warm-muted focus:border-olive-primary focus:outline-none"
+                  className="min-h-11 w-full rounded-xl border border-[#D4C9B0] bg-canvas-cream px-3.5 py-2.5 text-base text-espresso placeholder:text-warm-muted focus:border-olive-primary focus:outline-none sm:text-sm"
                 />
                 {searchQuery.length > 0 ? (
                   <button
