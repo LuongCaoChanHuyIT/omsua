@@ -4,7 +4,7 @@ import {
   type BranchInfo,
   type OrderRecord,
 } from '@omsua/shared';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { fetchAdminBranches, fetchOrders } from '../lib/api';
 
 interface BranchOrderStats {
@@ -51,15 +51,19 @@ export function BranchesPage() {
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [isFallbackBranches, setIsFallbackBranches] = useState<boolean>(false);
+  const [ordersError, setOrdersError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
+    setOrdersError(null);
     const [branchesResult, ordersResult] = await Promise.all([
       fetchAdminBranches(),
       fetchOrders(),
     ]);
 
-    if (branchesResult.ok && branchesResult.data.length > 0) {
+    const branchesSucceeded =
+      branchesResult.ok && branchesResult.data.length > 0;
+    if (branchesSucceeded) {
       setBranches(branchesResult.data);
       setIsFallbackBranches(false);
     } else {
@@ -69,6 +73,9 @@ export function BranchesPage() {
 
     if (ordersResult.ok) {
       setOrders(ordersResult.data);
+      setOrdersError(null);
+    } else if (branchesSucceeded) {
+      setOrdersError(ordersResult.error);
     }
 
     setLoading(false);
@@ -77,12 +84,15 @@ export function BranchesPage() {
   useEffect(() => {
     let active = true;
     setLoading(true);
+    setOrdersError(null);
 
     void Promise.all([fetchAdminBranches(), fetchOrders()]).then(
       ([branchesResult, ordersResult]) => {
         if (!active) return;
 
-        if (branchesResult.ok && branchesResult.data.length > 0) {
+        const branchesSucceeded =
+          branchesResult.ok && branchesResult.data.length > 0;
+        if (branchesSucceeded) {
           setBranches(branchesResult.data);
           setIsFallbackBranches(false);
         } else {
@@ -92,6 +102,9 @@ export function BranchesPage() {
 
         if (ordersResult.ok) {
           setOrders(ordersResult.data);
+          setOrdersError(null);
+        } else if (branchesSucceeded) {
+          setOrdersError(ordersResult.error);
         }
 
         setLoading(false);
@@ -102,6 +115,30 @@ export function BranchesPage() {
       active = false;
     };
   }, []);
+
+  const chainStats = useMemo(() => {
+    let activeOrders = 0;
+    let revenue = 0;
+
+    for (const order of orders) {
+      if (
+        order.status === 'pending' ||
+        order.status === 'preparing' ||
+        order.status === 'delivering'
+      ) {
+        activeOrders += 1;
+      }
+      if (order.status !== 'cancelled') {
+        revenue += order.grandTotal;
+      }
+    }
+
+    return {
+      totalOrders: orders.length,
+      activeOrders,
+      revenue,
+    };
+  }, [orders]);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -123,16 +160,66 @@ export function BranchesPage() {
           type="button"
           onClick={() => void loadData()}
           disabled={loading}
-          className="rounded-xl border border-[#D4C9B0] bg-surface-light px-4 py-2.5 text-sm font-semibold text-espresso transition hover:border-olive-primary hover:bg-card-butter/50 disabled:opacity-60"
+          className="min-h-11 rounded-xl border border-[#D4C9B0] bg-surface-light px-4 py-2.5 text-sm font-semibold text-espresso transition hover:border-olive-primary hover:bg-card-butter/50 disabled:opacity-60"
         >
           {loading ? 'Đang đồng bộ...' : 'Làm mới'}
         </button>
       </div>
 
+      <section
+        aria-label="Tổng quan toàn chuỗi"
+        className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
+      >
+        <div className="rounded-2xl border border-[#DDD4C0] bg-surface-light p-4 shadow-xs">
+          <p className="text-xs font-semibold uppercase tracking-wider text-warm-muted">
+            Quy mô hệ thống
+          </p>
+          <p className="mt-1 font-display text-xl font-bold text-olive-primary sm:text-2xl">
+            {branches.length} Cơ sở hoạt động
+          </p>
+        </div>
+        <div className="rounded-2xl border border-[#DDD4C0] bg-surface-light p-4 shadow-xs">
+          <p className="text-xs font-semibold uppercase tracking-wider text-warm-muted">
+            Tổng đơn toàn chuỗi
+          </p>
+          <p className="mt-1 font-display text-2xl font-bold text-espresso">
+            {chainStats.totalOrders}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-[#DEC98A] bg-card-butter/60 p-4 shadow-xs">
+          <p className="text-xs font-semibold uppercase tracking-wider text-olive-primary">
+            Đơn đang xử lý
+          </p>
+          <p className="mt-1 font-display text-2xl font-bold text-terracotta">
+            {chainStats.activeOrders}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-[#B4C488] bg-[#E3EAD1]/75 p-4 shadow-xs">
+          <p className="text-xs font-semibold uppercase tracking-wider text-[#45531B]">
+            Tổng doanh thu hợp lệ
+          </p>
+          <p className="mt-1 font-display text-2xl font-bold text-[#45531B]">
+            {formatVnd(chainStats.revenue)}
+          </p>
+        </div>
+      </section>
+
       {isFallbackBranches ? (
         <div className="rounded-2xl border border-[#DEC98A] bg-card-butter/60 px-5 py-3.5 text-xs font-medium text-olive-primary sm:text-sm">
           Đang hiển thị danh sách cơ sở mặc định từ cấu hình thương hiệu Ốm Sữa
           (chưa kết nối máy chủ API).
+        </div>
+      ) : null}
+
+      {ordersError ? (
+        <div
+          role="alert"
+          className="rounded-2xl border border-[#E6ABA6] bg-[#F7DFDC] px-5 py-4 text-sm text-[#8F3530]"
+        >
+          <p className="font-semibold">
+            Không thể đồng bộ thống kê đơn hàng theo chi nhánh
+          </p>
+          <p className="mt-1">{ordersError}</p>
         </div>
       ) : null}
 
@@ -170,7 +257,7 @@ export function BranchesPage() {
                 </p>
               </div>
 
-              <dl className="mt-5 grid grid-cols-3 gap-3 border-t border-[#E5DEC9] pt-4 text-center">
+              <dl className="mt-5 grid grid-cols-2 gap-3 border-t border-[#E5DEC9] pt-4 text-center sm:grid-cols-4">
                 <div className="rounded-xl bg-canvas-cream p-3">
                   <dt className="text-[11px] font-semibold uppercase tracking-wider text-warm-muted">
                     Tổng đơn
@@ -185,6 +272,14 @@ export function BranchesPage() {
                   </dt>
                   <dd className="mt-1 font-display text-lg font-bold text-terracotta">
                     {stats.activeOrders}
+                  </dd>
+                </div>
+                <div className="rounded-xl bg-[#EFE4CC]/75 p-3">
+                  <dt className="text-[11px] font-semibold uppercase tracking-wider text-[#6E5015]">
+                    Hoàn tất
+                  </dt>
+                  <dd className="mt-1 font-display text-lg font-bold text-[#6E5015]">
+                    {stats.completedOrders}
                   </dd>
                 </div>
                 <div className="rounded-xl bg-[#E3EAD1]/70 p-3">

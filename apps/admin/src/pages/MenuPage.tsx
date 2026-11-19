@@ -1,10 +1,15 @@
 import {
   formatVnd,
   type CatalogPayload,
+  type ProductCategoryId,
   type ProductItem,
 } from '@omsua/shared';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { fetchAdminCatalog, toggleProductAvailability } from '../lib/api';
+import { normalizeVietnameseSearch } from '../lib/text';
+
+type AvailabilityFilter = 'all' | 'available' | 'sold-out';
+type CategoryFilter = 'all' | ProductCategoryId;
 
 function formatSizesSummary(product: ProductItem): string {
   return product.sizes
@@ -14,6 +19,28 @@ function formatSizesSummary(product: ProductItem): string {
         : `Size ${option.size}: ${formatVnd(option.price)}`,
     )
     .join(' • ');
+}
+
+function matchesProductFilter(
+  product: ProductItem,
+  availabilityFilter: AvailabilityFilter,
+  normalizedQuery: string,
+): boolean {
+  if (availabilityFilter === 'available' && !product.isAvailable) {
+    return false;
+  }
+  if (availabilityFilter === 'sold-out' && product.isAvailable) {
+    return false;
+  }
+  if (!normalizedQuery) {
+    return true;
+  }
+
+  return (
+    normalizeVietnameseSearch(product.name).includes(normalizedQuery) ||
+    normalizeVietnameseSearch(product.englishName).includes(normalizedQuery) ||
+    normalizeVietnameseSearch(product.description).includes(normalizedQuery)
+  );
 }
 
 interface ProductCardProps {
@@ -36,7 +63,7 @@ function AdminProductCard({ product, toggling, onToggle }: ProductCardProps) {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-1.5">
             {product.isSignature ? (
-              <span className="rounded-full bg-card-olive-gold px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-surface-light">
+              <span className="rounded-full bg-card-olive-gold px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-espresso">
                 Signature
               </span>
             ) : null}
@@ -83,7 +110,7 @@ function AdminProductCard({ product, toggling, onToggle }: ProductCardProps) {
           type="button"
           disabled={toggling}
           onClick={() => onToggle(product)}
-          className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold transition disabled:opacity-60 sm:text-sm ${
+          className={`min-h-11 rounded-xl px-3.5 py-2 text-xs font-semibold transition disabled:opacity-60 sm:text-sm ${
             product.isAvailable
               ? 'border border-coral-sketch bg-[#F7DFDC] text-[#8F3530] hover:bg-[#F2CECA]'
               : 'bg-artichoke text-surface-light shadow-xs hover:bg-[#66762F]'
@@ -100,6 +127,11 @@ export function MenuPage() {
   const [catalog, setCatalog] = useState<CatalogPayload | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [availabilityFilter, setAvailabilityFilter] =
+    useState<AvailabilityFilter>('all');
+  const [selectedCategory, setSelectedCategory] =
+    useState<CategoryFilter>('all');
   const [togglingIds, setTogglingIds] = useState<Set<string>>(() => new Set());
 
   const loadCatalog = useCallback(async () => {
@@ -171,12 +203,57 @@ export function MenuPage() {
     }
   };
 
+  const resetFilters = () => {
+    setSearchQuery('');
+    setAvailabilityFilter('all');
+    setSelectedCategory('all');
+  };
+
   const totalProducts = catalog?.products.length ?? 0;
   const availableCount =
     catalog?.products.filter((item) => item.isAvailable).length ?? 0;
   const soldOutCount = totalProducts - availableCount;
-  const snacks =
-    catalog?.products.filter((item) => item.kind === 'snack') ?? [];
+
+  const normalizedQuery = useMemo(
+    () => normalizeVietnameseSearch(searchQuery),
+    [searchQuery],
+  );
+
+  const visibleDrinkSections = useMemo(() => {
+    if (!catalog) return [];
+    return catalog.categories
+      .filter(
+        (category) =>
+          selectedCategory === 'all' || selectedCategory === category.id,
+      )
+      .map((category) => ({
+        category,
+        products: catalog.products.filter(
+          (product) =>
+            product.categoryId === category.id &&
+            matchesProductFilter(product, availabilityFilter, normalizedQuery),
+        ),
+      }))
+      .filter((section) => section.products.length > 0);
+  }, [catalog, selectedCategory, availabilityFilter, normalizedQuery]);
+
+  const visibleSnacks = useMemo(() => {
+    if (!catalog) return [];
+    if (selectedCategory !== 'all' && selectedCategory !== 'snack') {
+      return [];
+    }
+    return catalog.products.filter(
+      (item) =>
+        item.kind === 'snack' &&
+        matchesProductFilter(item, availabilityFilter, normalizedQuery),
+    );
+  }, [catalog, selectedCategory, availabilityFilter, normalizedQuery]);
+
+  const totalVisibleCount =
+    visibleDrinkSections.reduce(
+      (sum, section) => sum + section.products.length,
+      0,
+    ) + visibleSnacks.length;
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
@@ -197,39 +274,183 @@ export function MenuPage() {
           type="button"
           onClick={() => void loadCatalog()}
           disabled={loading}
-          className="rounded-xl border border-[#D4C9B0] bg-surface-light px-4 py-2.5 text-sm font-semibold text-espresso transition hover:border-olive-primary hover:bg-card-butter/50 disabled:opacity-60"
+          className="min-h-11 rounded-xl border border-[#D4C9B0] bg-surface-light px-4 py-2.5 text-sm font-semibold text-espresso transition hover:border-olive-primary hover:bg-card-butter/50 disabled:opacity-60"
         >
           {loading ? 'Đang tải...' : 'Làm mới'}
         </button>
       </div>
 
       {catalog ? (
-        <section className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl border border-[#DDD4C0] bg-surface-light p-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-warm-muted">
-              Tổng danh mục món
-            </p>
-            <p className="mt-1 font-display text-2xl font-bold text-espresso">
-              {totalProducts} món
-            </p>
-          </div>
-          <div className="rounded-2xl border border-[#B4C488] bg-[#E3EAD1]/70 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-[#45531B]">
-              Đang mở bán (Còn món)
-            </p>
-            <p className="mt-1 font-display text-2xl font-bold text-[#45531B]">
-              {availableCount} món
-            </p>
-          </div>
-          <div className="rounded-2xl border border-[#E6ABA6] bg-[#F7DFDC]/70 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-[#8F3530]">
-              Đang khóa tạm (Tạm hết)
-            </p>
-            <p className="mt-1 font-display text-2xl font-bold text-[#8F3530]">
-              {soldOutCount} món
-            </p>
-          </div>
-        </section>
+        <>
+          <section className="grid gap-4 sm:grid-cols-3">
+            <button
+              type="button"
+              aria-pressed={availabilityFilter === 'all'}
+              onClick={() => setAvailabilityFilter('all')}
+              className={`rounded-2xl border p-4 text-left transition ${
+                availabilityFilter === 'all'
+                  ? 'border-olive-primary bg-surface-light shadow-xs'
+                  : 'border-[#DDD4C0] bg-surface-light hover:border-olive-primary/60'
+              }`}
+            >
+              <p className="text-xs font-semibold uppercase tracking-wider text-warm-muted">
+                Tổng danh mục món
+              </p>
+              <p className="mt-1 font-display text-2xl font-bold text-espresso">
+                {totalProducts} món
+              </p>
+            </button>
+            <button
+              type="button"
+              aria-pressed={availabilityFilter === 'available'}
+              onClick={() => setAvailabilityFilter('available')}
+              className={`rounded-2xl border p-4 text-left transition ${
+                availabilityFilter === 'available'
+                  ? 'border-[#45531B] bg-[#E3EAD1] shadow-xs'
+                  : 'border-[#B4C488] bg-[#E3EAD1]/70 hover:bg-[#E3EAD1]'
+              }`}
+            >
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#45531B]">
+                Đang mở bán (Còn món)
+              </p>
+              <p className="mt-1 font-display text-2xl font-bold text-[#45531B]">
+                {availableCount} món
+              </p>
+            </button>
+            <button
+              type="button"
+              aria-pressed={availabilityFilter === 'sold-out'}
+              onClick={() => setAvailabilityFilter('sold-out')}
+              className={`rounded-2xl border p-4 text-left transition ${
+                availabilityFilter === 'sold-out'
+                  ? 'border-[#8F3530] bg-[#F7DFDC] shadow-xs'
+                  : 'border-[#E6ABA6] bg-[#F7DFDC]/70 hover:bg-[#F7DFDC]'
+              }`}
+            >
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#8F3530]">
+                Đang khóa tạm (Tạm hết)
+              </p>
+              <p className="mt-1 font-display text-2xl font-bold text-[#8F3530]">
+                {soldOutCount} món
+              </p>
+            </button>
+          </section>
+
+          <section className="space-y-4 rounded-2xl border border-[#DDD4C0] bg-surface-light p-4 shadow-xs sm:p-5">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-1 items-center gap-2">
+                <input
+                  id="menu-search"
+                  name="menuSearch"
+                  type="search"
+                  aria-label="Tìm món trong thực đơn"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Tìm tên món tiếng Việt, tiếng Anh, nguyên liệu..."
+                  className="min-h-11 w-full rounded-xl border border-[#D4C9B0] bg-canvas-cream px-3.5 py-2.5 text-sm text-espresso placeholder:text-warm-muted focus:border-olive-primary focus:outline-none"
+                />
+                {searchQuery.length > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="min-h-11 shrink-0 rounded-xl border border-[#D4C9B0] bg-canvas-cream px-3.5 py-2 text-xs font-semibold text-espresso transition hover:border-olive-primary hover:bg-card-butter/60 sm:text-sm"
+                  >
+                    Xóa tìm
+                  </button>
+                ) : null}
+              </div>
+
+              <div
+                className="flex flex-wrap gap-2"
+                role="group"
+                aria-label="Lọc theo trạng thái món"
+              >
+                {(
+                  [
+                    {
+                      value: 'all',
+                      label: `Tất cả trạng thái (${totalProducts})`,
+                    },
+                    {
+                      value: 'available',
+                      label: `Đang bán (${availableCount})`,
+                    },
+                    {
+                      value: 'sold-out',
+                      label: `Đang tạm hết (${soldOutCount})`,
+                    },
+                  ] as const
+                ).map((pill) => {
+                  const isSelected = availabilityFilter === pill.value;
+                  return (
+                    <button
+                      key={pill.value}
+                      type="button"
+                      aria-pressed={isSelected}
+                      onClick={() => setAvailabilityFilter(pill.value)}
+                      className={`min-h-11 rounded-full px-3.5 py-2 text-xs font-semibold transition sm:text-sm ${
+                        isSelected
+                          ? 'bg-hero-espresso text-surface-light shadow-xs'
+                          : 'border border-[#D8CEB8] bg-canvas-cream text-espresso hover:bg-card-butter/60'
+                      }`}
+                    >
+                      {pill.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div
+              className="flex flex-wrap gap-2"
+              role="group"
+              aria-label="Lọc theo nhóm thực đơn"
+            >
+              <button
+                type="button"
+                aria-pressed={selectedCategory === 'all'}
+                onClick={() => setSelectedCategory('all')}
+                className={`min-h-11 rounded-full px-3.5 py-2 text-xs font-semibold transition sm:text-sm ${
+                  selectedCategory === 'all'
+                    ? 'bg-olive-primary text-surface-light shadow-xs'
+                    : 'border border-[#D8CEB8] bg-canvas-cream text-espresso hover:bg-card-butter/60'
+                }`}
+              >
+                Tất cả nhóm
+              </button>
+              {catalog.categories.map((category) => {
+                const isSelected = selectedCategory === category.id;
+                return (
+                  <button
+                    key={category.id}
+                    type="button"
+                    aria-pressed={isSelected}
+                    onClick={() => setSelectedCategory(category.id)}
+                    className={`min-h-11 rounded-full px-3.5 py-2 text-xs font-semibold transition sm:text-sm ${
+                      isSelected
+                        ? 'bg-olive-primary text-surface-light shadow-xs'
+                        : 'border border-[#D8CEB8] bg-canvas-cream text-espresso hover:bg-card-butter/60'
+                    }`}
+                  >
+                    {category.shortLabel}
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                aria-pressed={selectedCategory === 'snack'}
+                onClick={() => setSelectedCategory('snack')}
+                className={`min-h-11 rounded-full px-3.5 py-2 text-xs font-semibold transition sm:text-sm ${
+                  selectedCategory === 'snack'
+                    ? 'bg-olive-primary text-surface-light shadow-xs'
+                    : 'border border-[#D8CEB8] bg-canvas-cream text-espresso hover:bg-card-butter/60'
+                }`}
+              >
+                Bánh tráng Snack
+              </button>
+            </div>
+          </section>
+        </>
       ) : null}
 
       {error ? (
@@ -246,62 +467,76 @@ export function MenuPage() {
         <div className="rounded-2xl border border-[#DDD4C0] bg-surface-light p-10 text-center text-sm text-warm-muted">
           Đang tải thực đơn Ốm Sữa...
         </div>
+      ) : catalog && totalVisibleCount === 0 ? (
+        <div className="rounded-2xl border border-[#DDD4C0] bg-surface-light p-10 text-center">
+          <p className="font-editorial text-lg font-semibold text-espresso">
+            Không tìm thấy món phù hợp với bộ lọc hiện tại
+          </p>
+          <p className="mt-1 text-sm text-warm-muted">
+            Hãy thử từ khóa khác hoặc đặt lại bộ lọc để xem toàn bộ 30 món chuẩn
+            Ốm Sữa.
+          </p>
+          <button
+            type="button"
+            onClick={resetFilters}
+            className="mt-4 min-h-11 rounded-xl bg-terracotta px-5 py-2.5 text-sm font-semibold text-surface-light shadow-xs transition hover:bg-[#C05C16]"
+          >
+            Đặt lại bộ lọc
+          </button>
+        </div>
       ) : catalog ? (
         <div className="space-y-8">
-          {catalog.categories.map((category) => {
-            const categoryDrinks = catalog.products.filter(
-              (product) => product.categoryId === category.id,
-            );
-            return (
-              <section key={category.id} className="space-y-4">
-                <div
-                  className="rounded-2xl border border-[#D8CEB8] px-5 py-4"
-                  style={{ backgroundColor: category.accentBg }}
-                >
-                  <h2 className="font-display text-lg font-bold text-olive-primary sm:text-xl">
-                    {category.title}
-                  </h2>
-                  <p className="mt-0.5 text-xs font-medium text-espresso/80 sm:text-sm">
-                    {category.subtitle}
-                  </p>
-                </div>
+          {visibleDrinkSections.map(({ category, products }) => (
+            <section key={category.id} className="space-y-4">
+              <div
+                className="rounded-2xl border border-[#D8CEB8] px-5 py-4"
+                style={{ backgroundColor: category.accentBg }}
+              >
+                <h2 className="font-display text-lg font-bold text-olive-primary sm:text-xl">
+                  {category.title}
+                </h2>
+                <p className="mt-0.5 text-xs font-medium text-espresso/80 sm:text-sm">
+                  {category.subtitle}
+                </p>
+              </div>
 
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  {categoryDrinks.map((drink) => (
-                    <AdminProductCard
-                      key={drink.id}
-                      product={drink}
-                      toggling={togglingIds.has(drink.id)}
-                      onToggle={(item) => void handleToggleProduct(item)}
-                    />
-                  ))}
-                </div>
-              </section>
-            );
-          })}
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {products.map((drink) => (
+                  <AdminProductCard
+                    key={drink.id}
+                    product={drink}
+                    toggling={togglingIds.has(drink.id)}
+                    onToggle={(item) => void handleToggleProduct(item)}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
 
-          <section className="space-y-4">
-            <div className="rounded-2xl border border-[#E6ABA6] bg-[#F7DFDC]/75 px-5 py-4">
-              <h2 className="font-snack text-lg font-extrabold uppercase tracking-wide text-terracotta sm:text-xl">
-                5. Bánh Tráng Snack Đà Lạt
-              </h2>
-              <p className="mt-0.5 text-xs font-medium text-espresso/80 sm:text-sm">
-                Bánh tráng trộn tóp mỡ, cơm cháy chà bông, cuốn bơ &amp; chấm lòng
-                đào nhâm nhi cùng trà sữa
-              </p>
-            </div>
+          {visibleSnacks.length > 0 ? (
+            <section className="space-y-4">
+              <div className="rounded-2xl border border-[#E6ABA6] bg-[#F7DFDC]/75 px-5 py-4">
+                <h2 className="font-snack text-lg font-extrabold uppercase tracking-wide text-terracotta sm:text-xl">
+                  5. Bánh Tráng Snack Đà Lạt
+                </h2>
+                <p className="mt-0.5 text-xs font-medium text-espresso/80 sm:text-sm">
+                  Bánh tráng trộn tóp mỡ, cơm cháy chà bông, cuốn bơ &amp; chấm
+                  lòng đào nhâm nhi cùng trà sữa
+                </p>
+              </div>
 
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {snacks.map((snack) => (
-                <AdminProductCard
-                  key={snack.id}
-                  product={snack}
-                  toggling={togglingIds.has(snack.id)}
-                  onToggle={(item) => void handleToggleProduct(item)}
-                />
-              ))}
-            </div>
-          </section>
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {visibleSnacks.map((snack) => (
+                  <AdminProductCard
+                    key={snack.id}
+                    product={snack}
+                    toggling={togglingIds.has(snack.id)}
+                    onToggle={(item) => void handleToggleProduct(item)}
+                  />
+                ))}
+              </div>
+            </section>
+          ) : null}
         </div>
       ) : null}
     </div>

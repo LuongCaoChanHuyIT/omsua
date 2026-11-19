@@ -8,6 +8,12 @@ import { fetchBackendHealth } from '../lib/api';
 
 export function SettingsPage() {
   const apiUrl = normalizeApiBaseUrl(import.meta.env.VITE_API_URL);
+  const swaggerUrl = `${apiUrl}/docs`;
+  const adminOrigin =
+    typeof window !== 'undefined' && window.location.origin
+      ? window.location.origin
+      : `http://localhost:${DEFAULT_PORTS.ADMIN}`;
+
   const [health, setHealth] = useState<HealthFetchResult | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -64,7 +70,7 @@ export function SettingsPage() {
             type="button"
             onClick={() => void loadHealth()}
             disabled={loading}
-            className="rounded-xl border border-[#D4C9B0] bg-canvas-cream px-4 py-2 text-sm font-semibold text-espresso transition hover:border-olive-primary hover:bg-card-butter/50 disabled:opacity-60"
+            className="min-h-11 rounded-xl border border-[#D4C9B0] bg-canvas-cream px-4 py-2.5 text-sm font-semibold text-espresso transition hover:border-olive-primary hover:bg-card-butter/50 disabled:opacity-60"
           >
             {loading ? 'Đang kiểm tra...' : 'Kiểm tra lại'}
           </button>
@@ -98,8 +104,31 @@ export function SettingsPage() {
       <section className="rounded-2xl border border-[#DDD4C0] bg-surface-light p-6 shadow-xs">
         <dl className="divide-y divide-[#E5DEC9] text-sm">
           <div className="flex flex-wrap justify-between gap-2 py-3">
+            <dt className="font-medium text-warm-muted">
+              Admin Origin hiện tại
+            </dt>
+            <dd className="font-mono font-semibold text-espresso">
+              {adminOrigin}
+            </dd>
+          </div>
+          <div className="flex flex-wrap justify-between gap-2 py-3">
             <dt className="font-medium text-warm-muted">API Base URL</dt>
             <dd className="font-mono font-semibold text-espresso">{apiUrl}</dd>
+          </div>
+          <div className="flex flex-wrap justify-between gap-2 py-3">
+            <dt className="font-medium text-warm-muted">
+              Tài liệu OpenAPI (Swagger)
+            </dt>
+            <dd className="font-mono font-semibold text-terracotta">
+              <a
+                href={swaggerUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="underline decoration-terracotta/50 underline-offset-4 transition hover:text-olive-primary"
+              >
+                {swaggerUrl}
+              </a>
+            </dd>
           </div>
           <div className="flex flex-wrap justify-between gap-2 py-3">
             <dt className="font-medium text-warm-muted">Chế độ Vite</dt>

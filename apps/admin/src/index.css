@@ -19,6 +19,7 @@
   --font-display: "Fraunces", Georgia, serif;
   --font-editorial: "Lora", Georgia, serif;
   --font-sans: "Be Vietnam Pro", system-ui, sans-serif;
+  --font-quote: "Dancing Script", cursive;
   --font-snack: "Shantell Sans", cursive, sans-serif;
 }
 
@@ -30,4 +31,24 @@ body {
   background-color: var(--color-canvas-cream);
   color: var(--color-espresso);
   font-family: var(--font-sans);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-olive-primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

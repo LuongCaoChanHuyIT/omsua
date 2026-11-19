@@ -11,6 +11,13 @@ const navItems = [
 export function AdminLayout() {
   return (
     <div className="flex min-h-screen flex-col bg-canvas-cream text-espresso lg:flex-row">
+      <a
+        href="#admin-main"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-xl focus:border focus:border-card-butter focus:bg-hero-espresso focus:px-4 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-surface-light"
+      >
+        Chuyển đến nội dung chính
+      </a>
+
       <aside className="w-full shrink-0 border-b border-[#3F3A2D] bg-hero-espresso text-surface-light lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-b-0">
         <div className="border-b border-[#3F3A2D] px-5 py-4 lg:px-6 lg:py-6">
           <div className="flex items-center justify-between gap-3 lg:block">
@@ -29,6 +36,10 @@ export function AdminLayout() {
           <p className="mt-2 hidden text-xs leading-relaxed text-[#BEB6A5] lg:block">
             {OMSUA_BRAND.tagline}
           </p>
+          <p className="mt-2 font-quote text-base font-bold leading-snug text-card-butter">
+            “Trà sữa của người Đà Lạt — Gói trọn sương sớm &amp; vị ngọt lành
+            nguyên bản từ 2017”
+          </p>
         </div>
 
         <nav
@@ -41,7 +52,7 @@ export function AdminLayout() {
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `rounded-xl px-3.5 py-2.5 text-sm font-semibold transition ${
+                `inline-flex min-h-11 items-center rounded-xl px-3.5 py-2.5 text-sm font-semibold transition ${
                   isActive
                     ? 'bg-terracotta text-surface-light shadow-sm'
                     : 'text-[#DDD6C5] hover:bg-[#3A3528] hover:text-surface-light'
@@ -74,7 +85,7 @@ export function AdminLayout() {
           </span>
         </header>
 
-        <main className="flex-1 p-4 sm:p-8">
+        <main id="admin-main" tabIndex={-1} className="flex-1 p-4 sm:p-8">
           <Outlet />
         </main>
       </div>

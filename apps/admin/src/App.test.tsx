@@ -5,6 +5,7 @@ import {
   type OrderRecord,
 } from '@omsua/shared';
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -76,6 +77,7 @@ const mockPendingOrder: OrderRecord = {
 
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
   vi.restoreAllMocks();
 });
 
@@ -605,5 +607,563 @@ describe('Admin App routes & operational portals', () => {
         within(prodCard1).getByRole('button', { name: 'Mở bán lại' }),
       ).toBeInTheDocument();
     });
+  });
+
+  it('renders skip-to-main link targeting #admin-main and brand quote in font-quote inside AdminLayout', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: [],
+          timestamp: '2026-11-18T09:35:00.000Z',
+        }),
+      }),
+    );
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+
+    const skipLink = screen.getByRole('link', {
+      name: 'Chuyển đến nội dung chính',
+    });
+    expect(skipLink).toHaveAttribute('href', '#admin-main');
+    expect(document.getElementById('admin-main')?.tagName).toBe('MAIN');
+
+    const quoteEl = screen.getByText(/Gói trọn sương sớm/i);
+    expect(quoteEl.className).toContain('font-quote');
+  });
+
+  it('computes branch-wide KPI strip, status tab counts with aria-pressed, diacritic-insensitive search, Vietnam UTC+7 timestamps, and VietQR memo', async () => {
+    const ordersDataset: OrderRecord[] = [
+      mockPendingOrder, // pending, cod, 95.000đ, createdAt 2026-11-18T09:30:00.000Z -> 16:30 VN
+      {
+        ...mockPendingOrder,
+        id: 'ord-prep',
+        orderCode: 'OM-20261118-P2Q3',
+        customerName: 'Trần Bảo Ngọc',
+        customerPhone: '0912345678',
+        deliveryAddress: '45 Phan Đình Phùng, Đà Lạt',
+        paymentMethod: 'qr',
+        status: 'preparing',
+        grandTotal: 65000,
+        subtotal: 65000,
+      },
+      {
+        ...mockPendingOrder,
+        id: 'ord-deliv',
+        orderCode: 'OM-20261118-D4E5',
+        customerName: 'Lê Đặng Khoa',
+        customerPhone: '0988777666',
+        deliveryAddress: '544 Quốc lộ 20, Đức Trọng',
+        paymentMethod: 'cod',
+        status: 'delivering',
+        grandTotal: 50000,
+        subtotal: 50000,
+      },
+      {
+        ...mockPendingOrder,
+        id: 'ord-comp',
+        orderCode: 'OM-20261118-F6G7',
+        customerName: 'Phạm Hoàng Yến',
+        customerPhone: '0933111222',
+        paymentMethod: 'cod',
+        status: 'completed',
+        grandTotal: 40000,
+        subtotal: 40000,
+      },
+      {
+        ...mockPendingOrder,
+        id: 'ord-canc',
+        orderCode: 'OM-20261118-X0X0',
+        customerName: 'Võ Thanh Tùng',
+        customerPhone: '0977000111',
+        paymentMethod: 'cod',
+        status: 'cancelled',
+        grandTotal: 120000,
+        subtotal: 120000,
+      },
+    ];
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        success: true,
+        data: ordersDataset,
+        timestamp: '2026-11-18T10:00:00.000Z',
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+
+    const pendingCard = await screen.findByTestId('order-card-ord-1');
+    const qrCard = screen.getByTestId('order-card-ord-prep');
+
+    // Deterministic Vietnam timezone (2026-11-18T09:30:00.000Z === 16:30 in Asia/Ho_Chi_Minh)
+    expect(within(pendingCard).getByText(/16:30/)).toBeInTheDocument();
+
+    // VietQR transfer memo shown ONLY on QR payment orders
+    expect(
+      within(qrCard).getByText('CK: OMSUA OM-20261118-P2Q3 0912345678'),
+    ).toBeInTheDocument();
+    expect(
+      within(pendingCard).queryByText(/CK: OMSUA/),
+    ).not.toBeInTheDocument();
+
+    // 4-card top KPI strip (valid revenue excludes cancelled 120.000đ -> 95k + 65k + 50k + 40k = 250.000đ)
+    const kpiSection = screen.getByRole('region', {
+      name: 'Tổng quan đơn hàng',
+    });
+    expect(within(kpiSection).getByText('Tổng đơn hàng')).toBeInTheDocument();
+    expect(within(kpiSection).getByText('Đang pha chế & giao')).toBeInTheDocument();
+    expect(within(kpiSection).getByText('Doanh thu hợp lệ')).toBeInTheDocument();
+    expect(within(kpiSection).getByText('250.000đ')).toBeInTheDocument();
+
+    // Status tab counters + aria-pressed
+    const statusGroup = screen.getByRole('group', {
+      name: 'Lọc theo trạng thái',
+    });
+    const allTab = within(statusGroup).getByRole('button', {
+      name: 'Tất cả (5)',
+    });
+    const pendingTab = within(statusGroup).getByRole('button', {
+      name: 'Chờ xác nhận (1)',
+    });
+    expect(
+      within(statusGroup).getByRole('button', { name: 'Đang pha chế (1)' }),
+    ).toBeInTheDocument();
+    expect(
+      within(statusGroup).getByRole('button', { name: 'Đang giao (1)' }),
+    ).toBeInTheDocument();
+    expect(
+      within(statusGroup).getByRole('button', { name: 'Hoàn tất (1)' }),
+    ).toBeInTheDocument();
+    expect(
+      within(statusGroup).getByRole('button', { name: 'Đã hủy (1)' }),
+    ).toBeInTheDocument();
+
+    expect(allTab).toHaveAttribute('aria-pressed', 'true');
+    expect(pendingTab).toHaveAttribute('aria-pressed', 'false');
+
+    fireEvent.click(pendingTab);
+    expect(pendingTab).toHaveAttribute('aria-pressed', 'true');
+    expect(allTab).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByTestId('order-card-ord-1')).toBeInTheDocument();
+    expect(screen.queryByTestId('order-card-ord-prep')).not.toBeInTheDocument();
+    // Tab switch uses loaded branch orders without unnecessary status refetch, keeping all tab counts intact!
+    expect(
+      within(statusGroup).getByRole('button', { name: 'Tất cả (5)' }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(allTab);
+
+    // Diacritic-insensitive search + "Xóa tìm"
+    const searchInput = screen.getByLabelText('Tìm kiếm đơn hàng');
+    expect(searchInput).toHaveAttribute('id', 'order-search');
+    expect(searchInput).toHaveAttribute('name', 'orderSearch');
+
+    fireEvent.change(searchInput, { target: { value: 'nguyen minh anh' } });
+    expect(screen.getByTestId('order-card-ord-1')).toBeInTheDocument();
+    expect(screen.queryByTestId('order-card-ord-prep')).not.toBeInTheDocument();
+
+    fireEvent.change(searchInput, { target: { value: 'duc trong' } });
+    expect(screen.getByTestId('order-card-ord-deliv')).toBeInTheDocument();
+    expect(screen.queryByTestId('order-card-ord-1')).not.toBeInTheDocument();
+
+    fireEvent.change(searchInput, { target: { value: 'P2Q3' } });
+    expect(screen.getByTestId('order-card-ord-prep')).toBeInTheDocument();
+
+    fireEvent.change(searchInput, { target: { value: '091234' } });
+    expect(screen.getByTestId('order-card-ord-prep')).toBeInTheDocument();
+
+    fireEvent.change(searchInput, { target: { value: 'atiso' } });
+    expect(screen.getByTestId('order-card-ord-1')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Xóa tìm' }));
+    expect(searchInput).toHaveValue('');
+    expect(screen.getAllByTestId(/^order-card-/)).toHaveLength(5);
+  });
+
+  it('guards Hủy đơn with inline 2-step confirmation (Xác nhận hủy đơn / Giữ lại)', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(async (input: string, init?: RequestInit) => {
+        if (input.endsWith('/orders/ord-1/status') && init?.method === 'PATCH') {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              success: true,
+              data: {
+                ...mockPendingOrder,
+                status: 'cancelled',
+                updatedAt: '2026-11-18T09:50:00.000Z',
+              },
+              timestamp: '2026-11-18T09:50:00.000Z',
+            }),
+          };
+        }
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            success: true,
+            data: [mockPendingOrder],
+            timestamp: '2026-11-18T09:35:00.000Z',
+          }),
+        };
+      });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+
+    const orderCard = await screen.findByTestId('order-card-ord-1');
+
+    // Step 1: Click Hủy đơn -> should NOT call PATCH yet
+    fireEvent.click(within(orderCard).getByRole('button', { name: 'Hủy đơn' }));
+    expect(fetchMock).toHaveBeenCalledTimes(1); // Only initial GET /orders
+    expect(
+      within(orderCard).getByRole('button', { name: 'Xác nhận hủy đơn' }),
+    ).toBeInTheDocument();
+    const keepButton = within(orderCard).getByRole('button', {
+      name: 'Giữ lại',
+    });
+
+    // Clicking Giữ lại dismisses confirmation without network request
+    fireEvent.click(keepButton);
+    expect(
+      within(orderCard).queryByRole('button', { name: 'Xác nhận hủy đơn' }),
+    ).not.toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    // Step 2: Click Hủy đơn then Xác nhận hủy đơn -> sends PATCH cancelled
+    fireEvent.click(within(orderCard).getByRole('button', { name: 'Hủy đơn' }));
+    fireEvent.click(
+      within(orderCard).getByRole('button', { name: 'Xác nhận hủy đơn' }),
+    );
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining('/api/orders/ord-1/status'),
+        expect.objectContaining({
+          method: 'PATCH',
+          body: JSON.stringify({ status: 'cancelled' }),
+        }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(
+        within(orderCard).getByTestId('order-status-ord-1'),
+      ).toHaveTextContent('Đã hủy');
+    });
+  });
+
+  it('silently auto-refreshes OrdersPage every 12s when tab is visible without loading flicker and cleans up on unmount', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      get: () => 'visible',
+    });
+
+    const newlyArrivedOrder: OrderRecord = {
+      ...mockPendingOrder,
+      id: 'ord-live-2',
+      orderCode: 'OM-20261118-L9V9',
+      customerName: 'Đỗ Khánh Linh',
+    };
+
+    let pollCount = 0;
+    const fetchMock = vi.fn().mockImplementation(async () => {
+      pollCount += 1;
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data:
+            pollCount >= 2
+              ? [newlyArrivedOrder, mockPendingOrder]
+              : [mockPendingOrder],
+          timestamp: '2026-11-18T10:12:00.000Z',
+        }),
+      };
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { unmount } = render(
+      <MemoryRouter initialEntries={['/']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+
+    await screen.findByTestId('order-card-ord-1');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: 'Làm mới' })).toBeEnabled();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(12_000);
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(await screen.findByTestId('order-card-ord-live-2')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Làm mới' })).toBeEnabled();
+
+    // When tab is hidden, background polling pauses
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      get: () => 'hidden',
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(12_000);
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    // Unmount cleans up interval
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      get: () => 'visible',
+    });
+    unmount();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(24_000);
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('supports MenuPage search, availability & category filters with aria-pressed, WCAG AA Signature contrast, and empty-state reset', async () => {
+    const baseCatalog = getDefaultCatalog();
+    const customCatalog = {
+      ...baseCatalog,
+      products: baseCatalog.products.map((item, index) =>
+        index === 1 ? { ...item, isAvailable: false } : item,
+      ),
+    };
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: customCatalog,
+          timestamp: '2026-11-18T10:00:00.000Z',
+        }),
+      }),
+    );
+
+    render(
+      <MemoryRouter initialEntries={['/menu']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+
+    const atisoCard = await screen.findByTestId('menu-product-tra-sua-atiso');
+
+    // WCAG AA contrast check on Signature badge (text-espresso on bg-card-olive-gold)
+    const signatureBadge = within(atisoCard).getByText('Signature');
+    expect(signatureBadge.className).toContain('bg-card-olive-gold');
+    expect(signatureBadge.className).toContain('text-espresso');
+    expect(signatureBadge.className).not.toContain('text-surface-light');
+
+    // Availability filter pills with counts & aria-pressed
+    const availabilityGroup = screen.getByRole('group', {
+      name: 'Lọc theo trạng thái món',
+    });
+    const allAvailBtn = within(availabilityGroup).getByRole('button', {
+      name: 'Tất cả trạng thái (30)',
+    });
+    const soldOutBtn = within(availabilityGroup).getByRole('button', {
+      name: 'Đang tạm hết (1)',
+    });
+    expect(
+      within(availabilityGroup).getByRole('button', { name: 'Đang bán (29)' }),
+    ).toBeInTheDocument();
+    expect(allAvailBtn).toHaveAttribute('aria-pressed', 'true');
+    expect(soldOutBtn).toHaveAttribute('aria-pressed', 'false');
+
+    fireEvent.click(soldOutBtn);
+    expect(soldOutBtn).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getAllByTestId(/^menu-product-/)).toHaveLength(1);
+    fireEvent.click(allAvailBtn);
+    expect(screen.getAllByTestId(/^menu-product-/)).toHaveLength(30);
+
+    // Category filter pills with aria-pressed
+    const categoryGroup = screen.getByRole('group', {
+      name: 'Lọc theo nhóm thực đơn',
+    });
+    const snackCategoryBtn = within(categoryGroup).getByRole('button', {
+      name: 'Bánh tráng Snack',
+    });
+    fireEvent.click(snackCategoryBtn);
+    expect(snackCategoryBtn).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getAllByTestId(/^menu-product-/)).toHaveLength(6);
+    expect(
+      screen.getByTestId('menu-product-banh-trang-tron-top-mo'),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      within(categoryGroup).getByRole('button', { name: 'Tất cả nhóm' }),
+    );
+
+    // Diacritic-insensitive search across name, englishName, description + empty state reset
+    const menuSearch = screen.getByLabelText('Tìm món trong thực đơn');
+    expect(menuSearch).toHaveAttribute('id', 'menu-search');
+    expect(menuSearch).toHaveAttribute('name', 'menuSearch');
+
+    fireEvent.change(menuSearch, { target: { value: 'banh trang tron' } });
+    expect(
+      screen.getByTestId('menu-product-banh-trang-tron-top-mo'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('menu-product-tra-sua-atiso'),
+    ).not.toBeInTheDocument();
+
+    fireEvent.change(menuSearch, {
+      target: { value: 'khong-ton-tai-mon-nay-999' },
+    });
+    expect(screen.queryAllByTestId(/^menu-product-/)).toHaveLength(0);
+
+    const resetBtn = screen.getByRole('button', { name: 'Đặt lại bộ lọc' });
+    fireEvent.click(resetBtn);
+    expect(menuSearch).toHaveValue('');
+    expect(screen.getAllByTestId(/^menu-product-/)).toHaveLength(30);
+  });
+
+  it('displays chain-wide KPI summary, per-branch Hoàn tất stat, and explicit alert when orders sync fails on BranchesPage', async () => {
+    const completedOrder: OrderRecord = {
+      ...mockPendingOrder,
+      id: 'ord-comp-cs1',
+      orderCode: 'OM-20261118-C9C9',
+      status: 'completed',
+      grandTotal: 55000,
+    };
+
+    const fetchSuccess = vi.fn().mockImplementation(async (input: string) => {
+      if (input.endsWith('/branches')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            success: true,
+            data: OMSUA_BRANCHES,
+            timestamp: '2026-11-18T10:00:00.000Z',
+          }),
+        };
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: [mockPendingOrder, completedOrder],
+          timestamp: '2026-11-18T10:00:00.000Z',
+        }),
+      };
+    });
+    vi.stubGlobal('fetch', fetchSuccess);
+
+    const { unmount } = render(
+      <MemoryRouter initialEntries={['/branches']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+
+    const chainSummary = await screen.findByRole('region', {
+      name: 'Tổng quan toàn chuỗi',
+    });
+    expect(within(chainSummary).getByText('4 Cơ sở hoạt động')).toBeInTheDocument();
+    expect(within(chainSummary).getByText('Tổng đơn toàn chuỗi')).toBeInTheDocument();
+    expect(within(chainSummary).getByText('Đơn đang xử lý')).toBeInTheDocument();
+    expect(within(chainSummary).getByText('Tổng doanh thu hợp lệ')).toBeInTheDocument();
+    expect(within(chainSummary).getByText('150.000đ')).toBeInTheDocument();
+
+    const cs1Card = screen.getByTestId('branch-card-cs1-hoang-dieu');
+    expect(within(cs1Card).getByText('Hoàn tất')).toBeInTheDocument();
+
+    unmount();
+
+    // Partial failure: /branches succeeds, /orders fails -> explicit alert banner
+    const fetchPartialError = vi.fn().mockImplementation(async (input: string) => {
+      if (input.endsWith('/branches')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            success: true,
+            data: OMSUA_BRANCHES,
+            timestamp: '2026-11-18T10:05:00.000Z',
+          }),
+        };
+      }
+      return {
+        ok: false,
+        status: 503,
+        json: async () => ({ message: 'Dịch vụ đơn hàng tạm gián đoạn' }),
+      };
+    });
+    vi.stubGlobal('fetch', fetchPartialError);
+
+    render(
+      <MemoryRouter initialEntries={['/branches']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+
+    const alertBanner = await screen.findByRole('alert');
+    expect(alertBanner).toHaveTextContent(/Dịch vụ đơn hàng tạm gián đoạn/i);
+  });
+
+  it('displays active Admin origin and Swagger /docs URL on SettingsPage', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: {
+            status: 'ok',
+            service: 'omsua-backend',
+            version: '0.1.0',
+            uptime: 25,
+            environment: 'development',
+          },
+          timestamp: '2026-11-18T00:00:00.000Z',
+        }),
+      }),
+    );
+
+    render(
+      <MemoryRouter initialEntries={['/settings']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText(/omsua-backend/i);
+    expect(screen.getByText(window.location.origin)).toBeInTheDocument();
+    expect(
+      screen.getByText('http://localhost:4000/api/docs'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Web :3000 · Admin :3001 · Backend :4000/),
+    ).toBeInTheDocument();
   });
 });

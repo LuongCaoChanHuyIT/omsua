@@ -9,10 +9,13 @@ import {
   type OrderRecord,
   type OrderStatus,
 } from '@omsua/shared';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { fetchOrders, updateOrderStatus } from '../lib/api';
+import { normalizeVietnameseSearch } from '../lib/text';
 
 type StatusFilter = 'all' | OrderStatus;
+
+const AUTO_REFRESH_INTERVAL_MS = 12_000;
 
 const STATUS_FILTER_PILLS: ReadonlyArray<{
   value: StatusFilter;
@@ -48,6 +51,7 @@ function formatOrderTime(isoTimestamp: string): string {
     return isoTimestamp;
   }
   return parsed.toLocaleString('vi-VN', {
+    timeZone: 'Asia/Ho_Chi_Minh',
     hour: '2-digit',
     minute: '2-digit',
     day: '2-digit',
@@ -71,41 +75,116 @@ function renderLineMetadata(item: OrderLineResolved): string {
   return parts.join(' • ');
 }
 
+function matchesOrderQuery(order: OrderRecord, normalizedQuery: string): boolean {
+  if (!normalizedQuery) {
+    return true;
+  }
+
+  const topLevelFields = [
+    order.orderCode,
+    order.customerName,
+    order.customerPhone,
+    order.deliveryAddress,
+  ];
+  for (const field of topLevelFields) {
+    if (normalizeVietnameseSearch(field).includes(normalizedQuery)) {
+      return true;
+    }
+  }
+
+  return order.items.some((item) =>
+    normalizeVietnameseSearch(item.productName).includes(normalizedQuery),
+  );
+}
+
+interface CancelActionControlsProps {
+  orderId: string;
+  isConfirming: boolean;
+  isUpdating: boolean;
+  onRequestCancel: (orderId: string) => void;
+  onDismissCancel: () => void;
+  onConfirmCancel: (orderId: string) => void;
+}
+
+function CancelActionControls({
+  orderId,
+  isConfirming,
+  isUpdating,
+  onRequestCancel,
+  onDismissCancel,
+  onConfirmCancel,
+}: CancelActionControlsProps) {
+  if (isConfirming) {
+    return (
+      <>
+        <button
+          type="button"
+          disabled={isUpdating}
+          onClick={onDismissCancel}
+          className="min-h-11 rounded-xl border border-[#D4C9B0] bg-canvas-cream px-4 py-2.5 text-sm font-semibold text-espresso transition hover:bg-card-butter/50 disabled:opacity-60"
+        >
+          Giữ lại
+        </button>
+        <button
+          type="button"
+          disabled={isUpdating}
+          onClick={() => onConfirmCancel(orderId)}
+          className="min-h-11 rounded-xl border border-[#8F3530] bg-[#8F3530] px-4 py-2.5 text-sm font-semibold text-surface-light transition hover:bg-[#742A26] disabled:opacity-60"
+        >
+          Xác nhận hủy đơn
+        </button>
+      </>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      disabled={isUpdating}
+      onClick={() => onRequestCancel(orderId)}
+      className="min-h-11 rounded-xl border border-coral-sketch bg-[#F7DFDC] px-4 py-2.5 text-sm font-semibold text-[#8F3530] transition hover:bg-[#F2CECA] disabled:opacity-60"
+    >
+      Hủy đơn
+    </button>
+  );
+}
+
 export function OrdersPage() {
   const [selectedBranchId, setSelectedBranchId] = useState<string>('');
   const [selectedStatus, setSelectedStatus] = useState<StatusFilter>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [confirmingCancelOrderId, setConfirmingCancelOrderId] = useState<
+    string | null
+  >(null);
   const [updatingOrderIds, setUpdatingOrderIds] = useState<Set<string>>(
     () => new Set(),
   );
 
-  const loadOrders = useCallback(
-    async (statusFilter: StatusFilter, branchId: string) => {
-      setLoading(true);
-      setError(null);
-      const result = await fetchOrders({
-        status: statusFilter === 'all' ? undefined : statusFilter,
-        branchId: branchId || undefined,
-      });
-      if (result.ok) {
-        setOrders(result.data);
-      } else {
-        setError(result.error);
-      }
-      setLoading(false);
-    },
-    [],
-  );
+  const loadOrders = useCallback(async (branchId: string) => {
+    setLoading(true);
+    setError(null);
+    setConfirmingCancelOrderId(null);
+    const result = await fetchOrders({
+      branchId: branchId || undefined,
+    });
+    if (result.ok) {
+      setOrders(result.data);
+    } else {
+      setError(result.error);
+    }
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
     let active = true;
     setLoading(true);
     setError(null);
+    setConfirmingCancelOrderId(null);
 
     void fetchOrders({
-      status: selectedStatus === 'all' ? undefined : selectedStatus,
       branchId: selectedBranchId || undefined,
     }).then((result) => {
       if (!active) return;
@@ -117,12 +196,70 @@ export function OrdersPage() {
       setLoading(false);
     });
 
+    const intervalId = window.setInterval(() => {
+      if (
+        typeof document !== 'undefined' &&
+        document.visibilityState !== 'visible'
+      ) {
+        return;
+      }
+
+      void fetchOrders({
+        branchId: selectedBranchId || undefined,
+      }).then((result) => {
+        if (!active) return;
+        if (result.ok) {
+          setOrders(result.data);
+          setError(null);
+        }
+      });
+    }, AUTO_REFRESH_INTERVAL_MS);
+
     return () => {
       active = false;
+      window.clearInterval(intervalId);
     };
-  }, [selectedBranchId, selectedStatus]);
+  }, [selectedBranchId]);
+
+  const { counts, validRevenue } = useMemo(() => {
+    const tally: Record<StatusFilter, number> = {
+      all: orders.length,
+      pending: 0,
+      preparing: 0,
+      delivering: 0,
+      completed: 0,
+      cancelled: 0,
+    };
+    let revenue = 0;
+
+    for (const order of orders) {
+      tally[order.status] += 1;
+      if (order.status !== 'cancelled') {
+        revenue += order.grandTotal;
+      }
+    }
+
+    return { counts: tally, validRevenue: revenue };
+  }, [orders]);
+
+  const normalizedQuery = useMemo(
+    () => normalizeVietnameseSearch(searchQuery),
+    [searchQuery],
+  );
+
+  const filteredOrders = useMemo(() => {
+    return orders.filter((order) => {
+      if (selectedStatus !== 'all' && order.status !== selectedStatus) {
+        return false;
+      }
+      return matchesOrderQuery(order, normalizedQuery);
+    });
+  }, [orders, selectedStatus, normalizedQuery]);
 
   const handleTransition = async (orderId: string, nextStatus: OrderStatus) => {
+    setConfirmingCancelOrderId((current) =>
+      current === orderId ? null : current,
+    );
     setUpdatingOrderIds((prev) => {
       const next = new Set(prev);
       next.add(orderId);
@@ -137,14 +274,9 @@ export function OrdersPage() {
         return;
       }
 
-      setOrders((current) => {
-        if (selectedStatus !== 'all' && result.data.status !== selectedStatus) {
-          return current.filter((entry) => entry.id !== orderId);
-        }
-        return current.map((entry) =>
-          entry.id === orderId ? result.data : entry,
-        );
-      });
+      setOrders((current) =>
+        current.map((entry) => (entry.id === orderId ? result.data : entry)),
+      );
     } finally {
       setUpdatingOrderIds((prev) => {
         const next = new Set(prev);
@@ -172,34 +304,74 @@ export function OrdersPage() {
 
         <button
           type="button"
-          onClick={() => void loadOrders(selectedStatus, selectedBranchId)}
+          onClick={() => void loadOrders(selectedBranchId)}
           disabled={loading}
-          className="rounded-xl border border-[#D4C9B0] bg-surface-light px-4 py-2.5 text-sm font-semibold text-espresso transition hover:border-olive-primary hover:bg-card-butter/50 disabled:opacity-60"
+          className="min-h-11 rounded-xl border border-[#D4C9B0] bg-surface-light px-4 py-2.5 text-sm font-semibold text-espresso transition hover:border-olive-primary hover:bg-card-butter/50 disabled:opacity-60"
         >
           {loading ? 'Đang tải...' : 'Làm mới'}
         </button>
       </div>
 
-      <section className="rounded-2xl border border-[#DDD4C0] bg-surface-light p-4 shadow-xs sm:p-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Lọc theo trạng thái">
-            {STATUS_FILTER_PILLS.map((pill) => {
-              const isSelected = selectedStatus === pill.value;
-              return (
-                <button
-                  key={pill.value}
-                  type="button"
-                  onClick={() => setSelectedStatus(pill.value)}
-                  className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition sm:text-sm ${
-                    isSelected
-                      ? 'bg-hero-espresso text-surface-light shadow-xs'
-                      : 'border border-[#D8CEB8] bg-canvas-cream text-espresso hover:bg-card-butter/60'
-                  }`}
-                >
-                  {pill.label}
-                </button>
-              );
-            })}
+      <section
+        aria-label="Tổng quan đơn hàng"
+        className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
+      >
+        <div className="rounded-2xl border border-[#DDD4C0] bg-surface-light p-4 shadow-xs">
+          <p className="text-xs font-semibold uppercase tracking-wider text-warm-muted">
+            Tổng đơn hàng
+          </p>
+          <p className="mt-1 font-display text-2xl font-bold text-espresso">
+            {counts.all}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-[#DEC98A] bg-card-butter/60 p-4 shadow-xs">
+          <p className="text-xs font-semibold uppercase tracking-wider text-olive-primary">
+            Chờ xác nhận
+          </p>
+          <p className="mt-1 font-display text-2xl font-bold text-olive-primary">
+            {counts.pending}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-[#E6B38E] bg-[#F6DFCE]/70 p-4 shadow-xs">
+          <p className="text-xs font-semibold uppercase tracking-wider text-[#9A460B]">
+            Đang pha chế &amp; giao
+          </p>
+          <p className="mt-1 font-display text-2xl font-bold text-[#9A460B]">
+            {counts.preparing + counts.delivering}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-[#B4C488] bg-[#E3EAD1]/75 p-4 shadow-xs">
+          <p className="text-xs font-semibold uppercase tracking-wider text-[#45531B]">
+            Doanh thu hợp lệ
+          </p>
+          <p className="mt-1 font-display text-2xl font-bold text-[#45531B]">
+            {formatVnd(validRevenue)}
+          </p>
+        </div>
+      </section>
+
+      <section className="space-y-4 rounded-2xl border border-[#DDD4C0] bg-surface-light p-4 shadow-xs sm:p-5">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-1 items-center gap-2">
+            <input
+              id="order-search"
+              name="orderSearch"
+              type="search"
+              aria-label="Tìm kiếm đơn hàng"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Tìm mã OM-..., tên khách, SĐT, món..."
+              className="min-h-11 w-full rounded-xl border border-[#D4C9B0] bg-canvas-cream px-3.5 py-2.5 text-sm text-espresso placeholder:text-warm-muted focus:border-olive-primary focus:outline-none"
+            />
+            {searchQuery.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="min-h-11 shrink-0 rounded-xl border border-[#D4C9B0] bg-canvas-cream px-3.5 py-2 text-xs font-semibold text-espresso transition hover:border-olive-primary hover:bg-card-butter/60 sm:text-sm"
+              >
+                Xóa tìm
+              </button>
+            ) : null}
           </div>
 
           <div className="flex items-center gap-2.5">
@@ -214,7 +386,7 @@ export function OrdersPage() {
               aria-label="Lọc theo chi nhánh"
               value={selectedBranchId}
               onChange={(event) => setSelectedBranchId(event.target.value)}
-              className="w-full rounded-xl border border-[#D4C9B0] bg-canvas-cream px-3.5 py-2 text-sm font-medium text-espresso focus:border-olive-primary focus:outline-none lg:w-64"
+              className="min-h-11 w-full rounded-xl border border-[#D4C9B0] bg-canvas-cream px-3.5 py-2 text-sm font-medium text-espresso focus:border-olive-primary focus:outline-none md:w-64"
             >
               <option value="">Tất cả chi nhánh</option>
               {OMSUA_BRANCHES.map((branch) => (
@@ -224,6 +396,31 @@ export function OrdersPage() {
               ))}
             </select>
           </div>
+        </div>
+
+        <div
+          className="flex flex-wrap gap-2"
+          role="group"
+          aria-label="Lọc theo trạng thái"
+        >
+          {STATUS_FILTER_PILLS.map((pill) => {
+            const isSelected = selectedStatus === pill.value;
+            return (
+              <button
+                key={pill.value}
+                type="button"
+                aria-pressed={isSelected}
+                onClick={() => setSelectedStatus(pill.value)}
+                className={`min-h-11 rounded-full px-3.5 py-2 text-xs font-semibold transition sm:text-sm ${
+                  isSelected
+                    ? 'bg-hero-espresso text-surface-light shadow-xs'
+                    : 'border border-[#D8CEB8] bg-canvas-cream text-espresso hover:bg-card-butter/60'
+                }`}
+              >
+                {pill.label} ({counts[pill.value]})
+              </button>
+            );
+          })}
         </div>
       </section>
 
@@ -241,7 +438,7 @@ export function OrdersPage() {
         <div className="rounded-2xl border border-[#DDD4C0] bg-surface-light p-10 text-center text-sm text-warm-muted">
           Đang tải danh sách đơn hàng từ máy chủ Ốm Sữa...
         </div>
-      ) : orders.length === 0 ? (
+      ) : filteredOrders.length === 0 ? (
         <div className="rounded-2xl border border-[#DDD4C0] bg-surface-light p-10 text-center">
           <p className="font-editorial text-lg font-semibold text-espresso">
             Chưa có đơn hàng nào trong danh mục lọc này
@@ -252,8 +449,9 @@ export function OrdersPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {orders.map((order) => {
+          {filteredOrders.map((order) => {
             const isUpdating = updatingOrderIds.has(order.id);
+            const isConfirmingCancel = confirmingCancelOrderId === order.id;
 
             return (
               <article
@@ -278,7 +476,8 @@ export function OrdersPage() {
                       </span>
                     </div>
                     <p className="mt-1.5 text-xs font-medium text-warm-muted">
-                      {order.branchName} • Đặt lúc {formatOrderTime(order.createdAt)}
+                      {order.branchName} • Đặt lúc{' '}
+                      {formatOrderTime(order.createdAt)}
                     </p>
                   </div>
 
@@ -304,6 +503,11 @@ export function OrdersPage() {
                       </span>
                     </p>
                     <p className="text-espresso">{order.deliveryAddress}</p>
+                    {order.paymentMethod === 'qr' ? (
+                      <p className="rounded-lg border border-[#B4C488] bg-[#E3EAD1]/80 px-3 py-2 font-mono text-xs font-semibold text-[#45531B]">
+                        CK: OMSUA {order.orderCode} {order.customerPhone}
+                      </p>
+                    ) : null}
                     {order.note ? (
                       <p className="rounded-lg border border-[#DEC98A] bg-card-butter/60 px-3 py-2 text-xs font-medium text-olive-primary">
                         Ghi chú: {order.note}
@@ -358,23 +562,25 @@ export function OrdersPage() {
                   <div className="mt-5 flex flex-wrap items-center justify-end gap-2.5 border-t border-[#E5DEC9] pt-4">
                     {order.status === 'pending' ? (
                       <>
-                        <button
-                          type="button"
-                          disabled={isUpdating}
-                          onClick={() =>
-                            void handleTransition(order.id, 'cancelled')
+                        <CancelActionControls
+                          orderId={order.id}
+                          isConfirming={isConfirmingCancel}
+                          isUpdating={isUpdating}
+                          onRequestCancel={setConfirmingCancelOrderId}
+                          onDismissCancel={() =>
+                            setConfirmingCancelOrderId(null)
                           }
-                          className="rounded-xl border border-coral-sketch bg-[#F7DFDC] px-4 py-2 text-sm font-semibold text-[#8F3530] transition hover:bg-[#F2CECA] disabled:opacity-60"
-                        >
-                          Hủy đơn
-                        </button>
+                          onConfirmCancel={(id) =>
+                            void handleTransition(id, 'cancelled')
+                          }
+                        />
                         <button
                           type="button"
                           disabled={isUpdating}
                           onClick={() =>
                             void handleTransition(order.id, 'preparing')
                           }
-                          className="rounded-xl bg-terracotta px-4 py-2 text-sm font-semibold text-surface-light shadow-xs transition hover:bg-[#C05C16] disabled:opacity-60"
+                          className="min-h-11 rounded-xl bg-terracotta px-4 py-2.5 text-sm font-semibold text-surface-light shadow-xs transition hover:bg-[#C05C16] disabled:opacity-60"
                         >
                           Xác nhận pha chế
                         </button>
@@ -383,23 +589,25 @@ export function OrdersPage() {
 
                     {order.status === 'preparing' ? (
                       <>
-                        <button
-                          type="button"
-                          disabled={isUpdating}
-                          onClick={() =>
-                            void handleTransition(order.id, 'cancelled')
+                        <CancelActionControls
+                          orderId={order.id}
+                          isConfirming={isConfirmingCancel}
+                          isUpdating={isUpdating}
+                          onRequestCancel={setConfirmingCancelOrderId}
+                          onDismissCancel={() =>
+                            setConfirmingCancelOrderId(null)
                           }
-                          className="rounded-xl border border-coral-sketch bg-[#F7DFDC] px-4 py-2 text-sm font-semibold text-[#8F3530] transition hover:bg-[#F2CECA] disabled:opacity-60"
-                        >
-                          Hủy đơn
-                        </button>
+                          onConfirmCancel={(id) =>
+                            void handleTransition(id, 'cancelled')
+                          }
+                        />
                         <button
                           type="button"
                           disabled={isUpdating}
                           onClick={() =>
                             void handleTransition(order.id, 'delivering')
                           }
-                          className="rounded-xl bg-terracotta px-4 py-2 text-sm font-semibold text-surface-light shadow-xs transition hover:bg-[#C05C16] disabled:opacity-60"
+                          className="min-h-11 rounded-xl bg-terracotta px-4 py-2.5 text-sm font-semibold text-surface-light shadow-xs transition hover:bg-[#C05C16] disabled:opacity-60"
                         >
                           Giao hàng
                         </button>
@@ -413,7 +621,7 @@ export function OrdersPage() {
                         onClick={() =>
                           void handleTransition(order.id, 'completed')
                         }
-                        className="rounded-xl bg-artichoke px-4 py-2 text-sm font-semibold text-surface-light shadow-xs transition hover:bg-[#66762F] disabled:opacity-60"
+                        className="min-h-11 rounded-xl bg-artichoke px-4 py-2.5 text-sm font-semibold text-surface-light shadow-xs transition hover:bg-[#66762F] disabled:opacity-60"
                       >
                         Hoàn tất
                       </button>
