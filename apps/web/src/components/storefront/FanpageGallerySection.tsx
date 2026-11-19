@@ -51,7 +51,7 @@ export function FanpageGallerySection() {
   return (
     <section
       id="khong-gian"
-      className="scroll-mt-24 rounded-3xl border border-olive-primary/12 bg-surface-light p-6 shadow-2xs sm:p-8"
+      className="scroll-mt-24 rounded-3xl border border-olive-primary/14 bg-surface-light p-6 shadow-paper-rest sm:p-8"
     >
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-2">
@@ -59,7 +59,7 @@ export function FanpageGallerySection() {
             <span className="inline-flex items-center rounded-full bg-card-butter px-3.5 py-1 text-xs font-bold tracking-wider text-olive-primary uppercase">
               ✦ ẢNH THỰC TẾ TỪ FANPAGE {OMSUA_SOCIAL_LINKS.handle}
             </span>
-            <span className="inline-flex items-center rounded-full border border-olive-primary/18 bg-canvas-cream px-3 py-1 text-xs font-semibold text-espresso">
+            <span className="inline-flex items-center rounded-full border border-olive-primary/18 bg-canvas-cream px-3 py-1 text-xs font-semibold text-espresso tabular-nums">
               ✓ {OMSUA_SOCIAL_LINKS.followersLabel} •{' '}
               {OMSUA_SOCIAL_LINKS.ratingLabel}
             </span>
@@ -90,9 +90,9 @@ export function FanpageGallerySection() {
                   setActiveFilter(filter.id);
                   setLightboxIndex(null);
                 }}
-                className={`inline-flex min-h-11 cursor-pointer items-center rounded-full px-4 py-2 text-xs font-bold transition ${
+                className={`inline-flex min-h-11 cursor-pointer items-center rounded-full px-4 py-2 text-xs font-bold tabular-nums transition-colors ${
                   isActive
-                    ? 'bg-hero-espresso text-surface-light shadow-2xs'
+                    ? 'bg-hero-espresso text-surface-light'
                     : 'border border-olive-primary/20 bg-canvas-cream text-espresso hover:bg-card-butter/65'
                 }`}
               >
@@ -108,49 +108,54 @@ export function FanpageGallerySection() {
           const isFailed = failedIds.has(item.id);
 
           return (
-            <button
+            <article
               key={item.id}
-              type="button"
-              aria-label={`${item.title} — Xem ảnh lớn`}
-              onClick={() => setLightboxIndex(index)}
-              className="group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-olive-primary/12 bg-canvas-cream text-left shadow-2xs transition hover:border-olive-primary/35"
+              className="group flex flex-col overflow-hidden rounded-2xl border border-olive-primary/12 bg-canvas-cream shadow-paper-rest transition-colors hover:border-olive-primary/35"
             >
-              <div className="relative aspect-[4/5] w-full overflow-hidden bg-hero-espresso/15">
-                {isFailed ? (
-                  <div className="flex h-full w-full items-center justify-center bg-card-butter/50 p-3 text-center text-xs font-semibold text-olive-primary">
-                    {item.title}
-                  </div>
-                ) : (
-                  <img
-                    src={item.src}
-                    alt=""
-                    aria-hidden="true"
-                    loading="lazy"
-                    decoding="async"
-                    onError={() =>
-                      setFailedIds((prev) => {
-                        const next = new Set(prev);
-                        next.add(item.id);
-                        return next;
-                      })
-                    }
-                    className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                  />
-                )}
-              </div>
+              <button
+                type="button"
+                onClick={() => setLightboxIndex(index)}
+                className="flex cursor-pointer flex-col text-left focus-visible:outline-offset-[-2px]"
+              >
+                <div className="relative aspect-[4/5] w-full overflow-hidden bg-hero-espresso/15">
+                  {isFailed ? (
+                    <span
+                      aria-hidden="true"
+                      className="flex h-full w-full items-center justify-center bg-card-butter/50 p-3 text-center text-xs font-semibold text-olive-primary"
+                    >
+                      {item.title}
+                    </span>
+                  ) : (
+                    <img
+                      src={item.src}
+                      width={800}
+                      height={1000}
+                      alt=""
+                      aria-hidden="true"
+                      loading="lazy"
+                      decoding="async"
+                      onError={() =>
+                        setFailedIds((prev) => {
+                          const next = new Set(prev);
+                          next.add(item.id);
+                          return next;
+                        })
+                      }
+                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  )}
+                </div>
 
-              <div className="flex flex-1 flex-col justify-between p-3">
-                <p className="line-clamp-1 font-editorial text-xs font-semibold text-espresso sm:text-sm">
+                <span className="line-clamp-1 px-3 pt-3 font-editorial text-xs font-semibold text-espresso sm:text-sm">
                   {item.title}
-                </p>
-                <p
-                  aria-hidden="true"
-                  className="mt-1 line-clamp-2 text-[11px] leading-snug text-warm-muted"
-                >
-                  {item.caption}
-                </p>
-              </div>
-            </button>
+                  <span className="sr-only"> — Xem ảnh lớn</span>
+                </span>
+              </button>
+
+              <p className="mt-1 line-clamp-2 px-3 pb-3 text-xs leading-snug text-warm-muted">
+                {item.caption}
+              </p>
+            </article>
           );
         })}
       </div>

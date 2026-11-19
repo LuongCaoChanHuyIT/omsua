@@ -122,6 +122,22 @@ describe('web config & HomePage Storefront SSR consistency', () => {
         label: 'Tailwind pure white/black utility',
         regex: /\b(bg|text|border|ring|fill|stroke|outline)-(white|black)\b/,
       },
+      {
+        label: '<44px sm:min-h-9/10 touch-target regression',
+        regex: /\bsm:min-h-(9|10)\b/,
+      },
+      {
+        label: 'sub-12px micro-badge text-[9px]/text-[10px]/text-[11px]',
+        regex: /\btext-\[(9|10|11)px\]/,
+      },
+      {
+        label: 'non-compositor transition-all',
+        regex: /\btransition-all\b/,
+      },
+      {
+        label: 'straight three-dot loading string',
+        regex: /Đang (xử lý đơn hàng|tra cứu)\.\.\./,
+      },
     ];
 
     const files = collectSourceFiles(srcRoot);

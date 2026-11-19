@@ -38,6 +38,12 @@ describe('FanpageGallerySection, PhotoLightboxModal & BrandFooter social/branch 
     );
     const triggers = screen.getAllByRole('button', { name: /Xem ảnh lớn$/i });
     expect(triggers).toHaveLength(4);
+    for (const trigger of triggers) {
+      expect(trigger.querySelector('p')).toBeNull();
+      const img = trigger.querySelector('img');
+      expect(img).toHaveAttribute('width', '800');
+      expect(img).toHaveAttribute('height', '1000');
+    }
 
     triggers[3]!.focus();
     fireEvent.click(triggers[3]!);

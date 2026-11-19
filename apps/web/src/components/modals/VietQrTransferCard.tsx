@@ -192,7 +192,7 @@ export function VietQrTransferCard({
         </div>
 
         <div className="min-w-0 flex-1 space-y-1.5 text-xs sm:text-sm">
-          <span className="inline-flex items-center rounded-full bg-card-butter px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-olive-primary uppercase">
+          <span className="inline-flex items-center rounded-full bg-card-butter px-2.5 py-0.5 text-xs font-bold tracking-wider text-olive-primary uppercase">
             VIETQR • CHUYỂN KHOẢN NHANH 24/7
           </span>
           <p className="text-espresso">
@@ -205,13 +205,13 @@ export function VietQrTransferCard({
           </p>
           <p className="text-espresso">
             <span className="text-warm-muted">Số TK:</span>{' '}
-            <strong className="font-bold tracking-wide text-olive-primary">
+            <strong className="font-bold tracking-wide text-olive-primary tabular-nums">
               0561 0005 20178
             </strong>
           </p>
           <p className="text-espresso">
             <span className="text-warm-muted">Số tiền CK:</span>{' '}
-            <strong className="font-bold text-terracotta">
+            <strong className="font-bold text-terracotta tabular-nums">
               {formatVnd(amount)}
             </strong>
           </p>
@@ -220,7 +220,7 @@ export function VietQrTransferCard({
 
       <div className="mt-3 flex flex-col gap-2 rounded-xl border border-olive-primary/15 bg-card-butter/65 p-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <span className="block text-[11px] font-semibold text-warm-muted">
+          <span className="block text-xs font-semibold text-warm-muted">
             Nội dung chuyển khoản:
           </span>
           <code className="mt-0.5 block truncate font-sans text-xs font-bold text-olive-primary sm:text-sm">
