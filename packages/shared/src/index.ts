@@ -86,3 +86,6 @@ export type {
   FanpagePhotoItem,
   ProductPhotoMeta,
 } from './fanpage-media';
+
+export { normalizeVietnameseText, resolveOrderAge } from './text-and-time';
+export type { OrderAgeBadge } from './text-and-time';

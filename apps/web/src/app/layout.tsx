@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import {
   Be_Vietnam_Pro,
   Dancing_Script,
@@ -51,6 +51,10 @@ const fontVariableClasses = [
   dancingScript.variable,
   shantellSans.variable,
 ].join(' ');
+
+export const viewport: Viewport = {
+  themeColor: '#EEEADF',
+};
 
 export const metadata: Metadata = {
   title: 'Ốm Sữa — Trà sữa của người Đà Lạt • Since 2017',

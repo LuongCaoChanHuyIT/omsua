@@ -104,6 +104,16 @@ describe('web config & HomePage Storefront SSR consistency', () => {
     expect(globalsCss).toContain('.bg-hero-espresso :focus-visible');
     expect(globalsCss).toContain('var(--color-card-butter)');
     expect(globalsCss).toContain('prefers-reduced-motion: reduce');
+    expect(globalsCss).toContain('--shadow-paper-rest');
+    expect(globalsCss).toContain('--shadow-paper-lift');
+    expect(globalsCss).toContain('bg-paper-grain');
+
+    const layoutSource = readFileSync(
+      path.join(srcRoot, 'app', 'layout.tsx'),
+      'utf8',
+    );
+    expect(layoutSource).toContain('export const viewport: Viewport');
+    expect(layoutSource).toMatch(/themeColor:\s*['"]#EEEADF['"]/);
 
     const forbiddenPatterns: Array<{ label: string; regex: RegExp }> = [
       { label: 'hex #fff/#ffffff/#000/#000000', regex: /(#fff\b|#ffffff\b|#000\b|#000000\b)/i },

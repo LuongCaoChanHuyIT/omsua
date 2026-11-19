@@ -1,8 +1,5 @@
+import { normalizeVietnameseText } from '@omsua/shared';
+
 export function normalizeVietnameseSearch(value: string): string {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[đĐ]/g, 'd')
-    .toLowerCase()
-    .trim();
+  return normalizeVietnameseText(value);
 }

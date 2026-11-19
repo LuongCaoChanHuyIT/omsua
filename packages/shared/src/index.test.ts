@@ -6,6 +6,8 @@ import {
   DEFAULT_PORTS,
   createApiResponse,
   normalizeApiBaseUrl,
+  normalizeVietnameseText,
+  resolveOrderAge,
 } from './index';
 
 describe('@omsua/shared', () => {
@@ -62,5 +64,34 @@ describe('@omsua/shared', () => {
     ).trim();
     expect(cjsOut).toBe('4000');
     expect(esmOut).toBe('3000');
+  });
+
+  it('normalizes Vietnamese diacritics/Đ and resolves order age SLA badges safely across clock skew, invalid dates, and terminal statuses', () => {
+    expect(normalizeVietnameseText('  Đức Trọng — Sữa Tươi Đường Đen  ')).toBe(
+      'duc trong — sua tuoi duong den',
+    );
+    const baseNow = Date.parse('2026-11-19T08:30:00.000Z');
+    expect(
+      resolveOrderAge('2026-11-19T08:35:00.000Z', 'pending', baseNow),
+    ).toEqual({
+      label: 'Vừa đặt',
+      minutes: 0,
+      isOverdue: false,
+    });
+    expect(
+      resolveOrderAge('2026-11-19T08:09:00.000Z', 'pending', baseNow),
+    ).toEqual({
+      label: '21 phút trước',
+      minutes: 21,
+      isOverdue: true,
+    });
+    expect(
+      resolveOrderAge('2026-11-19T07:00:00.000Z', 'completed', baseNow),
+    ).toEqual({
+      label: '1 giờ 30 phút trước',
+      minutes: 90,
+      isOverdue: false,
+    });
+    expect(resolveOrderAge('not-a-date', 'pending', baseNow)).toBeNull();
   });
 });
