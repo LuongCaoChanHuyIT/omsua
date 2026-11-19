@@ -95,6 +95,11 @@ describe('Admin brand favicon, typography, a11y CSS, and zero pure B/W rule', ()
     expect(indexHtml).toContain('Dancing+Script:wght@700');
     expect(indexHtml).toContain('Be+Vietnam+Pro:wght@400;500;600;700;800');
     expect(indexHtml).toContain('Lora:ital,wght@0,400;0,500;0,600;1,400');
+    expect(indexHtml).toContain('<meta name="description"');
+
+    const robotsPath = path.join(ADMIN_ROOT, 'public', 'robots.txt');
+    expect(fs.existsSync(robotsPath)).toBe(true);
+    expect(fs.readFileSync(robotsPath, 'utf8')).toContain('User-agent: *');
   });
 
   it('defines --font-quote, :focus-visible outline, dark surface focus contrast, and prefers-reduced-motion in src/index.css', () => {

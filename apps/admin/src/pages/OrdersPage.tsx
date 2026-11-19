@@ -174,6 +174,9 @@ export function OrdersPage() {
   const mutationEpochRef = useRef<number>(0);
   const inFlightMutationsRef = useRef<number>(0);
   const activeForegroundSeqRef = useRef<number>(0);
+  const committedMutationsRef = useRef<Map<string, OrderRecord>>(new Map());
+  const activeBranchRef = useRef<string>(selectedBranchId);
+  activeBranchRef.current = selectedBranchId;
 
   const loadOrders = useCallback(async (branchId: string) => {
     const seq = ++fetchSeqRef.current;
@@ -194,6 +197,7 @@ export function OrdersPage() {
         mutEpoch === mutationEpochRef.current &&
         inFlightMutationsRef.current === 0
       ) {
+        committedMutationsRef.current.clear();
         setOrders(result.data);
       }
     } else {
@@ -221,7 +225,14 @@ export function OrdersPage() {
           initialMutEpoch === mutationEpochRef.current &&
           inFlightMutationsRef.current === 0
         ) {
+          committedMutationsRef.current.clear();
           setOrders(result.data);
+        } else {
+          setOrders(
+            result.data.map(
+              (entry) => committedMutationsRef.current.get(entry.id) ?? entry,
+            ),
+          );
         }
       } else {
         setError(result.error);
@@ -258,6 +269,7 @@ export function OrdersPage() {
           return;
         }
         if (result.ok) {
+          committedMutationsRef.current.clear();
           setOrders(result.data);
         }
       });
@@ -324,9 +336,18 @@ export function OrdersPage() {
         return;
       }
 
-      setOrders((current) =>
-        current.map((entry) => (entry.id === orderId ? result.data : entry)),
-      );
+      committedMutationsRef.current.set(orderId, result.data);
+      setOrders((current) => {
+        if (
+          activeBranchRef.current &&
+          result.data.branchId !== activeBranchRef.current
+        ) {
+          return current;
+        }
+        return current.map((entry) =>
+          entry.id === orderId ? result.data : entry,
+        );
+      });
     } finally {
       mutationEpochRef.current += 1;
       inFlightMutationsRef.current -= 1;

@@ -4,6 +4,7 @@ import type { NextConfig } from 'next';
 export default function nextConfig(phase: string): NextConfig {
   return {
     distDir: phase === PHASE_DEVELOPMENT_SERVER ? '.next-dev' : '.next',
+    devIndicators: false,
     transpilePackages: ['@omsua/shared'],
   };
 }

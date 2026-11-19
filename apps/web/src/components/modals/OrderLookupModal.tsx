@@ -136,6 +136,8 @@ export function OrderLookupModal({
 
   useEffect(() => {
     if (!isOpen) {
+      requestIdRef.current += 1;
+      setIsLoading(false);
       wasOpenRef.current = false;
       lastInitialOrderCodeRef.current = null;
       return;

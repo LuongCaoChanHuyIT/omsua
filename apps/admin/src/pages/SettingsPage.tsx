@@ -124,7 +124,7 @@ export function SettingsPage() {
                 href={swaggerUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="underline decoration-terracotta/50 underline-offset-4 transition hover:text-olive-primary"
+                className="inline-flex min-h-11 items-center underline decoration-terracotta/50 underline-offset-4 transition hover:text-olive-primary"
               >
                 {swaggerUrl}
               </a>

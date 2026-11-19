@@ -1495,4 +1495,108 @@ describe('Admin App routes & operational portals', () => {
       within(atisoCard).getByRole('button', { name: 'Mở bán lại' }),
     ).toBeInTheDocument();
   });
+
+  it('applies branch-switch orders even when a status PATCH on the previous branch is still in flight, and enforces min-h-11 on Settings Swagger link', async () => {
+    const ducTrongOrder: OrderRecord = {
+      ...mockPendingOrder,
+      id: 'ord-dt-9',
+      orderCode: 'OM-20261119-DT99',
+      branchId: 'cs4-duc-trong',
+      branchName: 'Cơ sở 4 — Đức Trọng',
+    };
+
+    let resolvePatch!: (res: unknown) => void;
+    const fetchMock = vi
+      .fn()
+      .mockImplementation((input: string, init?: RequestInit) => {
+        if (
+          input.endsWith('/orders/ord-1/status') &&
+          init?.method === 'PATCH'
+        ) {
+          return new Promise((resolve) => {
+            resolvePatch = resolve;
+          });
+        }
+        if (input.includes('branchId=cs4-duc-trong')) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({
+              success: true,
+              data: [ducTrongOrder],
+              timestamp: '2026-11-19T06:00:00.000Z',
+            }),
+          });
+        }
+        if (input.endsWith('/health')) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({
+              success: true,
+              data: {
+                status: 'ok',
+                service: 'omsua-backend',
+                version: '0.1.0',
+                uptime: 50,
+                environment: 'production',
+              },
+              timestamp: '2026-11-19T06:00:00.000Z',
+            }),
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({
+            success: true,
+            data: [mockPendingOrder],
+            timestamp: '2026-11-19T05:59:00.000Z',
+          }),
+        });
+      });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+
+    const initialCard = await screen.findByTestId('order-card-ord-1');
+    // Start PATCH on ord-1 (stays in flight)
+    fireEvent.click(
+      within(initialCard).getByRole('button', { name: 'Xác nhận pha chế' }),
+    );
+    expect(resolvePatch).toBeDefined();
+
+    // Immediately switch branch filter to Cơ sở 4 — Đức Trọng while PATCH is in flight!
+    fireEvent.change(screen.getByLabelText('Lọc theo chi nhánh'), {
+      target: { value: 'cs4-duc-trong' },
+    });
+
+    // Must immediately display Cơ sở 4 — Đức Trọng orders without getting blocked by inFlightMutationsRef!
+    expect(
+      await screen.findByTestId('order-card-ord-dt-9'),
+    ).toBeInTheDocument();
+
+    // Resolve the earlier PATCH cleanly
+    resolvePatch({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        success: true,
+        data: { ...mockPendingOrder, status: 'preparing' },
+        timestamp: '2026-11-19T06:00:01.000Z',
+      }),
+    });
+
+    // Navigate to /settings and verify Swagger link has >=44px min-h-11 tap target
+    fireEvent.click(screen.getByRole('link', { name: 'Cài đặt' }));
+    const swaggerLink = await screen.findByRole('link', {
+      name: /\/api\/docs/i,
+    });
+    expect(swaggerLink.className).toContain('min-h-11');
+  });
 });

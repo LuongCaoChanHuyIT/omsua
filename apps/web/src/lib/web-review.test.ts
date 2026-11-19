@@ -30,6 +30,7 @@ function collectSourceFiles(dir: string): string[] {
 
 describe('web config & HomePage Storefront SSR consistency', () => {
   const originalApiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const originalServerApiUrl = process.env.API_URL;
 
   afterEach(() => {
     vi.restoreAllMocks();
@@ -37,6 +38,11 @@ describe('web config & HomePage Storefront SSR consistency', () => {
       delete process.env.NEXT_PUBLIC_API_URL;
     } else {
       process.env.NEXT_PUBLIC_API_URL = originalApiUrl;
+    }
+    if (originalServerApiUrl === undefined) {
+      delete process.env.API_URL;
+    } else {
+      process.env.API_URL = originalServerApiUrl;
     }
   });
 
@@ -51,7 +57,8 @@ describe('web config & HomePage Storefront SSR consistency', () => {
     expect(mergedRules['react-hooks/exhaustive-deps']).toBeDefined();
   });
 
-  it('normalizes NEXT_PUBLIC_API_URL for HomePage SSR fetches and renders warm Ốm Sữa Storefront fallback markup', async () => {
+  it('normalizes NEXT_PUBLIC_API_URL for HomePage SSR fetches (falling through blank API_URL) and renders warm Ốm Sữa Storefront fallback markup', async () => {
+    process.env.API_URL = '   ';
     process.env.NEXT_PUBLIC_API_URL = 'https://api.staging.omsua.vn/api///';
     const fetchSpy = vi
       .spyOn(globalThis, 'fetch')
@@ -141,14 +148,26 @@ describe('web config & HomePage Storefront SSR consistency', () => {
     expect(typeof nextConfig).toBe('function');
     const configFn = nextConfig as unknown as (phase: string) => {
       distDir?: string;
+      devIndicators?: false | object;
       transpilePackages?: string[];
     };
     expect(configFn(PHASE_DEVELOPMENT_SERVER).distDir).toBe('.next-dev');
+    expect(configFn(PHASE_DEVELOPMENT_SERVER).devIndicators).toBe(false);
     expect(configFn(PHASE_PRODUCTION_BUILD).distDir).toBe('.next');
     expect(configFn(PHASE_PRODUCTION_BUILD).transpilePackages).toContain(
       '@omsua/shared',
     );
     expect(homePageDynamic).toBe('force-dynamic');
+
+    const catchAllPath = path.resolve(
+      __dirname,
+      '..',
+      'app',
+      '[...notFound]',
+      'page.tsx',
+    );
+    expect(existsSync(catchAllPath)).toBe(true);
+    expect(readFileSync(catchAllPath, 'utf8')).toContain('notFound()');
 
     const pageSource = readFileSync(
       path.resolve(__dirname, '..', 'app', 'page.tsx'),
