@@ -139,6 +139,14 @@ describe('web config & HomePage Storefront SSR consistency', () => {
         label: 'straight three-dot loading string',
         regex: /Đang (xử lý đơn hàng|tra cứu)\.\.\./,
       },
+      {
+        label: 'legacy React forwardRef (use React 19 ref prop)',
+        regex: /\bforwardRef\s*[<(]/,
+      },
+      {
+        label: 'legacy React useContext (use React 19 use())',
+        regex: /\buseContext\s*\(/,
+      },
     ];
 
     const files = collectSourceFiles(srcRoot);

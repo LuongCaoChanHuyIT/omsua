@@ -18,10 +18,16 @@ import {
 import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { StorefrontClientShell } from '@/components/storefront/StorefrontClientShell';
-import { CartProvider } from '@/store/cart-store';
+import { CartProvider, useCart } from '@/store/cart-store';
 import { CartCheckoutDrawer } from './CartCheckoutDrawer';
+import { Checkout } from './checkout/CheckoutCompound';
+import { Customizer } from './customizer/CustomizerCompound';
 import { OrderLookupModal } from './OrderLookupModal';
-import { ProductCustomizerModal } from './ProductCustomizerModal';
+import {
+  DrinkCustomizerModal,
+  ProductCustomizerModal,
+  SnackCustomizerModal,
+} from './ProductCustomizerModal';
 
 describe('Interactive Customizer Modal & Cart Checkout Flow', () => {
   const catalog = getDefaultCatalog();
@@ -1459,5 +1465,136 @@ describe('Interactive Customizer Modal & Cart Checkout Flow', () => {
     expect(nameInput).not.toHaveAttribute('aria-describedby');
     expect(phoneInput).toHaveAttribute('aria-invalid', 'true');
     expect(document.activeElement).toBe(phoneInput);
+  });
+
+  it('supports React 19 Compound Components (Customizer.*, Checkout.*, CartContext { state, actions, meta }) and explicit Drink/Snack variants without cross-kind state leakage', () => {
+    const snackProduct = catalog.products.find(
+      (p) => p.id === 'banh-trang-tron-top-mo',
+    )!;
+    const onAddSpy = vi.fn();
+
+    // 1. Live switch from Drink (Size L + topping) -> Snack resets cleanly without leaking drink options
+    const { rerender, unmount } = render(
+      <ProductCustomizerModal
+        product={traSuaAtiso}
+        toppings={catalog.toppings}
+        onClose={vi.fn()}
+        onAddToCart={onAddSpy}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('radio', { name: /Size L/i }));
+    fireEvent.click(
+      screen.getByRole('checkbox', { name: /Trân châu đen nấu mật/i }),
+    );
+
+    rerender(
+      <ProductCustomizerModal
+        product={snackProduct}
+        toppings={catalog.toppings}
+        onClose={vi.fn()}
+        onAddToCart={onAddSpy}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Thêm vào giỏ • 40.000đ' }),
+    );
+    expect(onAddSpy).toHaveBeenCalledWith({
+      productId: 'banh-trang-tron-top-mo',
+      quantity: 1,
+      size: 'STD',
+      spiceLevel: 'cay-vua',
+    });
+    unmount();
+
+    // 2. Explicit DrinkCustomizerModal & SnackCustomizerModal variants + custom sibling consumer inside Customizer.Provider
+    function CustomSiblingReadout() {
+      const { state, actions, meta } = Customizer.useCustomizerContext();
+      return (
+        <div>
+          <span data-testid="compound-readout">
+            {`${meta.product.id}:${state.sugarLevel}:${meta.previewLine.lineTotal}`}
+          </span>
+          <button type="button" onClick={() => actions.setSugarLevel('30')}>
+            Sibling 30%
+          </button>
+        </div>
+      );
+    }
+
+    const { unmount: unmountCompound } = render(
+      <Customizer.Provider
+        product={traSuaAtiso}
+        toppings={catalog.toppings}
+        onClose={vi.fn()}
+      >
+        <Customizer.SugarSelector />
+        <CustomSiblingReadout />
+      </Customizer.Provider>,
+    );
+
+    expect(screen.getByTestId('compound-readout')).toHaveTextContent(
+      'tra-sua-atiso:70:45000',
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Sibling 30%' }));
+    expect(screen.getByTestId('compound-readout')).toHaveTextContent(
+      'tra-sua-atiso:30:45000',
+    );
+    unmountCompound();
+
+    // 3. Explicit variants + CartContext { state, actions, meta } + Checkout.useCheckoutContext()
+    function CartAndCheckoutInspector() {
+      const cart = useCart();
+      const checkout = Checkout.useCheckoutContext();
+      return (
+        <div data-testid="di-inspector">
+          {`hydrated:${String(cart.meta.isHydrated)}:items:${cart.state.totals.totalItems}:pay:${checkout.state.paymentMethod}`}
+          <button
+            type="button"
+            onClick={() => checkout.actions.setPaymentMethod('qr')}
+          >
+            Switch QR via DI
+          </button>
+        </div>
+      );
+    }
+
+    const { unmount: unmountVariants } = render(
+      <div>
+        <DrinkCustomizerModal
+          product={traSuaAtiso}
+          toppings={catalog.toppings}
+          onClose={vi.fn()}
+        />
+        <SnackCustomizerModal
+          product={snackProduct}
+          onClose={vi.fn()}
+        />
+      </div>,
+    );
+    expect(
+      screen.getByRole('heading', { name: 'Tùy chỉnh ly của bạn' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Tùy chỉnh món ăn vặt' }),
+    ).toBeInTheDocument();
+    unmountVariants();
+
+    render(
+      <CartProvider catalog={catalog} branches={OMSUA_BRANCHES}>
+        <Checkout.Provider isOpen={true} onClose={vi.fn()}>
+          <CartAndCheckoutInspector />
+        </Checkout.Provider>
+      </CartProvider>,
+    );
+
+    expect(screen.getByTestId('di-inspector')).toHaveTextContent(
+      'hydrated:true:items:0:pay:cod',
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Switch QR via DI' }));
+    expect(screen.getByTestId('di-inspector')).toHaveTextContent(
+      'hydrated:true:items:0:pay:qr',
+    );
   });
 });

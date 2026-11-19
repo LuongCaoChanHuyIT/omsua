@@ -15,8 +15,8 @@ import {
 } from '@omsua/shared';
 import {
   createContext,
+  use,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -35,19 +35,32 @@ export interface UnavailableCartItem {
   reason: string;
 }
 
-export interface CartContextValue {
+export interface CartStateSlice {
   branches: BranchInfo[];
   selectedBranch: BranchInfo;
-  setSelectedBranchId: (branchId: string) => void;
   items: OrderItemInput[];
   lines: OrderLineResolved[];
   totals: OrderTotals;
   unavailableItems: UnavailableCartItem[];
+}
+
+export interface CartActionsSlice {
+  setSelectedBranchId: (branchId: string) => void;
   addItem: (item: OrderItemInput) => void;
   updateQuantity: (canonicalKey: string, quantity: number) => void;
   removeItem: (canonicalKey: string) => void;
   removeUnavailableItems: () => void;
   clearCart: () => void;
+}
+
+export interface CartMetaSlice {
+  isHydrated: boolean;
+}
+
+export interface CartContextValue extends CartStateSlice, CartActionsSlice {
+  state: CartStateSlice;
+  actions: CartActionsSlice;
+  meta: CartMetaSlice;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -390,15 +403,21 @@ export function CartProvider({
     [lines],
   );
 
-  const value = useMemo<CartContextValue>(
+  const stateSlice = useMemo<CartStateSlice>(
     () => ({
       branches,
       selectedBranch,
-      setSelectedBranchId,
       items,
       lines,
       totals,
       unavailableItems,
+    }),
+    [branches, items, lines, selectedBranch, totals, unavailableItems],
+  );
+
+  const actionsSlice = useMemo<CartActionsSlice>(
+    () => ({
+      setSelectedBranchId,
       addItem,
       updateQuantity,
       removeItem,
@@ -407,25 +426,35 @@ export function CartProvider({
     }),
     [
       addItem,
-      branches,
       clearCart,
-      items,
-      lines,
       removeItem,
       removeUnavailableItems,
-      selectedBranch,
       setSelectedBranchId,
-      totals,
-      unavailableItems,
       updateQuantity,
     ],
   );
 
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+  const metaSlice = useMemo<CartMetaSlice>(
+    () => ({ isHydrated }),
+    [isHydrated],
+  );
+
+  const value = useMemo<CartContextValue>(
+    () => ({
+      ...stateSlice,
+      ...actionsSlice,
+      state: stateSlice,
+      actions: actionsSlice,
+      meta: metaSlice,
+    }),
+    [actionsSlice, metaSlice, stateSlice],
+  );
+
+  return <CartContext value={value}>{children}</CartContext>;
 }
 
 export function useCart(): CartContextValue {
-  const context = useContext(CartContext);
+  const context = use(CartContext);
   if (!context) {
     throw new Error('useCart must be used within a CartProvider.');
   }
@@ -433,5 +462,5 @@ export function useCart(): CartContextValue {
 }
 
 export function useOptionalCart(): CartContextValue | null {
-  return useContext(CartContext);
+  return use(CartContext);
 }
