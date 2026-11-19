@@ -38,7 +38,7 @@ describe('ProductMedia hybrid photo + studio SVG fallback', () => {
     expect(nextImg).not.toBeNull();
     expect(nextImg).toHaveAttribute(
       'src',
-      '/images/fanpage/products/drink-quyt-nhai.webp',
+      '/images/fanpage/products/drink-quyt-nhai-cat-tuong.webp',
     );
   });
 
@@ -54,8 +54,14 @@ describe('ProductMedia hybrid photo + studio SVG fallback', () => {
     expect(container.querySelector('img')).toBeNull();
     expect(container.querySelector('svg')).not.toBeNull();
 
-    rerender(<ProductMedia productId="tra-me-thot-not" />);
+    rerender(<ProductMedia productId="tra-sua-flan-chay-canh" />);
     expect(container.querySelector('img')).toBeNull();
     expect(container.querySelector('svg')).not.toBeNull();
+
+    rerender(<ProductMedia toppingId="hat-sen" variant="topping" />);
+    expect(container.querySelector('img')).toHaveAttribute(
+      'src',
+      '/images/fanpage/products/topping-hat-sen.webp',
+    );
   });
 });

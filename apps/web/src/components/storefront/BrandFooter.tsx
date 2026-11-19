@@ -154,6 +154,10 @@ export function BrandFooter({
                           aria-hidden="true"
                           loading="lazy"
                           decoding="async"
+                          style={{
+                            objectPosition:
+                              branchPhoto.objectPosition ?? 'center',
+                          }}
                           onError={() =>
                             setFailedBranchPhotoIds((prev) => {
                               const next = new Set(prev);

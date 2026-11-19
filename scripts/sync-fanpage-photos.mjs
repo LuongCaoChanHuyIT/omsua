@@ -89,6 +89,11 @@ function computePixelExtract(extract, imgWidth, imgHeight) {
   };
 }
 
+/**
+ * @param {Buffer} buffer
+ * @param {string | null | undefined} contentType
+ * @param {number | { maxDimension?: number; extract?: { left: number; top: number; width: number; height: number } }} [optionsOrMaxDim=640]
+ */
 export async function validateAndOptimizePhotoBuffer(
   buffer,
   contentType,

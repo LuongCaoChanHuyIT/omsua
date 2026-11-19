@@ -257,6 +257,9 @@ export function BranchesPage() {
                       aria-hidden="true"
                       loading="lazy"
                       decoding="async"
+                      style={{
+                        objectPosition: branchPhoto.objectPosition ?? 'center',
+                      }}
                       onError={() => {
                         setFailedPhotoBranchIds((prev) => {
                           if (prev.has(branch.id)) return prev;

@@ -24,36 +24,36 @@ describe('FanpageGallerySection, PhotoLightboxModal & BrandFooter social/branch 
     render(<FanpageGallerySection />);
 
     expect(
-      screen.getByRole('button', { name: 'Tất cả (12)' }),
+      screen.getByRole('button', { name: 'Tất cả (16)' }),
     ).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByText(/14K người theo dõi/i)).toBeInTheDocument();
 
     fireEvent.click(
-      screen.getByRole('button', { name: /Bánh tráng Nhà Ốm \(3\)/i }),
+      screen.getByRole('button', { name: /Bánh tráng Nhà Ốm \(4\)/i }),
     );
     const triggers = screen.getAllByRole('button', { name: /Xem ảnh lớn:/i });
-    expect(triggers).toHaveLength(3);
+    expect(triggers).toHaveLength(4);
 
-    triggers[2]!.focus();
-    fireEvent.click(triggers[2]!);
+    triggers[3]!.focus();
+    fireEvent.click(triggers[3]!);
 
     const dialog = screen.getByRole('dialog');
-    expect(within(dialog).getByText('3 / 3')).toBeInTheDocument();
+    expect(within(dialog).getByText('4 / 4')).toBeInTheDocument();
 
-    // Wrap-around from last (index 2) -> first (index 0)
+    // Wrap-around from last (index 3) -> first (index 0)
     fireEvent.keyDown(window, { key: 'ArrowRight' });
-    expect(within(dialog).getByText('1 / 3')).toBeInTheDocument();
+    expect(within(dialog).getByText('1 / 4')).toBeInTheDocument();
 
-    // Wrap-around from first (index 0) -> last (index 2)
+    // Wrap-around from first (index 0) -> last (index 3)
     fireEvent.keyDown(window, { key: 'ArrowLeft' });
-    expect(within(dialog).getByText('3 / 3')).toBeInTheDocument();
+    expect(within(dialog).getByText('4 / 4')).toBeInTheDocument();
 
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    expect(document.activeElement).toBe(triggers[2]);
+    expect(document.activeElement).toBe(triggers[3]);
   });
 
-  it('renders verified Facebook, Instagram, TikTok links and branch storefront photos in BrandFooter', () => {
+  it('renders verified Facebook, Instagram, TikTok links and branch storefront photos with objectPosition in BrandFooter', () => {
     const { container } = render(<BrandFooter branches={OMSUA_BRANCHES} />);
 
     expect(
@@ -72,6 +72,13 @@ describe('FanpageGallerySection, PhotoLightboxModal & BrandFooter social/branch 
       'img[src^="/images/fanpage/branches/"]',
     );
     expect(branchImages).toHaveLength(4);
+    expect(branchImages[0]).toHaveAttribute(
+      'src',
+      '/images/fanpage/branches/branch-cs1-hoang-dieu.webp',
+    );
+    expect((branchImages[0] as HTMLImageElement).style.objectPosition).toBe(
+      'center 12%',
+    );
 
     fireEvent.error(branchImages[0]!);
     expect(
@@ -85,11 +92,11 @@ describe('FanpageGallerySection, PhotoLightboxModal & BrandFooter social/branch 
     const gridImages = container.querySelectorAll(
       '#khong-gian img[src^="/images/fanpage/"]',
     );
-    expect(gridImages).toHaveLength(12);
+    expect(gridImages).toHaveLength(16);
     fireEvent.error(gridImages[0]!);
     expect(
       container.querySelectorAll('#khong-gian img[src^="/images/fanpage/"]'),
-    ).toHaveLength(11);
+    ).toHaveLength(15);
 
     const triggers = screen.getAllByRole('button', { name: /Xem ảnh lớn:/i });
     fireEvent.click(triggers[0]!);
@@ -139,6 +146,18 @@ describe('FanpageGallerySection, PhotoLightboxModal & BrandFooter social/branch 
     expect(realModeBtn.className).not.toMatch(/sm:min-h-(9|10)\b/);
     expect(studioModeBtn.className).toContain('min-h-11');
     expect(studioModeBtn.className).not.toMatch(/sm:min-h-(9|10)\b/);
+
+    // Verify macro topping photos (e.g. hat-sen, khuc-bach) render real .webp imgs in ToppingStripSection
+    expect(
+      document.querySelector(
+        'img[src="/images/fanpage/products/topping-hat-sen.webp"]',
+      ),
+    ).not.toBeNull();
+    expect(
+      document.querySelector(
+        'img[src="/images/fanpage/products/topping-khuc-bach.webp"]',
+      ),
+    ).not.toBeNull();
 
     const galleryFilterButtons = within(
       screen.getByRole('group', { name: 'Lọc album ảnh thực tế' }),

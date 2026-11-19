@@ -1648,7 +1648,10 @@ describe('Admin App routes & operational portals', () => {
     const cs1Photo = await screen.findByTestId('branch-photo-cs1-hoang-dieu');
     expect(cs1Photo).toHaveAttribute(
       'src',
-      '/images/fanpage/branches/branch-hoang-dieu.webp',
+      '/images/fanpage/branches/branch-cs1-hoang-dieu.webp',
+    );
+    expect((cs1Photo as HTMLImageElement).style.objectPosition).toBe(
+      'center 12%',
     );
     fireEvent.error(cs1Photo);
     expect(
@@ -1665,5 +1668,19 @@ describe('Admin App routes & operational portals', () => {
 
     const atisoCard = await screen.findByTestId('menu-product-tra-sua-atiso');
     expect(within(atisoCard).getByText('Ảnh thực tế')).toBeInTheDocument();
+    const chuoiCard = await screen.findByTestId(
+      'menu-product-tra-sua-atiso-chuoi',
+    );
+    expect(within(chuoiCard).getByText('Ảnh thực tế')).toBeInTheDocument();
+    const comChayCard = await screen.findByTestId(
+      'menu-product-com-chay-cha-bong',
+    );
+    expect(within(comChayCard).getByText('Ảnh thực tế')).toBeInTheDocument();
+    const flanCard = await screen.findByTestId(
+      'menu-product-tra-sua-flan-chay-canh',
+    );
+    expect(
+      within(flanCard).queryByText('Ảnh thực tế'),
+    ).not.toBeInTheDocument();
   });
 });

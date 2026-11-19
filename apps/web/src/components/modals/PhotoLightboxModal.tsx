@@ -102,6 +102,7 @@ export function PhotoLightboxModal({
             </div>
           ) : (
             <img
+              key={currentItem.src}
               src={currentItem.src}
               alt={currentItem.title}
               decoding="async"
