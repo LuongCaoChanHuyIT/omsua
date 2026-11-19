@@ -19,7 +19,7 @@ export function PhotoLightboxModal({
   onClose,
 }: PhotoLightboxModalProps) {
   const headingId = useId();
-  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const [failedSrcs, setFailedSrcs] = useState<Set<string>>(() => new Set());
   const isOpen =
     activeIndex !== null && activeIndex >= 0 && activeIndex < items.length;
 
@@ -53,7 +53,7 @@ export function PhotoLightboxModal({
 
   const currentItem = items[activeIndex]!;
   const total = items.length;
-  const isImageBroken = failedSrc === currentItem.src;
+  const isImageBroken = failedSrcs.has(currentItem.src);
 
   return (
     <div
@@ -105,7 +105,14 @@ export function PhotoLightboxModal({
               src={currentItem.src}
               alt={currentItem.title}
               decoding="async"
-              onError={() => setFailedSrc(currentItem.src)}
+              onError={() =>
+                setFailedSrcs((prev) => {
+                  if (prev.has(currentItem.src)) return prev;
+                  const next = new Set(prev);
+                  next.add(currentItem.src);
+                  return next;
+                })
+              }
               className="max-h-[58vh] w-auto max-w-full rounded-2xl object-contain"
             />
           )}

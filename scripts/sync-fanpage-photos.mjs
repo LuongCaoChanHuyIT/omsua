@@ -47,24 +47,36 @@ export async function validateAndOptimizePhotoBuffer(
     );
   }
 
-  if (!Buffer.isBuffer(buffer) || buffer.byteLength < 512) {
-    throw new Error('Image buffer is empty or too small.');
+  if (!Buffer.isBuffer(buffer) || buffer.byteLength === 0) {
+    throw new Error('Image buffer is empty.');
   }
 
-  const pipeline = sharp(buffer).rotate();
-  const metadata = await pipeline.metadata();
-  if (
-    !metadata.width ||
-    !metadata.height ||
-    metadata.width < 200 ||
-    metadata.height < 200
-  ) {
+  let metadata;
+  try {
+    metadata = await sharp(buffer).metadata();
+  } catch (cause) {
     throw new Error(
-      `Image dimensions too small (${String(metadata.width)}x${String(metadata.height)}; expected >= 200x200).`,
+      `Corrupt or unsupported image payload: ${cause instanceof Error ? cause.message : String(cause)}`,
     );
   }
 
-  const { data, info } = await pipeline
+  const swapsAxes = (metadata.orientation ?? 1) >= 5;
+  const effectiveWidth = swapsAxes ? metadata.height : metadata.width;
+  const effectiveHeight = swapsAxes ? metadata.width : metadata.height;
+
+  if (
+    !effectiveWidth ||
+    !effectiveHeight ||
+    effectiveWidth < 200 ||
+    effectiveHeight < 200
+  ) {
+    throw new Error(
+      `Image dimensions too small (${String(effectiveWidth)}x${String(effectiveHeight)}; expected >= 200x200).`,
+    );
+  }
+
+  const { data, info } = await sharp(buffer)
+    .rotate()
     .resize({
       width: maxDimension,
       height: maxDimension,

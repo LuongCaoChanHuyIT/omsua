@@ -213,6 +213,7 @@ function StorefrontShellInner({
         toppings={catalog.toppings}
         defaultSpice={activeSpice}
         initialToppingIds={initialToppingIdsForModal}
+        preferIllustration={preferIllustration}
         onClose={() => {
           setActiveProductForModal(null);
           setInitialToppingIdsForModal([]);
@@ -223,6 +224,7 @@ function StorefrontShellInner({
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
         apiBaseUrl={apiBaseUrl}
+        preferIllustration={preferIllustration}
         onOrderError={() => {
           void onRefreshCatalog();
         }}

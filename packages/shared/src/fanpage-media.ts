@@ -231,7 +231,7 @@ export const FANPAGE_GALLERY_ITEMS: readonly FanpagePhotoItem[] = [
     caption:
       'Hành trình nghiên cứu và phát triển những búp hoa Atiso xanh thành thức uống đặc trưng của Ốm.',
     postUrl:
-      'https://www.facebook.com/photo/?fbid=948069193857748&set=a.870975204900481',
+      'https://www.facebook.com/photo/?fbid=989321219732545&set=a.870975204900481',
     aspectRatio: '4/5',
   },
   {

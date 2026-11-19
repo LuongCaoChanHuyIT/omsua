@@ -28,6 +28,7 @@ export interface CartCheckoutDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   apiBaseUrl?: string;
+  preferIllustration?: boolean;
   submitOrderFn?: SubmitOrderHandler;
   onOrderError?: (error: string) => void;
   onOrderCreated?: (order: OrderRecord) => void;
@@ -40,6 +41,7 @@ export function CartCheckoutDrawer({
   isOpen,
   onClose,
   apiBaseUrl,
+  preferIllustration = false,
   submitOrderFn,
   onOrderError,
   onOrderCreated,
@@ -464,6 +466,7 @@ export function CartCheckoutDrawer({
                             line.kind === 'snack' ? 'snack' : undefined
                           }
                           variant={line.kind === 'snack' ? 'snack' : 'card'}
+                          preferIllustration={preferIllustration}
                         />
                       </div>
 

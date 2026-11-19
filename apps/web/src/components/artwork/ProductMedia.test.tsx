@@ -23,6 +23,25 @@ describe('ProductMedia hybrid photo + studio SVG fallback', () => {
     expect(container.querySelector('svg')).not.toBeNull();
   });
 
+  it('recovers and renders the new .webp photo when productId changes after a previous image load error', () => {
+    const { rerender, container } = render(
+      <ProductMedia productId="tra-sua-atiso" />,
+    );
+    const firstImg = container.querySelector('img');
+    expect(firstImg).not.toBeNull();
+    fireEvent.error(firstImg!);
+    expect(container.querySelector('img')).toBeNull();
+    expect(container.querySelector('svg')).not.toBeNull();
+
+    rerender(<ProductMedia productId="quyt-nhai-cat-tuong" />);
+    const nextImg = container.querySelector('img');
+    expect(nextImg).not.toBeNull();
+    expect(nextImg).toHaveAttribute(
+      'src',
+      '/images/fanpage/products/drink-quyt-nhai.webp',
+    );
+  });
+
   it('renders accessible img label when alt is passed, and renders SVG directly when preferIllustration is true or product has no photo', () => {
     const { rerender, container } = render(
       <ProductMedia productId="tra-sua-atiso" alt="Ly Trà Sữa Atiso thực tế" />,

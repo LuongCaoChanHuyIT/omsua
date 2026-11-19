@@ -1,4 +1,5 @@
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync, statSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import {
   BRANCH_PHOTO_BY_ID,
@@ -8,8 +9,15 @@ import {
 import { describe, expect, it } from 'vitest';
 import { validateAndOptimizePhotoBuffer } from '../../../../scripts/sync-fanpage-photos.mjs';
 
+const nextPkgPath = realpathSync(
+  path.resolve(__dirname, '..', '..', 'node_modules', 'next', 'package.json'),
+);
+const sharp = createRequire(nextPkgPath)('sharp') as (input?: unknown) => {
+  png: () => { toBuffer: () => Promise<Buffer> };
+};
+
 describe('Fanpage local WebP assets & sharp validation pipeline', () => {
-  it('rejects non-image content types and tiny/corrupt buffers before writing disk files', async () => {
+  it('rejects non-image content types, corrupt >=512B payloads, and <200x200 images via sharp metadata', async () => {
     await expect(
       validateAndOptimizePhotoBuffer(
         Buffer.from('<html>signature expired</html>'),
@@ -18,8 +26,23 @@ describe('Fanpage local WebP assets & sharp validation pipeline', () => {
     ).rejects.toThrow(/content-type/i);
 
     await expect(
-      validateAndOptimizePhotoBuffer(Buffer.from('not-an-image'), 'image/jpeg'),
+      validateAndOptimizePhotoBuffer(Buffer.alloc(1024, 0x41), 'image/jpeg'),
     ).rejects.toThrow();
+
+    const tinyPngBuffer = await sharp({
+      create: {
+        width: 100,
+        height: 100,
+        channels: 3,
+        background: { r: 238, g: 234, b: 223 },
+      },
+    })
+      .png()
+      .toBuffer();
+
+    await expect(
+      validateAndOptimizePhotoBuffer(tinyPngBuffer, 'image/png'),
+    ).rejects.toThrow(/dimensions too small/i);
   });
 
   it('ships valid, non-empty RIFF WEBP files for every gallery, product, and branch photo in web and admin public dirs', () => {

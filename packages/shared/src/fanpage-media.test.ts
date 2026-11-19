@@ -56,4 +56,37 @@ describe('fanpage-media manifest (@omsua/shared)', () => {
     }
     expect(getBranchPhoto('unknown-branch')).toBeNull();
   });
+
+  it('keeps postUrl consistent across PRODUCT_PHOTO_BY_ID, BRANCH_PHOTO_BY_ID, and FANPAGE_GALLERY_ITEMS for any shared .webp asset', () => {
+    const postUrlBySrc = new Map<string, string>();
+    const entries: Array<{ label: string; src: string; postUrl: string }> = [
+      ...Object.entries(BRANCH_PHOTO_BY_ID).map(([id, meta]) => ({
+        label: `BRANCH_PHOTO_BY_ID[${id}]`,
+        src: meta.src,
+        postUrl: meta.postUrl,
+      })),
+      ...Object.entries(PRODUCT_PHOTO_BY_ID).map(([id, meta]) => ({
+        label: `PRODUCT_PHOTO_BY_ID[${id}]`,
+        src: meta.src,
+        postUrl: meta.postUrl,
+      })),
+      ...FANPAGE_GALLERY_ITEMS.map((item) => ({
+        label: `FANPAGE_GALLERY_ITEMS[${item.id}]`,
+        src: item.src,
+        postUrl: item.postUrl,
+      })),
+    ];
+
+    for (const entry of entries) {
+      const existing = postUrlBySrc.get(entry.src);
+      if (existing === undefined) {
+        postUrlBySrc.set(entry.src, entry.postUrl);
+      } else {
+        expect(
+          entry.postUrl,
+          `Mismatched postUrl for ${entry.src} at ${entry.label}`,
+        ).toBe(existing);
+      }
+    }
+  });
 });

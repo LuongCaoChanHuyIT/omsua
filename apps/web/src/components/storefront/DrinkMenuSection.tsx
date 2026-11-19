@@ -71,7 +71,7 @@ export function DrinkMenuSection({
                 type="button"
                 aria-pressed={!preferIllustration}
                 onClick={() => onToggleMediaMode(false)}
-                className={`inline-flex min-h-11 cursor-pointer items-center rounded-full px-3.5 py-1.5 text-xs font-bold transition sm:min-h-9 ${
+                className={`inline-flex min-h-11 cursor-pointer items-center rounded-full px-3.5 py-1.5 text-xs font-bold transition ${
                   !preferIllustration
                     ? 'bg-terracotta text-surface-light shadow-2xs'
                     : 'text-espresso hover:bg-canvas-cream'
@@ -83,7 +83,7 @@ export function DrinkMenuSection({
                 type="button"
                 aria-pressed={preferIllustration}
                 onClick={() => onToggleMediaMode(true)}
-                className={`inline-flex min-h-11 cursor-pointer items-center rounded-full px-3.5 py-1.5 text-xs font-bold transition sm:min-h-9 ${
+                className={`inline-flex min-h-11 cursor-pointer items-center rounded-full px-3.5 py-1.5 text-xs font-bold transition ${
                   preferIllustration
                     ? 'bg-olive-primary text-surface-light shadow-2xs'
                     : 'text-espresso hover:bg-canvas-cream'

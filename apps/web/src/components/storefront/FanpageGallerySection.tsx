@@ -90,7 +90,7 @@ export function FanpageGallerySection() {
                   setActiveFilter(filter.id);
                   setLightboxIndex(null);
                 }}
-                className={`inline-flex min-h-11 cursor-pointer items-center rounded-full px-4 py-2 text-xs font-bold transition sm:min-h-10 ${
+                className={`inline-flex min-h-11 cursor-pointer items-center rounded-full px-4 py-2 text-xs font-bold transition ${
                   isActive
                     ? 'bg-hero-espresso text-surface-light shadow-2xs'
                     : 'border border-olive-primary/20 bg-canvas-cream text-espresso hover:bg-card-butter/65'

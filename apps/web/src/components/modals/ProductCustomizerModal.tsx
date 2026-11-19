@@ -29,6 +29,7 @@ export interface ProductCustomizerModalProps {
   toppings: ToppingItem[];
   defaultSpice?: SpiceLevel;
   initialToppingIds?: string[];
+  preferIllustration?: boolean;
   onClose: () => void;
   onAddToCart?: (item: OrderItemInput) => void;
 }
@@ -38,6 +39,7 @@ interface CustomizerDialogBodyProps {
   toppings: ToppingItem[];
   defaultSpice: SpiceLevel;
   initialToppingIds?: string[];
+  preferIllustration: boolean;
   onClose: () => void;
   onAddToCart?: (item: OrderItemInput) => void;
 }
@@ -47,6 +49,7 @@ function CustomizerDialogBody({
   toppings,
   defaultSpice,
   initialToppingIds,
+  preferIllustration,
   onClose,
   onAddToCart,
 }: CustomizerDialogBodyProps) {
@@ -224,6 +227,7 @@ function CustomizerDialogBody({
                 productId={product.id}
                 categoryId={product.categoryId}
                 variant={product.kind === 'snack' ? 'snack' : 'card'}
+                preferIllustration={preferIllustration}
               />
             </div>
             <div className="min-w-0 space-y-1">
@@ -368,6 +372,7 @@ function CustomizerDialogBody({
                               toppingId={topping.id}
                               categoryId="topping"
                               variant="topping"
+                              preferIllustration={preferIllustration}
                             />
                           </div>
                           <input
@@ -490,6 +495,7 @@ export function ProductCustomizerModal({
   toppings,
   defaultSpice = 'cay-vua',
   initialToppingIds,
+  preferIllustration = false,
   onClose,
   onAddToCart,
 }: ProductCustomizerModalProps) {
@@ -504,6 +510,7 @@ export function ProductCustomizerModal({
       toppings={toppings}
       defaultSpice={defaultSpice}
       initialToppingIds={initialToppingIds}
+      preferIllustration={preferIllustration}
       onClose={onClose}
       onAddToCart={onAddToCart}
     />
