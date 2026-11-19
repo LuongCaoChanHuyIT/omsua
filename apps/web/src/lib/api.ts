@@ -182,3 +182,49 @@ export async function submitOrder(
     return { ok: false, error: message };
   }
 }
+
+export async function fetchOrderByCode(
+  orderCode: string,
+  baseUrl: string | undefined = process.env.NEXT_PUBLIC_API_URL,
+  fetchImpl: typeof fetch = fetch,
+): Promise<{ ok: true; order: OrderRecord } | { ok: false; error: string }> {
+  const normalizedCode = orderCode.trim().toUpperCase();
+  if (!normalizedCode) {
+    return {
+      ok: false,
+      error: 'Vui lòng nhập mã đơn hàng (ví dụ: OM-20261119-AB12).',
+    };
+  }
+
+  const endpoint = `${normalizeApiBaseUrl(baseUrl)}/orders/code/${encodeURIComponent(normalizedCode)}`;
+
+  try {
+    const response = await fetchImpl(endpoint, { cache: 'no-store' });
+
+    if (!response.ok) {
+      let errorBody: unknown = null;
+      try {
+        errorBody = await response.json();
+      } catch {
+        errorBody = null;
+      }
+      return {
+        ok: false,
+        error: extractNestErrorMessage(errorBody, response.status),
+      };
+    }
+
+    const json: unknown = await response.json();
+    if (!isOrderApiResponse(json)) {
+      return { ok: false, error: 'Phản hồi đơn hàng không hợp lệ.' };
+    }
+
+    return { ok: true, order: json.data };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'Không thể kết nối máy chủ tra cứu đơn hàng.';
+    return { ok: false, error: message };
+  }
+}

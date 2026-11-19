@@ -52,13 +52,13 @@ export function HeroSpotlight({
           <div className="flex flex-wrap items-center gap-3 pt-1">
             <a
               href="#thuc-don"
-              className="inline-flex items-center rounded-full bg-terracotta px-6 py-2.5 text-sm font-bold text-surface-light shadow-xs transition hover:opacity-92"
+              className="inline-flex min-h-11 items-center rounded-full bg-terracotta px-6 py-2.5 text-sm font-bold text-surface-light shadow-xs transition hover:opacity-92"
             >
               Đặt món ngay →
             </a>
             <a
               href="#chi-nhanh"
-              className="inline-flex items-center rounded-full border border-olive-primary/25 bg-surface-light px-5 py-2.5 text-sm font-semibold text-espresso transition hover:bg-canvas-cream"
+              className="inline-flex min-h-11 items-center rounded-full border border-olive-primary/25 bg-surface-light px-5 py-2.5 text-sm font-semibold text-espresso transition hover:bg-canvas-cream"
             >
               Xem 4 chi nhánh
             </a>
@@ -125,7 +125,7 @@ export function HeroSpotlight({
                       <button
                         type="button"
                         onClick={() => onSelectProduct(product)}
-                        className="cursor-pointer rounded-full bg-terracotta px-3.5 py-1.5 text-xs font-bold text-surface-light transition hover:opacity-92"
+                        className="inline-flex min-h-11 cursor-pointer items-center rounded-full bg-terracotta px-3.5 py-1.5 text-xs font-bold text-surface-light transition hover:opacity-92 sm:min-h-9"
                       >
                         + Đặt ngay
                       </button>
@@ -133,7 +133,7 @@ export function HeroSpotlight({
                       <button
                         type="button"
                         disabled
-                        className="cursor-not-allowed rounded-full bg-warm-muted/40 px-3.5 py-1.5 text-xs font-semibold text-surface-light/65"
+                        className="inline-flex min-h-11 cursor-not-allowed items-center rounded-full bg-warm-muted/40 px-3.5 py-1.5 text-xs font-semibold text-surface-light/65 sm:min-h-9"
                       >
                         Tạm hết
                       </button>

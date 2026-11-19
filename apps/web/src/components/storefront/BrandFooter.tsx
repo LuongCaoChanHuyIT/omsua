@@ -88,8 +88,7 @@ export function BrandFooter({
   return (
     <footer className="mt-14 bg-hero-espresso text-surface-light">
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div id="cau-chuyen" className="scroll-mt-24 pb-7">
-          <div id="story" />
+        <div className="pb-7">
           <p className="font-quote text-2xl leading-relaxed font-bold text-card-butter sm:text-[26px]">
             “Mộc mạc - Tinh tế - Nguyên bản. Là những từ ngữ mô tả ngắn gọn nhất
             tinh thần mà Ốm muốn gửi đến bạn.”
@@ -108,6 +107,7 @@ export function BrandFooter({
                 <div
                   key={branch.id}
                   role={onSelectBranch ? 'button' : undefined}
+                  aria-pressed={onSelectBranch ? isSelected : undefined}
                   tabIndex={onSelectBranch ? 0 : undefined}
                   onClick={
                     onSelectBranch

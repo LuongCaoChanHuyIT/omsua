@@ -7,6 +7,7 @@ import {
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BrandFooter } from './BrandFooter';
+import { BrandStorySection } from './BrandStorySection';
 import { DrinkMenuSection } from './DrinkMenuSection';
 import { HeroSpotlight } from './HeroSpotlight';
 import { SnackMenuSection } from './SnackMenuSection';
@@ -288,5 +289,149 @@ describe('Storefront Sections', () => {
     expect(markup).not.toMatch(
       /(#fff\b|#ffffff\b|#000\b|#000000\b|bg-white|text-white|bg-black|text-black)/i,
     );
+  });
+
+  it('supports single mobile+desktop nav, branch select id/name, min-h-11 touch targets, and optional Đơn đã đặt pill in StorefrontHeader', () => {
+    const onOpenOrderLookup = vi.fn();
+    const { rerender } = render(
+      <StorefrontHeader
+        branches={OMSUA_BRANCHES}
+        selectedBranch={OMSUA_BRANCHES[0]!}
+        onSelectBranch={vi.fn()}
+        cartItemCount={0}
+        cartTotal={0}
+        onOpenCart={vi.fn()}
+        recentOrderCount={0}
+        onOpenOrderLookup={onOpenOrderLookup}
+      />,
+    );
+
+    const navs = screen.getAllByRole('navigation', {
+      name: /Điều hướng cửa hàng/i,
+    });
+    expect(navs).toHaveLength(1);
+    expect(navs[0]!.className).not.toContain('hidden');
+
+    const branchSelect = screen.getByLabelText(/Chọn chi nhánh/i);
+    expect(branchSelect).toHaveAttribute('id', 'storefront-branch-select');
+    expect(branchSelect).toHaveAttribute('name', 'branchId');
+
+    const lookupBtnZero = screen.getByRole('button', { name: 'Đơn đã đặt' });
+    expect(lookupBtnZero.className).toContain('min-h-11');
+    fireEvent.click(lookupBtnZero);
+    expect(onOpenOrderLookup).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <StorefrontHeader
+        branches={OMSUA_BRANCHES}
+        selectedBranch={OMSUA_BRANCHES[0]!}
+        onSelectBranch={vi.fn()}
+        cartItemCount={1}
+        cartTotal={45000}
+        onOpenCart={vi.fn()}
+        recentOrderCount={3}
+        onOpenOrderLookup={onOpenOrderLookup}
+      />,
+    );
+    expect(
+      screen.getByRole('button', { name: 'Đơn đã đặt (3)' }),
+    ).toBeInTheDocument();
+  });
+
+  it('renders interactive + Chọn buttons and Tạm hết state in ToppingStripSection when onSelectTopping is provided', () => {
+    const catalog = getDefaultCatalog();
+    const toppings = catalog.toppings.map((topping) =>
+      topping.id === 'kem-trung' ? { ...topping, isAvailable: false } : topping,
+    );
+    const onSelectTopping = vi.fn();
+
+    render(
+      <ToppingStripSection
+        toppings={toppings}
+        onSelectTopping={onSelectTopping}
+      />,
+    );
+
+    const chooseBobaBtn = screen.getByRole('button', {
+      name: 'Chọn topping Trân châu đen',
+    });
+    expect(chooseBobaBtn).toHaveTextContent('+ Chọn');
+    fireEvent.click(chooseBobaBtn);
+    expect(onSelectTopping).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'tran-chau-den' }),
+    );
+
+    const kemTrungCard = screen.getByText('Kem trứng').closest('div')!;
+    expect(
+      within(kemTrungCard).getByRole('button', { name: 'Tạm hết' }),
+    ).toBeDisabled();
+  });
+
+  it('renders BrandStorySection owning unique #cau-chuyen id, WCAG AA contrast on badges, and aria-pressed on BrandFooter branch cards', () => {
+    const catalog = getDefaultCatalog();
+    const onSelectBranch = vi.fn();
+
+    const { container } = render(
+      <div>
+        <DrinkMenuSection
+          categories={catalog.categories}
+          drinks={catalog.products.filter((p) => p.kind === 'drink')}
+          activeCategory="fresh-milk-blended"
+          onChangeCategory={vi.fn()}
+          onSelectDrink={vi.fn()}
+        />
+        <SnackMenuSection
+          snacks={catalog.products.filter((p) => p.kind === 'snack')}
+          activeSpice="cay-vua"
+          onChangeSpice={vi.fn()}
+          onSelectSnack={vi.fn()}
+        />
+        <BrandStorySection />
+        <BrandFooter
+          branches={OMSUA_BRANCHES}
+          selectedBranchId="cs1-hoang-dieu"
+          onSelectBranch={onSelectBranch}
+        />
+      </div>,
+    );
+
+    const storyAnchors = container.querySelectorAll('#cau-chuyen');
+    expect(storyAnchors).toHaveLength(1);
+    expect(
+      screen.getByText(/✦ CÂU CHUYỆN ỐM SỮA • TỪ 2017/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', {
+        name: /Hành trình ủ vị Atiso xanh giữa sương sớm Đà Lạt/i,
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Bông Atiso xanh Cầu Đất/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Lá trà ủ chậm & Sữa thanh trùng/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Topping & Sốt tắc nhà làm mỗi sáng/i),
+    ).toBeInTheDocument();
+
+    const creamBadge = screen.getByText('CREAM & BLENDED');
+    expect(creamBadge.className).toContain('text-espresso');
+    expect(creamBadge.className).not.toContain('text-surface-light');
+
+    const spiceBadges = screen.getAllByText('Cay vừa');
+    const coralBadge = spiceBadges.find((el) =>
+      el.className.includes('bg-coral-sketch'),
+    );
+    expect(coralBadge).toBeDefined();
+    expect(coralBadge!.className).toContain('text-espresso');
+    expect(coralBadge!.className).not.toContain('text-surface-light');
+
+    const branch1Btn = screen.getByRole('button', {
+      name: /Cơ sở 1 — Hoàng Diệu/i,
+    });
+    const branch4Btn = screen.getByRole('button', {
+      name: /Cơ sở 4 — Đức Trọng/i,
+    });
+    expect(branch1Btn).toHaveAttribute('aria-pressed', 'true');
+    expect(branch4Btn).toHaveAttribute('aria-pressed', 'false');
   });
 });

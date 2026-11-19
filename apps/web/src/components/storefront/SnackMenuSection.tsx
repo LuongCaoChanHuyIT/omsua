@@ -54,7 +54,7 @@ export function SnackMenuSection({
                 type="button"
                 aria-pressed={isActive}
                 onClick={() => onChangeSpice(option.value)}
-                className={`cursor-pointer rounded-full px-3.5 py-1.5 text-xs font-bold transition ${
+                className={`inline-flex min-h-11 cursor-pointer items-center rounded-full px-3.5 py-2 text-xs font-bold transition sm:min-h-10 ${
                   isActive
                     ? 'bg-terracotta text-surface-light shadow-2xs'
                     : 'border border-olive-primary/15 bg-canvas-cream text-espresso hover:bg-card-butter/60'
@@ -82,7 +82,7 @@ export function SnackMenuSection({
                   categoryId="snack"
                   variant="snack"
                 />
-                <span className="absolute top-2 left-2 rounded-full bg-coral-sketch px-2 py-0.5 text-[10px] font-bold text-surface-light">
+                <span className="absolute top-2 left-2 rounded-full bg-coral-sketch px-2 py-0.5 text-[10px] font-bold text-espresso">
                   {SPICE_LEVEL_LABELS[activeSpice]}
                 </span>
                 <div className="absolute bottom-2 left-2 flex items-center gap-1">
@@ -113,7 +113,7 @@ export function SnackMenuSection({
                     <button
                       type="button"
                       onClick={() => onSelectSnack(snack, activeSpice)}
-                      className="w-full cursor-pointer rounded-full bg-hero-espresso px-3 py-2 text-xs font-bold text-surface-light transition hover:opacity-90"
+                      className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center rounded-full bg-hero-espresso px-3 py-2 text-xs font-bold text-surface-light transition hover:opacity-90 sm:min-h-10"
                     >
                       + Thêm món ăn vặt
                     </button>
@@ -121,7 +121,7 @@ export function SnackMenuSection({
                     <button
                       type="button"
                       disabled
-                      className="w-full cursor-not-allowed rounded-full bg-warm-muted/25 px-3 py-2 text-xs font-semibold text-warm-muted"
+                      className="inline-flex min-h-11 w-full cursor-not-allowed items-center justify-center rounded-full bg-warm-muted/25 px-3 py-2 text-xs font-semibold text-warm-muted sm:min-h-10"
                     >
                       Tạm hết
                     </button>

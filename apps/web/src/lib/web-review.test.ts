@@ -1,7 +1,25 @@
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import path from 'node:path';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import eslintConfig from '../../eslint.config.mjs';
 import HomePage from '../app/page';
+
+function collectSourceFiles(dir: string): string[] {
+  const results: string[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      results.push(...collectSourceFiles(fullPath));
+    } else if (
+      /\.(ts|tsx|css|svg)$/.test(entry.name) &&
+      !/\.test\.(ts|tsx)$/.test(entry.name)
+    ) {
+      results.push(fullPath);
+    }
+  }
+  return results;
+}
 
 describe('web config & HomePage Storefront SSR consistency', () => {
   const originalApiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -50,5 +68,48 @@ describe('web config & HomePage Storefront SSR consistency', () => {
     expect(html).not.toMatch(
       /(#fff\b|#ffffff\b|#000\b|#000000\b|bg-white|text-white|bg-black|text-black)/i,
     );
+  });
+
+  it('provides warm brand icon.svg using Ốm Sữa palette and passes recursive static pure B/W source scan across apps/web/src', () => {
+    const srcRoot = path.resolve(__dirname, '..');
+    const iconSvgPath = path.join(srcRoot, 'app', 'icon.svg');
+
+    expect(existsSync(iconSvgPath)).toBe(true);
+    const iconSvg = readFileSync(iconSvgPath, 'utf8');
+    expect(iconSvg).toContain('<svg');
+    expect(iconSvg).toMatch(/#EEEADF/i);
+    expect(iconSvg).toMatch(/#594C00/i);
+    expect(iconSvg).toMatch(/#7A8B3B/i);
+    expect(iconSvg).toMatch(/#D96B1E/i);
+
+    const globalsCss = readFileSync(
+      path.join(srcRoot, 'app', 'globals.css'),
+      'utf8',
+    );
+    expect(globalsCss).toContain(':focus-visible');
+    expect(globalsCss).toContain('prefers-reduced-motion: reduce');
+
+    const forbiddenPatterns: Array<{ label: string; regex: RegExp }> = [
+      { label: 'hex #fff/#ffffff/#000/#000000', regex: /(#fff\b|#ffffff\b|#000\b|#000000\b)/i },
+      { label: 'rgb(255,255,255) or rgb(0,0,0)', regex: /rgb\(\s*(255\s*,\s*255\s*,\s*255|0\s*,\s*0\s*,\s*0)/i },
+      {
+        label: 'Tailwind pure white/black utility',
+        regex: /\b(bg|text|border|ring|fill|stroke|outline)-(white|black)\b/,
+      },
+    ];
+
+    const files = collectSourceFiles(srcRoot);
+    expect(files.length).toBeGreaterThanOrEqual(20);
+
+    for (const filePath of files) {
+      const content = readFileSync(filePath, 'utf8');
+      const relativeFile = path.relative(srcRoot, filePath);
+      for (const { label, regex } of forbiddenPatterns) {
+        expect(
+          content,
+          `Forbidden ${label} found in ${relativeFile}`,
+        ).not.toMatch(regex);
+      }
+    }
   });
 });

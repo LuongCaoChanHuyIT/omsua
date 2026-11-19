@@ -9,6 +9,7 @@ import {
   fetchBackendHealth,
   fetchBranches,
   fetchCatalog,
+  fetchOrderByCode,
   submitOrder,
 } from './api';
 
@@ -389,5 +390,160 @@ describe('submitOrder (web)', () => {
     );
 
     expect(result).toEqual({ ok: false, error: 'connect ECONNREFUSED' });
+  });
+});
+
+describe('fetchOrderByCode (web)', () => {
+  const sampleOrder: OrderRecord = {
+    id: 'ord-lookup-1',
+    orderCode: 'OM-20261119-AB12',
+    branchId: 'cs1-hoang-dieu',
+    branchName: 'Cơ sở 1 — Hoàng Diệu',
+    customerName: 'Trần Bảo Ngọc',
+    customerPhone: '0945396117',
+    deliveryAddress: '18 Nguyễn Chí Thanh, Đà Lạt',
+    paymentMethod: 'qr',
+    status: 'preparing',
+    items: [
+      {
+        canonicalKey:
+          'tra-sua-atiso|size:M|sugar:70|ice:70|spice:-|toppings:tran-chau-den',
+        productId: 'tra-sua-atiso',
+        productName: 'Trà Sữa Atiso',
+        kind: 'drink',
+        quantity: 1,
+        size: 'M',
+        sizeLabel: 'Size M (Chuẩn)',
+        basePrice: 45000,
+        sugarLevel: '70',
+        iceLevel: '70',
+        toppings: [
+          {
+            id: 'tran-chau-den',
+            name: 'Trân châu đen nấu mật',
+            shortName: 'Trân châu đen',
+            price: 10000,
+          },
+        ],
+        unitPrice: 55000,
+        lineTotal: 55000,
+      },
+    ],
+    subtotal: 55000,
+    shippingFee: 0,
+    ecoFee: 0,
+    grandTotal: 55000,
+    totalItems: 1,
+    createdAt: '2026-11-19T02:10:00.000Z',
+    updatedAt: '2026-11-19T02:15:00.000Z',
+  };
+
+  it('calls GET /orders/code/:orderCode with trimmed uppercase encoded code and cache: no-store', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        success: true,
+        data: sampleOrder,
+        timestamp: '2026-11-19T02:15:00.000Z',
+      }),
+    });
+
+    const result = await fetchOrderByCode(
+      '  om-20261119-ab12  ',
+      'http://localhost:4000/api///',
+      mockFetch as unknown as typeof fetch,
+    );
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      'http://localhost:4000/api/orders/code/OM-20261119-AB12',
+      { cache: 'no-store' },
+    );
+    expect(result).toEqual({ ok: true, order: sampleOrder });
+  });
+
+  it('extracts NestJS 400 and 404 error messages cleanly and handles invalid payload or network errors', async () => {
+    const mockNotFound = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 404,
+      json: async () => ({
+        statusCode: 404,
+        message: 'Không tìm thấy đơn hàng với mã "OM-20261119-ZZZZ".',
+        error: 'Not Found',
+      }),
+    });
+
+    const notFoundResult = await fetchOrderByCode(
+      'OM-20261119-ZZZZ',
+      'http://localhost:4000/api',
+      mockNotFound as unknown as typeof fetch,
+    );
+    expect(notFoundResult).toEqual({
+      ok: false,
+      error: 'Không tìm thấy đơn hàng với mã "OM-20261119-ZZZZ".',
+    });
+
+    const mockBadRequest = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      json: async () => ({
+        statusCode: 400,
+        message: ['Mã đơn hàng không đúng định dạng OM-YYYYMMDD-XXXX.'],
+        error: 'Bad Request',
+      }),
+    });
+
+    const badRequestResult = await fetchOrderByCode(
+      'bad code/1',
+      'http://localhost:4000/api',
+      mockBadRequest as unknown as typeof fetch,
+    );
+    expect(mockBadRequest).toHaveBeenCalledWith(
+      'http://localhost:4000/api/orders/code/BAD%20CODE%2F1',
+      { cache: 'no-store' },
+    );
+    expect(badRequestResult).toEqual({
+      ok: false,
+      error: 'Mã đơn hàng không đúng định dạng OM-YYYYMMDD-XXXX.',
+    });
+
+    const mockInvalidShape = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ success: true, data: { invalid: true } }),
+    });
+    const invalidShapeResult = await fetchOrderByCode(
+      'OM-20261119-AB12',
+      'http://localhost:4000/api',
+      mockInvalidShape as unknown as typeof fetch,
+    );
+    expect(invalidShapeResult).toEqual({
+      ok: false,
+      error: 'Phản hồi đơn hàng không hợp lệ.',
+    });
+
+    const mockNetworkFail = vi
+      .fn()
+      .mockRejectedValue(new Error('connect ECONNREFUSED'));
+    const networkFailResult = await fetchOrderByCode(
+      'OM-20261119-AB12',
+      'http://localhost:4000/api',
+      mockNetworkFail as unknown as typeof fetch,
+    );
+    expect(networkFailResult).toEqual({
+      ok: false,
+      error: 'connect ECONNREFUSED',
+    });
+  });
+
+  it('rejects empty/whitespace-only orderCode cleanly without calling fetch', async () => {
+    const mockFetch = vi.fn();
+    const emptyResult = await fetchOrderByCode(
+      '   ',
+      'http://localhost:4000/api',
+      mockFetch as unknown as typeof fetch,
+    );
+    expect(emptyResult.ok).toBe(false);
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 });

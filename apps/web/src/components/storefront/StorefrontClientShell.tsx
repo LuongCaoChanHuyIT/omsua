@@ -4,16 +4,21 @@ import {
   type BranchInfo,
   type CatalogPayload,
   type DrinkCategoryId,
+  type OrderRecord,
   type ProductItem,
   type SpiceLevel,
+  formatVnd,
   normalizeApiBaseUrl,
 } from '@omsua/shared';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CartCheckoutDrawer } from '@/components/modals/CartCheckoutDrawer';
+import { OrderLookupModal } from '@/components/modals/OrderLookupModal';
 import { ProductCustomizerModal } from '@/components/modals/ProductCustomizerModal';
 import { fetchCatalog } from '@/lib/api';
+import { readRecentOrders } from '@/lib/recent-orders';
 import { CartProvider, useCart } from '@/store/cart-store';
 import { BrandFooter } from './BrandFooter';
+import { BrandStorySection } from './BrandStorySection';
 import { DrinkMenuSection } from './DrinkMenuSection';
 import { HeroSpotlight } from './HeroSpotlight';
 import { SnackMenuSection } from './SnackMenuSection';
@@ -47,7 +52,21 @@ function StorefrontShellInner({
   const [activeSpice, setActiveSpice] = useState<SpiceLevel>('cay-vua');
   const [activeProductForModal, setActiveProductForModal] =
     useState<ProductItem | null>(null);
+  const [initialToppingIdsForModal, setInitialToppingIdsForModal] = useState<
+    string[]
+  >([]);
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
+  const [isOrderLookupOpen, setIsOrderLookupOpen] = useState<boolean>(false);
+  const [trackedOrder, setTrackedOrder] = useState<OrderRecord | null>(null);
+  const [recentOrderCount, setRecentOrderCount] = useState<number>(0);
+
+  useEffect(() => {
+    setRecentOrderCount(readRecentOrders().length);
+  }, []);
+
+  const syncRecentOrderCount = useCallback(() => {
+    setRecentOrderCount(readRecentOrders().length);
+  }, []);
 
   const spotlightProducts = useMemo(
     () => catalog.products.filter((product) => product.isSpotlight),
@@ -64,27 +83,52 @@ function StorefrontShellInner({
     [catalog.products],
   );
 
+  const showMobileStickyCartBar =
+    totals.totalItems > 0 &&
+    !isCartOpen &&
+    !activeProductForModal &&
+    !isOrderLookupOpen;
+
+  const openCartDrawer = useCallback(() => {
+    setIsCartOpen(true);
+    void onRefreshCatalog();
+  }, [onRefreshCatalog]);
+
   return (
     <div
       data-api-base-url={apiBaseUrl}
-      className="min-h-screen bg-canvas-cream text-espresso"
+      className={`min-h-screen bg-canvas-cream text-espresso ${
+        showMobileStickyCartBar ? 'pb-20 lg:pb-0' : ''
+      }`}
     >
+      <a
+        href="#thuc-don"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-full focus:bg-hero-espresso focus:px-4 focus:py-2.5 focus:text-xs focus:font-bold focus:text-surface-light focus:shadow-lg"
+      >
+        Chuyển đến thực đơn chính
+      </a>
+
       <StorefrontHeader
         branches={branches}
         selectedBranch={selectedBranch}
         onSelectBranch={setSelectedBranchId}
         cartItemCount={totals.totalItems}
         cartTotal={totals.grandTotal}
-        onOpenCart={() => {
-          setIsCartOpen(true);
-          void onRefreshCatalog();
+        onOpenCart={openCartDrawer}
+        recentOrderCount={recentOrderCount}
+        onOpenOrderLookup={() => {
+          setTrackedOrder(null);
+          setIsOrderLookupOpen(true);
         }}
       />
 
       <main className="mx-auto flex max-w-7xl flex-col gap-10 px-4 pt-6 sm:px-6 lg:px-8">
         <HeroSpotlight
           spotlightProducts={spotlightProducts}
-          onSelectProduct={(product) => setActiveProductForModal(product)}
+          onSelectProduct={(product) => {
+            setInitialToppingIdsForModal([]);
+            setActiveProductForModal(product);
+          }}
         />
 
         <DrinkMenuSection
@@ -92,10 +136,29 @@ function StorefrontShellInner({
           drinks={drinks}
           activeCategory={activeCategory}
           onChangeCategory={setActiveCategory}
-          onSelectDrink={(drink) => setActiveProductForModal(drink)}
+          onSelectDrink={(drink) => {
+            setInitialToppingIdsForModal([]);
+            setActiveProductForModal(drink);
+          }}
         />
 
-        <ToppingStripSection toppings={catalog.toppings} />
+        <ToppingStripSection
+          toppings={catalog.toppings}
+          onSelectTopping={(topping) => {
+            const defaultDrink =
+              catalog.products.find(
+                (product) =>
+                  product.id === 'tra-sua-atiso' && product.isAvailable,
+              ) ??
+              drinks.find((drink) => drink.isAvailable) ??
+              null;
+
+            if (defaultDrink) {
+              setInitialToppingIdsForModal([topping.id]);
+              setActiveProductForModal(defaultDrink);
+            }
+          }}
+        />
 
         <SnackMenuSection
           snacks={snacks}
@@ -103,9 +166,12 @@ function StorefrontShellInner({
           onChangeSpice={setActiveSpice}
           onSelectSnack={(snack, spice) => {
             setActiveSpice(spice);
+            setInitialToppingIdsForModal([]);
             setActiveProductForModal(snack);
           }}
         />
+
+        <BrandStorySection />
       </main>
 
       <BrandFooter
@@ -114,11 +180,27 @@ function StorefrontShellInner({
         onSelectBranch={setSelectedBranchId}
       />
 
+      {showMobileStickyCartBar && (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-olive-primary/15 bg-hero-espresso/95 p-3 text-surface-light backdrop-blur-md lg:hidden">
+          <button
+            type="button"
+            onClick={openCartDrawer}
+            className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center rounded-2xl bg-terracotta px-4 py-3 text-sm font-bold text-surface-light shadow-xs transition hover:opacity-92"
+          >
+            {`Xem giỏ hàng (${totals.totalItems} món) • ${formatVnd(totals.grandTotal)} →`}
+          </button>
+        </div>
+      )}
+
       <ProductCustomizerModal
         product={activeProductForModal}
         toppings={catalog.toppings}
         defaultSpice={activeSpice}
-        onClose={() => setActiveProductForModal(null)}
+        initialToppingIds={initialToppingIdsForModal}
+        onClose={() => {
+          setActiveProductForModal(null);
+          setInitialToppingIdsForModal([]);
+        }}
       />
 
       <CartCheckoutDrawer
@@ -127,6 +209,26 @@ function StorefrontShellInner({
         apiBaseUrl={apiBaseUrl}
         onOrderError={() => {
           void onRefreshCatalog();
+        }}
+        onOrderCreated={() => {
+          syncRecentOrderCount();
+        }}
+        onTrackOrder={(order) => {
+          setTrackedOrder(order);
+          setIsOrderLookupOpen(true);
+        }}
+      />
+
+      <OrderLookupModal
+        isOpen={isOrderLookupOpen}
+        onClose={() => {
+          setIsOrderLookupOpen(false);
+          setTrackedOrder(null);
+        }}
+        apiBaseUrl={apiBaseUrl}
+        initialOrder={trackedOrder}
+        onOrderLoaded={() => {
+          syncRecentOrderCount();
         }}
       />
     </div>

@@ -1,4 +1,5 @@
 export { BrandFooter, type BrandFooterProps } from './BrandFooter';
+export { BrandStorySection } from './BrandStorySection';
 export {
   DrinkMenuSection,
   type DrinkMenuSectionProps,

@@ -1,11 +1,17 @@
+'use client';
+
 import { type ToppingItem, formatShortPrice } from '@omsua/shared';
 import { ProductIllustration } from '@/components/artwork/OmSuaArtwork';
 
 export interface ToppingStripSectionProps {
   toppings: ToppingItem[];
+  onSelectTopping?: (topping: ToppingItem) => void;
 }
 
-export function ToppingStripSection({ toppings }: ToppingStripSectionProps) {
+export function ToppingStripSection({
+  toppings,
+  onSelectTopping,
+}: ToppingStripSectionProps) {
   return (
     <section className="rounded-3xl border border-olive-primary/12 bg-surface-light p-5 shadow-2xs sm:p-7">
       <div className="mb-4 flex flex-col gap-1.5 lg:flex-row lg:items-baseline lg:justify-between">
@@ -37,6 +43,29 @@ export function ToppingStripSection({ toppings }: ToppingStripSectionProps) {
             <span className="mt-0.5 text-xs font-bold text-terracotta">
               +{formatShortPrice(topping.price)}
             </span>
+
+            {onSelectTopping && (
+              <div className="mt-2.5 w-full pt-0.5">
+                {topping.isAvailable ? (
+                  <button
+                    type="button"
+                    aria-label={`Chọn topping ${topping.shortName}`}
+                    onClick={() => onSelectTopping(topping)}
+                    className="inline-flex min-h-10 w-full cursor-pointer items-center justify-center rounded-full bg-artichoke px-3 py-1.5 text-xs font-bold text-surface-light shadow-2xs transition hover:opacity-92 sm:min-h-9"
+                  >
+                    + Chọn
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    disabled
+                    className="inline-flex min-h-10 w-full cursor-not-allowed items-center justify-center rounded-full bg-warm-muted/25 px-3 py-1.5 text-xs font-semibold text-warm-muted sm:min-h-9"
+                  >
+                    Tạm hết
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         ))}
       </div>

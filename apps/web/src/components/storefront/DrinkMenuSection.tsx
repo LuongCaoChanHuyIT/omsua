@@ -65,7 +65,7 @@ export function DrinkMenuSection({
             type="button"
             aria-pressed={activeCategory === 'all'}
             onClick={() => onChangeCategory('all')}
-            className={`cursor-pointer rounded-full px-4 py-1.5 text-xs font-bold transition sm:text-[13px] ${
+            className={`inline-flex min-h-11 cursor-pointer items-center rounded-full px-4 py-2 text-xs font-bold transition sm:min-h-10 sm:text-[13px] ${
               activeCategory === 'all'
                 ? 'bg-hero-espresso text-surface-light'
                 : 'border border-olive-primary/20 bg-surface-light text-espresso hover:bg-canvas-cream'
@@ -86,7 +86,7 @@ export function DrinkMenuSection({
                 type="button"
                 aria-pressed={isActive}
                 onClick={() => onChangeCategory(category.id)}
-                className={`cursor-pointer rounded-full px-4 py-1.5 text-xs font-bold transition sm:text-[13px] ${
+                className={`inline-flex min-h-11 cursor-pointer items-center rounded-full px-4 py-2 text-xs font-bold transition sm:min-h-10 sm:text-[13px] ${
                   isActive
                     ? 'bg-hero-espresso text-surface-light'
                     : CATEGORY_CHIP_IDLE_STYLES[category.id]
@@ -114,7 +114,7 @@ export function DrinkMenuSection({
               <div className="mb-5 space-y-1">
                 <div className="flex flex-wrap items-center gap-2.5">
                   {isCreamContainer && (
-                    <span className="rounded-full bg-card-olive-gold px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-surface-light uppercase">
+                    <span className="rounded-full bg-card-olive-gold px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-espresso uppercase">
                       CREAM &amp; BLENDED
                     </span>
                   )}
@@ -172,7 +172,7 @@ export function DrinkMenuSection({
                           <button
                             type="button"
                             onClick={() => onSelectDrink(drink)}
-                            className="cursor-pointer rounded-full bg-terracotta px-3.5 py-1.5 text-xs font-bold text-surface-light transition hover:opacity-90"
+                            className="inline-flex min-h-11 cursor-pointer items-center rounded-full bg-terracotta px-4 py-2 text-xs font-bold text-surface-light transition hover:opacity-90 sm:min-h-9"
                           >
                             + Thêm
                           </button>
@@ -180,7 +180,7 @@ export function DrinkMenuSection({
                           <button
                             type="button"
                             disabled
-                            className="cursor-not-allowed rounded-full bg-warm-muted/25 px-3.5 py-1.5 text-xs font-semibold text-warm-muted"
+                            className="inline-flex min-h-11 cursor-not-allowed items-center rounded-full bg-warm-muted/25 px-4 py-2 text-xs font-semibold text-warm-muted sm:min-h-9"
                           >
                             Tạm hết
                           </button>
