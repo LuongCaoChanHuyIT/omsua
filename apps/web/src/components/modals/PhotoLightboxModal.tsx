@@ -2,7 +2,11 @@
 /* eslint-disable @next/next/no-img-element */
 
 import type { FanpagePhotoItem } from '@omsua/shared';
-import { useEffect, useId, useState } from 'react';
+import { startTransition, useCallback, useEffect, useId, useState } from 'react';
+import {
+  AppViewTransition,
+  addAppTransitionType,
+} from '@/components/transitions/AppViewTransition';
 import { useModalAccessibility } from '@/hooks/use-modal-accessibility';
 
 export interface PhotoLightboxModalProps {
@@ -28,6 +32,27 @@ export function PhotoLightboxModal({
     onClose,
   });
 
+  const navigateSlide = useCallback(
+    (direction: 'next' | 'prev') => {
+      if (activeIndex === null || items.length <= 1) {
+        return;
+      }
+      const totalCount = items.length;
+      const nextIndex =
+        direction === 'next'
+          ? (activeIndex + 1) % totalCount
+          : (activeIndex - 1 + totalCount) % totalCount;
+
+      startTransition(() => {
+        addAppTransitionType(
+          direction === 'next' ? 'lightbox-next' : 'lightbox-prev',
+        );
+        onChangeIndex(nextIndex);
+      });
+    },
+    [activeIndex, items.length, onChangeIndex],
+  );
+
   useEffect(() => {
     if (!isOpen || activeIndex === null || items.length <= 1) {
       return;
@@ -36,16 +61,16 @@ export function PhotoLightboxModal({
     function handleArrowKeys(event: KeyboardEvent) {
       if (event.key === 'ArrowRight') {
         event.preventDefault();
-        onChangeIndex(((activeIndex ?? 0) + 1) % items.length);
+        navigateSlide('next');
       } else if (event.key === 'ArrowLeft') {
         event.preventDefault();
-        onChangeIndex(((activeIndex ?? 0) - 1 + items.length) % items.length);
+        navigateSlide('prev');
       }
     }
 
     window.addEventListener('keydown', handleArrowKeys);
     return () => window.removeEventListener('keydown', handleArrowKeys);
-  }, [activeIndex, isOpen, items.length, onChangeIndex]);
+  }, [activeIndex, isOpen, items.length, navigateSlide]);
 
   if (!isOpen || activeIndex === null) {
     return null;
@@ -54,6 +79,7 @@ export function PhotoLightboxModal({
   const currentItem = items[activeIndex]!;
   const total = items.length;
   const isImageBroken = failedSrcs.has(currentItem.src);
+  const sharedVtName = `gallery-photo-${currentItem.id}`;
 
   return (
     <div
@@ -96,27 +122,49 @@ export function PhotoLightboxModal({
         </div>
 
         <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-y-auto overscroll-contain bg-hero-espresso p-3 sm:p-5">
-          {isImageBroken ? (
-            <div className="flex h-64 w-full items-center justify-center rounded-2xl border border-surface-light/15 bg-surface-light/8 p-6 text-center text-sm text-card-butter">
-              Ảnh đang được đồng bộ từ Fanpage Ốm Sữa Đà Lạt
+          <AppViewTransition
+            key={currentItem.id}
+            name={sharedVtName}
+            share="morph"
+            enter={{
+              'lightbox-next': 'lightbox-next',
+              'lightbox-prev': 'lightbox-prev',
+              default: 'fade-in',
+            }}
+            exit={{
+              'lightbox-next': 'lightbox-next',
+              'lightbox-prev': 'lightbox-prev',
+              default: 'fade-out',
+            }}
+            default="none"
+          >
+            <div
+              data-vt-name={sharedVtName}
+              className="flex w-full items-center justify-center"
+            >
+              {isImageBroken ? (
+                <div className="flex h-64 w-full items-center justify-center rounded-2xl border border-surface-light/15 bg-surface-light/8 p-6 text-center text-sm text-card-butter">
+                  Ảnh đang được đồng bộ từ Fanpage Ốm Sữa Đà Lạt
+                </div>
+              ) : (
+                <img
+                  key={currentItem.src}
+                  src={currentItem.src}
+                  alt={currentItem.title}
+                  decoding="async"
+                  onError={() =>
+                    setFailedSrcs((prev) => {
+                      if (prev.has(currentItem.src)) return prev;
+                      const next = new Set(prev);
+                      next.add(currentItem.src);
+                      return next;
+                    })
+                  }
+                  className="max-h-[58vh] w-auto max-w-full rounded-2xl object-contain"
+                />
+              )}
             </div>
-          ) : (
-            <img
-              key={currentItem.src}
-              src={currentItem.src}
-              alt={currentItem.title}
-              decoding="async"
-              onError={() =>
-                setFailedSrcs((prev) => {
-                  if (prev.has(currentItem.src)) return prev;
-                  const next = new Set(prev);
-                  next.add(currentItem.src);
-                  return next;
-                })
-              }
-              className="max-h-[58vh] w-auto max-w-full rounded-2xl object-contain"
-            />
-          )}
+          </AppViewTransition>
         </div>
 
         <div className="flex shrink-0 flex-col gap-3 border-t border-olive-primary/12 bg-surface-light px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
@@ -125,14 +173,12 @@ export function PhotoLightboxModal({
           </p>
 
           <div className="flex shrink-0 flex-wrap items-center gap-2">
-            {total > 1 && (
+            {total > 1 ? (
               <>
                 <button
                   type="button"
                   aria-label="Ảnh trước"
-                  onClick={() =>
-                    onChangeIndex((activeIndex - 1 + total) % total)
-                  }
+                  onClick={() => navigateSlide('prev')}
                   className="inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border border-olive-primary/20 bg-canvas-cream px-3.5 text-xs font-bold text-espresso transition hover:bg-card-butter"
                 >
                   ← Trước
@@ -140,13 +186,13 @@ export function PhotoLightboxModal({
                 <button
                   type="button"
                   aria-label="Ảnh tiếp theo"
-                  onClick={() => onChangeIndex((activeIndex + 1) % total)}
+                  onClick={() => navigateSlide('next')}
                   className="inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border border-olive-primary/20 bg-canvas-cream px-3.5 text-xs font-bold text-espresso transition hover:bg-card-butter"
                 >
                   Tiếp →
                 </button>
               </>
-            )}
+            ) : null}
 
             <a
               href={currentItem.postUrl}

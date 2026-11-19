@@ -299,6 +299,14 @@ describe('Storefront Sections', () => {
     expect(markup).not.toMatch(
       /(#fff\b|#ffffff\b|#000\b|#000000\b|bg-white|text-white|bg-black|text-black)/i,
     );
+
+    const headerEl = container.querySelector('header') as HTMLElement;
+    expect(headerEl.style.viewTransitionName).toBe('omsua-site-header');
+
+    const vtNames = Array.from(container.querySelectorAll('[data-vt-name]'))
+      .map((el) => el.getAttribute('data-vt-name'))
+      .filter(Boolean);
+    expect(new Set(vtNames).size).toBe(vtNames.length);
   });
 
   it('supports single mobile+desktop nav, branch select id/name, min-h-11 touch targets, and optional Đơn đã đặt pill in StorefrontHeader', () => {

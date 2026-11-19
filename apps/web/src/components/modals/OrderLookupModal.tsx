@@ -258,7 +258,7 @@ export function OrderLookupModal({
                       key={recent.orderCode}
                       type="button"
                       onClick={() => void executeLookup(recent.orderCode, false)}
-                      className={`inline-flex min-h-11 cursor-pointer items-center rounded-2xl border px-3.5 py-2 text-xs font-bold transition ${
+                      className={`inline-flex min-h-11 cursor-pointer items-center rounded-2xl border px-3.5 py-2 text-xs font-bold tabular-nums transition ${
                         isCurrent
                           ? 'border-hero-espresso bg-hero-espresso text-surface-light'
                           : 'border-olive-primary/20 bg-card-butter/65 text-espresso hover:bg-card-butter'
@@ -288,7 +288,7 @@ export function OrderLookupModal({
                   <span className="text-xs font-bold tracking-wider text-warm-muted uppercase">
                     Mã đơn hàng
                   </span>
-                  <p className="mt-0.5 font-display text-2xl font-bold text-espresso">
+                  <p className="mt-0.5 font-display text-2xl font-bold text-espresso tabular-nums">
                     {activeOrder.orderCode}
                   </p>
                   <p className="mt-1 text-xs text-warm-muted">
@@ -399,7 +399,7 @@ export function OrderLookupModal({
                             </p>
                           )}
                         </div>
-                        <span className="shrink-0 font-bold text-terracotta sm:text-sm">
+                        <span className="shrink-0 font-bold text-terracotta tabular-nums sm:text-sm">
                           {formatVnd(item.lineTotal)}
                         </span>
                       </li>
@@ -439,7 +439,7 @@ export function OrderLookupModal({
                   <span className="font-bold text-espresso">
                     Tổng thanh toán:
                   </span>
-                  <span className="font-extrabold text-terracotta">
+                  <span className="font-extrabold text-terracotta tabular-nums">
                     {formatVnd(activeOrder.grandTotal)}
                   </span>
                 </div>

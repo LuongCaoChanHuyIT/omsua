@@ -46,10 +46,28 @@ describe('FanpageGallerySection, PhotoLightboxModal & BrandFooter social/branch 
     }
 
     triggers[3]!.focus();
+    const beforeOpenVtNodes = Array.from(
+      document.querySelectorAll('[data-vt-name]'),
+    ).map((el) => el.getAttribute('data-vt-name'));
+    expect(beforeOpenVtNodes).toHaveLength(4);
+    expect(new Set(beforeOpenVtNodes).size).toBe(4);
+    const targetVtName = triggers[3]!
+      .querySelector('[data-vt-name]')
+      ?.getAttribute('data-vt-name');
+    expect(targetVtName).toMatch(/^gallery-photo-/);
+
     fireEvent.click(triggers[3]!);
 
     const dialog = screen.getByRole('dialog');
     expect(within(dialog).getByText('4 / 4')).toBeInTheDocument();
+
+    // Exclusive 1-to-1 shared element ownership while lightbox is open:
+    expect(triggers[3]!.querySelector('[data-vt-name]')).toBeNull();
+    const openMatchingNodes = document.querySelectorAll(
+      `[data-vt-name="${targetVtName}"]`,
+    );
+    expect(openMatchingNodes).toHaveLength(1);
+    expect(dialog.contains(openMatchingNodes[0]!)).toBe(true);
 
     // Wrap-around from last (index 3) -> first (index 0)
     fireEvent.keyDown(window, { key: 'ArrowRight' });
@@ -62,6 +80,9 @@ describe('FanpageGallerySection, PhotoLightboxModal & BrandFooter social/branch 
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(document.activeElement).toBe(triggers[3]);
+    expect(
+      triggers[3]!.querySelector(`[data-vt-name="${targetVtName}"]`),
+    ).not.toBeNull();
   });
 
   it('renders verified Facebook, Instagram, TikTok links and branch storefront photos with objectPosition in BrandFooter', () => {

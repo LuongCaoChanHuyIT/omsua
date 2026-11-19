@@ -6,6 +6,7 @@ import {
   type OrderRecord,
 } from '@omsua/shared';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { DirectionalPageTransition } from '../components/transitions/AppViewTransition';
 import { fetchAdminBranches, fetchOrders } from '../lib/api';
 
 interface BranchOrderStats {
@@ -152,7 +153,8 @@ export function BranchesPage() {
   }, [orders]);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <DirectionalPageTransition>
+      <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-subhead-ochre">
@@ -171,9 +173,9 @@ export function BranchesPage() {
           type="button"
           onClick={() => void loadData()}
           disabled={loading}
-          className="min-h-11 rounded-xl border border-[#D4C9B0] bg-surface-light px-4 py-2.5 text-sm font-semibold text-espresso transition hover:border-olive-primary hover:bg-card-butter/50 disabled:opacity-60"
+          className="min-h-11 rounded-xl border border-[#D4C9B0] bg-surface-light px-4 py-2.5 text-sm font-semibold text-espresso transition-colors hover:border-olive-primary hover:bg-card-butter/50 disabled:opacity-60"
         >
-          {loading ? 'Đang đồng bộ...' : 'Làm mới'}
+          {loading ? 'Đang đồng bộ…' : 'Làm mới'}
         </button>
       </div>
 
@@ -185,7 +187,7 @@ export function BranchesPage() {
           <p className="text-xs font-semibold uppercase tracking-wider text-warm-muted">
             Quy mô hệ thống
           </p>
-          <p className="mt-1 font-display text-xl font-bold text-olive-primary sm:text-2xl">
+          <p className="mt-1 font-display text-xl font-bold text-olive-primary tabular-nums sm:text-2xl">
             {branches.length} Cơ sở hoạt động
           </p>
         </div>
@@ -193,7 +195,7 @@ export function BranchesPage() {
           <p className="text-xs font-semibold uppercase tracking-wider text-warm-muted">
             Tổng đơn toàn chuỗi
           </p>
-          <p className="mt-1 font-display text-2xl font-bold text-espresso">
+          <p className="mt-1 font-display text-2xl font-bold text-espresso tabular-nums">
             {chainStats.totalOrders}
           </p>
         </div>
@@ -201,7 +203,7 @@ export function BranchesPage() {
           <p className="text-xs font-semibold uppercase tracking-wider text-olive-primary">
             Đơn đang xử lý
           </p>
-          <p className="mt-1 font-display text-2xl font-bold text-terracotta">
+          <p className="mt-1 font-display text-2xl font-bold text-terracotta tabular-nums">
             {chainStats.activeOrders}
           </p>
         </div>
@@ -209,7 +211,7 @@ export function BranchesPage() {
           <p className="text-xs font-semibold uppercase tracking-wider text-[#45531B]">
             Tổng doanh thu hợp lệ
           </p>
-          <p className="mt-1 font-display text-2xl font-bold text-[#45531B]">
+          <p className="mt-1 font-display text-2xl font-bold text-[#45531B] tabular-nums">
             {formatVnd(chainStats.revenue)}
           </p>
         </div>
@@ -336,6 +338,7 @@ export function BranchesPage() {
           );
         })}
       </div>
-    </div>
+      </div>
+    </DirectionalPageTransition>
   );
 }

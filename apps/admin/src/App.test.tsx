@@ -1735,4 +1735,69 @@ describe('Admin App routes & operational portals', () => {
     expect(completedBadge).toHaveTextContent(/2 giờ trước/i);
     expect(completedBadge).not.toHaveTextContent(/Quá hạn/i);
   });
+
+  it('isolates persistent AdminLayout chrome with viewTransitionName and preserves modified Ctrl/Meta+Click behavior on DirectionalNavLink', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: [],
+          timestamp: new Date().toISOString(),
+        }),
+      }),
+    );
+
+    const { container } = render(
+      <MemoryRouter initialEntries={['/']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+
+    const sidebar = container.querySelector('aside') as HTMLElement;
+    const topbar = container.querySelector('header') as HTMLElement;
+    expect(sidebar.style.viewTransitionName).toBe('omsua-admin-sidebar');
+    expect(topbar.style.viewTransitionName).toBe('omsua-admin-topbar');
+
+    const menuLink = screen.getByRole('link', { name: 'Thực đơn' });
+
+    // Modified Ctrl+Click and Meta+Click must NOT call preventDefault() in DirectionalNavLink or trigger SPA navigation
+    const observedDefaultPrevented: boolean[] = [];
+    const swallowJsdomAnchorDefault = (event: MouseEvent) => {
+      observedDefaultPrevented.push(event.defaultPrevented);
+      event.preventDefault();
+    };
+    window.addEventListener('click', swallowJsdomAnchorDefault);
+    try {
+      const ctrlClick = new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+        button: 0,
+        ctrlKey: true,
+      });
+      menuLink.dispatchEvent(ctrlClick);
+
+      const metaClick = new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+        button: 0,
+        metaKey: true,
+      });
+      menuLink.dispatchEvent(metaClick);
+    } finally {
+      window.removeEventListener('click', swallowJsdomAnchorDefault);
+    }
+    expect(observedDefaultPrevented).toEqual([false, false]);
+    expect(
+      screen.queryByRole('heading', { name: /Quản lý Thực đơn/i }),
+    ).not.toBeInTheDocument();
+
+    // Primary unmodified left click navigates cleanly to Thực đơn
+    fireEvent.click(menuLink);
+    expect(
+      await screen.findByRole('heading', { name: /Quản lý Thực đơn/i }),
+    ).toBeInTheDocument();
+  });
 });

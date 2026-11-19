@@ -11,10 +11,18 @@ import {
   formatVnd,
   normalizeApiBaseUrl,
 } from '@omsua/shared';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  startTransition,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { CartCheckoutDrawer } from '@/components/modals/CartCheckoutDrawer';
 import { OrderLookupModal } from '@/components/modals/OrderLookupModal';
 import { ProductCustomizerModal } from '@/components/modals/ProductCustomizerModal';
+import { AppViewTransition } from '@/components/transitions/AppViewTransition';
 import { fetchCatalog } from '@/lib/api';
 import { readRecentOrders } from '@/lib/recent-orders';
 import { CartProvider, useCart } from '@/store/cart-store';
@@ -206,47 +214,63 @@ function StorefrontShellInner({
           categories={catalog.categories}
           drinks={drinks}
           activeCategory={activeCategory}
-          onChangeCategory={setActiveCategory}
+          onChangeCategory={(nextCat) => {
+            startTransition(() => {
+              setActiveCategory(nextCat);
+            });
+          }}
           searchQuery={searchQuery}
           onChangeSearchQuery={setSearchQuery}
           preferIllustration={preferIllustration}
-          onToggleMediaMode={setPreferIllustration}
+          onToggleMediaMode={(preferStudio) => {
+            startTransition(() => {
+              setPreferIllustration(preferStudio);
+            });
+          }}
           onSelectDrink={(drink) => {
             setInitialToppingIdsForModal([]);
             setActiveProductForModal(drink);
           }}
         />
 
-        <ToppingStripSection
-          toppings={catalog.toppings}
-          preferIllustration={preferIllustration}
-          onSelectTopping={(topping) => {
-            const defaultDrink =
-              catalog.products.find(
-                (product) =>
-                  product.id === 'tra-sua-atiso' && product.isAvailable,
-              ) ??
-              drinks.find((drink) => drink.isAvailable) ??
-              null;
+        <AppViewTransition>
+          <ToppingStripSection
+            toppings={catalog.toppings}
+            preferIllustration={preferIllustration}
+            onSelectTopping={(topping) => {
+              const defaultDrink =
+                catalog.products.find(
+                  (product) =>
+                    product.id === 'tra-sua-atiso' && product.isAvailable,
+                ) ??
+                drinks.find((drink) => drink.isAvailable) ??
+                null;
 
-            if (defaultDrink) {
-              setInitialToppingIdsForModal([topping.id]);
-              setActiveProductForModal(defaultDrink);
-            }
-          }}
-        />
+              if (defaultDrink) {
+                setInitialToppingIdsForModal([topping.id]);
+                setActiveProductForModal(defaultDrink);
+              }
+            }}
+          />
+        </AppViewTransition>
 
-        <SnackMenuSection
-          snacks={snacks}
-          activeSpice={activeSpice}
-          onChangeSpice={setActiveSpice}
-          preferIllustration={preferIllustration}
-          onSelectSnack={(snack, spice) => {
-            setActiveSpice(spice);
-            setInitialToppingIdsForModal([]);
-            setActiveProductForModal(snack);
-          }}
-        />
+        <AppViewTransition>
+          <SnackMenuSection
+            snacks={snacks}
+            activeSpice={activeSpice}
+            onChangeSpice={(nextSpice) => {
+              startTransition(() => {
+                setActiveSpice(nextSpice);
+              });
+            }}
+            preferIllustration={preferIllustration}
+            onSelectSnack={(snack, spice) => {
+              setActiveSpice(spice);
+              setInitialToppingIdsForModal([]);
+              setActiveProductForModal(snack);
+            }}
+          />
+        </AppViewTransition>
 
         <BrandStorySection />
 
@@ -259,8 +283,11 @@ function StorefrontShellInner({
         onSelectBranch={setSelectedBranchId}
       />
 
-      {showMobileStickyCartBar && (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-olive-primary/15 bg-hero-espresso/95 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] text-surface-light backdrop-blur-md lg:hidden">
+      {showMobileStickyCartBar ? (
+        <div
+          style={{ viewTransitionName: 'omsua-sticky-cart' }}
+          className="fixed inset-x-0 bottom-0 z-30 border-t border-olive-primary/15 bg-hero-espresso/95 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] text-surface-light backdrop-blur-md lg:hidden"
+        >
           <button
             type="button"
             onClick={openCartDrawer}
@@ -271,7 +298,7 @@ function StorefrontShellInner({
               : `Xem giỏ hàng (${unavailableItems.length} món tạm hết) →`}
           </button>
         </div>
-      )}
+      ) : null}
 
       <ProductCustomizerModal
         product={activeProductForModal}

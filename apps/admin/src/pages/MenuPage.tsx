@@ -5,7 +5,8 @@ import {
   type ProductCategoryId,
   type ProductItem,
 } from '@omsua/shared';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { DirectionalPageTransition } from '../components/transitions/AppViewTransition';
 import { fetchAdminCatalog, toggleProductAvailability } from '../lib/api';
 import { normalizeVietnameseSearch } from '../lib/text';
 
@@ -50,7 +51,11 @@ interface ProductCardProps {
   onToggle: (product: ProductItem) => void;
 }
 
-function AdminProductCard({ product, toggling, onToggle }: ProductCardProps) {
+const AdminProductCard = memo(function AdminProductCard({
+  product,
+  toggling,
+  onToggle,
+}: ProductCardProps) {
   return (
     <article
       data-testid={`menu-product-${product.id}`}
@@ -108,7 +113,7 @@ function AdminProductCard({ product, toggling, onToggle }: ProductCardProps) {
       </div>
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#E5DEC9] pt-3.5">
-        <span className="text-xs font-bold text-terracotta sm:text-sm">
+        <span className="text-xs font-bold text-terracotta tabular-nums sm:text-sm">
           {formatSizesSummary(product)}
         </span>
 
@@ -116,7 +121,7 @@ function AdminProductCard({ product, toggling, onToggle }: ProductCardProps) {
           type="button"
           disabled={toggling}
           onClick={() => onToggle(product)}
-          className={`min-h-11 rounded-xl px-3.5 py-2 text-xs font-semibold transition disabled:opacity-60 sm:text-sm ${
+          className={`min-h-11 rounded-xl px-3.5 py-2 text-xs font-semibold transition-colors disabled:opacity-60 sm:text-sm ${
             product.isAvailable
               ? 'border border-coral-sketch bg-[#F7DFDC] text-[#8F3530] hover:bg-[#F2CECA]'
               : 'bg-artichoke text-surface-light shadow-xs hover:bg-[#66762F]'
@@ -127,7 +132,7 @@ function AdminProductCard({ product, toggling, onToggle }: ProductCardProps) {
       </div>
     </article>
   );
-}
+});
 
 export function MenuPage() {
   const [catalog, setCatalog] = useState<CatalogPayload | null>(null);
@@ -277,7 +282,8 @@ export function MenuPage() {
     ) + visibleSnacks.length;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8">
+    <DirectionalPageTransition>
+      <div className="mx-auto max-w-6xl space-y-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-subhead-ochre">
@@ -295,9 +301,9 @@ export function MenuPage() {
           type="button"
           onClick={() => void loadCatalog()}
           disabled={loading}
-          className="min-h-11 rounded-xl border border-[#D4C9B0] bg-surface-light px-4 py-2.5 text-sm font-semibold text-espresso transition hover:border-olive-primary hover:bg-card-butter/50 disabled:opacity-60"
+          className="min-h-11 rounded-xl border border-[#D4C9B0] bg-surface-light px-4 py-2.5 text-sm font-semibold text-espresso transition-colors hover:border-olive-primary hover:bg-card-butter/50 disabled:opacity-60"
         >
-          {loading ? 'Đang tải...' : 'Làm mới'}
+          {loading ? 'Đang tải…' : 'Làm mới'}
         </button>
       </div>
 
@@ -308,7 +314,7 @@ export function MenuPage() {
               type="button"
               aria-pressed={availabilityFilter === 'all'}
               onClick={() => setAvailabilityFilter('all')}
-              className={`rounded-2xl border p-4 text-left transition ${
+              className={`rounded-2xl border p-4 text-left transition-colors ${
                 availabilityFilter === 'all'
                   ? 'border-olive-primary bg-surface-light shadow-xs'
                   : 'border-[#DDD4C0] bg-surface-light hover:border-olive-primary/60'
@@ -317,7 +323,7 @@ export function MenuPage() {
               <p className="text-xs font-semibold uppercase tracking-wider text-warm-muted">
                 Tổng danh mục món
               </p>
-              <p className="mt-1 font-display text-2xl font-bold text-espresso">
+              <p className="mt-1 font-display text-2xl font-bold text-espresso tabular-nums">
                 {totalProducts} món
               </p>
             </button>
@@ -325,7 +331,7 @@ export function MenuPage() {
               type="button"
               aria-pressed={availabilityFilter === 'available'}
               onClick={() => setAvailabilityFilter('available')}
-              className={`rounded-2xl border p-4 text-left transition ${
+              className={`rounded-2xl border p-4 text-left transition-colors ${
                 availabilityFilter === 'available'
                   ? 'border-[#45531B] bg-[#E3EAD1] shadow-xs'
                   : 'border-[#B4C488] bg-[#E3EAD1]/70 hover:bg-[#E3EAD1]'
@@ -334,7 +340,7 @@ export function MenuPage() {
               <p className="text-xs font-semibold uppercase tracking-wider text-[#45531B]">
                 Đang mở bán (Còn món)
               </p>
-              <p className="mt-1 font-display text-2xl font-bold text-[#45531B]">
+              <p className="mt-1 font-display text-2xl font-bold text-[#45531B] tabular-nums">
                 {availableCount} món
               </p>
             </button>
@@ -342,7 +348,7 @@ export function MenuPage() {
               type="button"
               aria-pressed={availabilityFilter === 'sold-out'}
               onClick={() => setAvailabilityFilter('sold-out')}
-              className={`rounded-2xl border p-4 text-left transition ${
+              className={`rounded-2xl border p-4 text-left transition-colors ${
                 availabilityFilter === 'sold-out'
                   ? 'border-[#8F3530] bg-[#F7DFDC] shadow-xs'
                   : 'border-[#E6ABA6] bg-[#F7DFDC]/70 hover:bg-[#F7DFDC]'
@@ -351,7 +357,7 @@ export function MenuPage() {
               <p className="text-xs font-semibold uppercase tracking-wider text-[#8F3530]">
                 Đang khóa tạm (Tạm hết)
               </p>
-              <p className="mt-1 font-display text-2xl font-bold text-[#8F3530]">
+              <p className="mt-1 font-display text-2xl font-bold text-[#8F3530] tabular-nums">
                 {soldOutCount} món
               </p>
             </button>
@@ -367,7 +373,7 @@ export function MenuPage() {
                   aria-label="Tìm món trong thực đơn"
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Tìm tên món tiếng Việt, tiếng Anh, nguyên liệu..."
+                  placeholder="Tìm tên món tiếng Việt, tiếng Anh, nguyên liệu…"
                   className="min-h-11 w-full rounded-xl border border-[#D4C9B0] bg-canvas-cream px-3.5 py-2.5 text-base text-espresso placeholder:text-warm-muted focus:border-olive-primary focus:outline-none sm:text-sm"
                 />
                 {searchQuery.length > 0 ? (
@@ -486,7 +492,7 @@ export function MenuPage() {
 
       {loading && !catalog ? (
         <div className="rounded-2xl border border-[#DDD4C0] bg-surface-light p-10 text-center text-sm text-warm-muted">
-          Đang tải thực đơn Ốm Sữa...
+          Đang tải thực đơn Ốm Sữa…
         </div>
       ) : catalog && totalVisibleCount === 0 ? (
         <div className="rounded-2xl border border-[#DDD4C0] bg-surface-light p-10 text-center">
@@ -560,6 +566,7 @@ export function MenuPage() {
           ) : null}
         </div>
       ) : null}
-    </div>
+      </div>
+    </DirectionalPageTransition>
   );
 }

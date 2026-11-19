@@ -7,8 +7,9 @@ import {
   formatShortPrice,
   normalizeVietnameseText,
 } from '@omsua/shared';
-import { useMemo, useState } from 'react';
+import { memo, startTransition, useCallback, useMemo, useState } from 'react';
 import { ProductMedia } from '@/components/artwork/ProductMedia';
+import { AppViewTransition } from '@/components/transitions/AppViewTransition';
 
 export interface DrinkMenuSectionProps {
   categories: CategoryInfo[];
@@ -44,6 +45,82 @@ function formatDrinkSizes(drink: ProductItem): string {
     .join(' • ');
 }
 
+interface DrinkMenuItemCardProps {
+  drink: ProductItem;
+  isCreamContainer: boolean;
+  preferIllustration: boolean;
+  onSelectById: (drinkId: string) => void;
+}
+
+export const DrinkMenuItemCard = memo(function DrinkMenuItemCard({
+  drink,
+  isCreamContainer,
+  preferIllustration,
+  onSelectById,
+}: DrinkMenuItemCardProps) {
+  return (
+    <article
+      className={`flex gap-3.5 rounded-2xl p-3.5 shadow-paper-rest transition-colors ${
+        isCreamContainer
+          ? 'border border-olive-primary/14 bg-canvas-cream/65 hover:border-olive-primary/30'
+          : 'border border-olive-primary/10 bg-surface-light hover:border-olive-primary/28'
+      }`}
+    >
+      <div className="relative h-28 w-24 shrink-0 overflow-hidden rounded-xl sm:w-28">
+        <ProductMedia
+          productId={drink.id}
+          categoryId={drink.categoryId}
+          variant="card"
+          preferIllustration={preferIllustration}
+        />
+        {drink.isSignature ? (
+          <span className="absolute top-1.5 left-1.5 rounded-full bg-artichoke px-2 py-0.5 text-xs font-bold tracking-wide text-surface-light">
+            + SIGNATURE
+          </span>
+        ) : null}
+      </div>
+
+      <div className="flex min-w-0 flex-1 flex-col justify-between">
+        <div>
+          <h4 className="font-editorial text-base leading-snug font-semibold text-espresso">
+            {drink.name}
+          </h4>
+          <p className="font-editorial text-xs italic text-warm-muted">
+            {drink.englishName}
+          </p>
+          <p className="mt-1 line-clamp-2 text-xs text-warm-muted">
+            {drink.description}
+          </p>
+        </div>
+
+        <div className="mt-3 flex items-center justify-between gap-2">
+          <span className="text-xs font-bold text-terracotta tabular-nums sm:text-sm">
+            {formatDrinkSizes(drink)}
+          </span>
+
+          {drink.isAvailable ? (
+            <button
+              type="button"
+              onClick={() => onSelectById(drink.id)}
+              className="inline-flex min-h-11 cursor-pointer items-center rounded-full bg-terracotta px-4 py-2 text-xs font-bold text-surface-light transition-opacity hover:opacity-90"
+            >
+              + Thêm
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled
+              className="inline-flex min-h-11 cursor-not-allowed items-center rounded-full bg-warm-muted/25 px-4 py-2 text-xs font-semibold text-warm-muted"
+            >
+              Tạm hết
+            </button>
+          )}
+        </div>
+      </div>
+    </article>
+  );
+});
+
 export function DrinkMenuSection({
   categories,
   drinks,
@@ -58,12 +135,33 @@ export function DrinkMenuSection({
   const [uncontrolledQuery, setUncontrolledQuery] = useState<string>('');
   const effectiveQuery = searchQuery ?? uncontrolledQuery;
 
+  const drinksById = useMemo(
+    () => new Map(drinks.map((drink) => [drink.id, drink])),
+    [drinks],
+  );
+
+  const handleSelectById = useCallback(
+    (drinkId: string) => {
+      const found = drinksById.get(drinkId);
+      if (found) {
+        onSelectDrink(found);
+      }
+    },
+    [drinksById, onSelectDrink],
+  );
+
   function handleQueryChange(next: string) {
     if (onChangeSearchQuery) {
       onChangeSearchQuery(next);
     } else {
       setUncontrolledQuery(next);
     }
+  }
+
+  function handleCategoryClick(nextCat: DrinkCategoryId | 'all') {
+    startTransition(() => {
+      onChangeCategory(nextCat);
+    });
   }
 
   const normalizedQuery = useMemo(
@@ -89,9 +187,7 @@ export function DrinkMenuSection({
         });
         return { category, categoryDrinks };
       })
-      .filter(
-        (group) => !normalizedQuery || group.categoryDrinks.length > 0,
-      );
+      .filter((group) => !normalizedQuery || group.categoryDrinks.length > 0);
   }, [activeCategory, categories, drinks, normalizedQuery]);
 
   const totalVisibleDrinks = useMemo(
@@ -116,7 +212,7 @@ export function DrinkMenuSection({
           </p>
         </div>
 
-        {onToggleMediaMode && (
+        {onToggleMediaMode ? (
           <div
             role="group"
             aria-label="Chế độ hiển thị hình món"
@@ -147,7 +243,7 @@ export function DrinkMenuSection({
               Minh họa Studio
             </button>
           </div>
-        )}
+        ) : null}
       </div>
 
       <div className="flex flex-col gap-3 rounded-2xl border border-olive-primary/15 bg-canvas-cream/95 p-3 shadow-paper-rest backdrop-blur-md lg:sticky lg:top-[69px] lg:z-30 lg:flex-row lg:items-center lg:justify-between">
@@ -183,13 +279,25 @@ export function DrinkMenuSection({
           <button
             type="button"
             aria-pressed={activeCategory === 'all'}
-            onClick={() => onChangeCategory('all')}
-            className={`inline-flex min-h-11 cursor-pointer items-center rounded-full px-4 py-2 text-xs font-bold tabular-nums transition-colors sm:text-[13px] ${
+            onClick={() => handleCategoryClick('all')}
+            className={`relative isolate inline-flex min-h-11 cursor-pointer items-center rounded-full px-4 py-2 text-xs font-bold tabular-nums transition-colors sm:text-[13px] ${
               activeCategory === 'all'
                 ? 'bg-hero-espresso text-surface-light'
                 : 'border border-olive-primary/20 bg-surface-light text-espresso hover:bg-canvas-cream'
             }`}
           >
+            {activeCategory === 'all' ? (
+              <AppViewTransition
+                name="drink-category-pill"
+                share="tab-pill"
+                default="none"
+              >
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 -z-10 rounded-full bg-hero-espresso"
+                />
+              </AppViewTransition>
+            ) : null}
             {`Tất cả (${drinks.length})`}
           </button>
 
@@ -204,13 +312,25 @@ export function DrinkMenuSection({
                 key={category.id}
                 type="button"
                 aria-pressed={isActive}
-                onClick={() => onChangeCategory(category.id)}
-                className={`inline-flex min-h-11 cursor-pointer items-center rounded-full px-4 py-2 text-xs font-bold tabular-nums transition-colors sm:text-[13px] ${
+                onClick={() => handleCategoryClick(category.id)}
+                className={`relative isolate inline-flex min-h-11 cursor-pointer items-center rounded-full px-4 py-2 text-xs font-bold tabular-nums transition-colors sm:text-[13px] ${
                   isActive
                     ? 'bg-hero-espresso text-surface-light'
                     : CATEGORY_CHIP_IDLE_STYLES[category.id]
                 }`}
               >
+                {isActive ? (
+                  <AppViewTransition
+                    name="drink-category-pill"
+                    share="tab-pill"
+                    default="none"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-0 -z-10 rounded-full bg-hero-espresso"
+                    />
+                  </AppViewTransition>
+                ) : null}
                 {`${category.shortLabel} (${count})`}
               </button>
             );
@@ -230,8 +350,10 @@ export function DrinkMenuSection({
           <button
             type="button"
             onClick={() => {
-              handleQueryChange('');
-              onChangeCategory('all');
+              startTransition(() => {
+                handleQueryChange('');
+                onChangeCategory('all');
+              });
             }}
             className="mt-4 inline-flex min-h-11 cursor-pointer items-center rounded-full bg-terracotta px-5 py-2.5 text-xs font-bold text-surface-light transition-opacity hover:opacity-92 sm:text-sm"
           >
@@ -250,11 +372,11 @@ export function DrinkMenuSection({
               >
                 <div className="mb-5 space-y-1 border-b border-olive-primary/12 pb-3.5">
                   <div className="flex flex-wrap items-center gap-2.5">
-                    {isCreamContainer && (
+                    {isCreamContainer ? (
                       <span className="rounded-full bg-card-olive-gold px-2.5 py-0.5 text-xs font-bold tracking-wider text-espresso uppercase">
                         CREAM &amp; BLENDED
                       </span>
-                    )}
+                    ) : null}
                     <h3 className="font-display text-xl font-bold text-olive-primary sm:text-2xl">
                       {category.title}
                     </h3>
@@ -266,66 +388,14 @@ export function DrinkMenuSection({
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                   {categoryDrinks.map((drink) => (
-                    <article
-                      key={drink.id}
-                      className={`flex gap-3.5 rounded-2xl p-3.5 shadow-paper-rest transition-colors ${
-                        isCreamContainer
-                          ? 'border border-olive-primary/14 bg-canvas-cream/65 hover:border-olive-primary/30'
-                          : 'border border-olive-primary/10 bg-surface-light hover:border-olive-primary/28'
-                      }`}
-                    >
-                      <div className="relative h-28 w-24 shrink-0 overflow-hidden rounded-xl sm:w-28">
-                        <ProductMedia
-                          productId={drink.id}
-                          categoryId={drink.categoryId}
-                          variant="card"
-                          preferIllustration={preferIllustration}
-                        />
-                        {drink.isSignature && (
-                          <span className="absolute top-1.5 left-1.5 rounded-full bg-artichoke px-2 py-0.5 text-xs font-bold tracking-wide text-surface-light">
-                            + SIGNATURE
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex min-w-0 flex-1 flex-col justify-between">
-                        <div>
-                          <h4 className="font-editorial text-base leading-snug font-semibold text-espresso">
-                            {drink.name}
-                          </h4>
-                          <p className="font-editorial text-xs italic text-warm-muted">
-                            {drink.englishName}
-                          </p>
-                          <p className="mt-1 line-clamp-2 text-xs text-warm-muted">
-                            {drink.description}
-                          </p>
-                        </div>
-
-                        <div className="mt-3 flex items-center justify-between gap-2">
-                          <span className="text-xs font-bold text-terracotta tabular-nums sm:text-sm">
-                            {formatDrinkSizes(drink)}
-                          </span>
-
-                          {drink.isAvailable ? (
-                            <button
-                              type="button"
-                              onClick={() => onSelectDrink(drink)}
-                              className="inline-flex min-h-11 cursor-pointer items-center rounded-full bg-terracotta px-4 py-2 text-xs font-bold text-surface-light transition-opacity hover:opacity-90"
-                            >
-                              + Thêm
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              disabled
-                              className="inline-flex min-h-11 cursor-not-allowed items-center rounded-full bg-warm-muted/25 px-4 py-2 text-xs font-semibold text-warm-muted"
-                            >
-                              Tạm hết
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </article>
+                    <AppViewTransition key={drink.id}>
+                      <DrinkMenuItemCard
+                        drink={drink}
+                        isCreamContainer={isCreamContainer}
+                        preferIllustration={preferIllustration}
+                        onSelectById={handleSelectById}
+                      />
+                    </AppViewTransition>
                   ))}
                 </div>
               </div>

@@ -1,5 +1,6 @@
 import { OMSUA_BRAND } from '@omsua/shared';
-import { NavLink, Outlet } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
+import { DirectionalNavLink } from '../components/transitions/AppViewTransition';
 
 const navItems = [
   { to: '/', label: 'Đơn hàng', end: true },
@@ -18,7 +19,10 @@ export function AdminLayout() {
         Chuyển đến nội dung chính
       </a>
 
-      <aside className="w-full shrink-0 border-b border-[#3F3A2D] bg-hero-espresso text-surface-light lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-b-0">
+      <aside
+        style={{ viewTransitionName: 'omsua-admin-sidebar' }}
+        className="w-full shrink-0 border-b border-[#3F3A2D] bg-hero-espresso text-surface-light lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-b-0"
+      >
         <div className="border-b border-[#3F3A2D] px-5 py-4 lg:px-6 lg:py-6">
           <div className="flex items-center justify-between gap-3 lg:block">
             <div>
@@ -50,12 +54,12 @@ export function AdminLayout() {
           className="flex flex-wrap gap-1.5 px-4 py-3 lg:flex-1 lg:flex-col lg:gap-1.5 lg:p-4"
         >
           {navItems.map((item) => (
-            <NavLink
+            <DirectionalNavLink
               key={item.to}
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `inline-flex min-h-11 items-center rounded-xl px-3.5 py-2.5 text-sm font-semibold transition ${
+                `inline-flex min-h-11 items-center rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-colors ${
                   isActive
                     ? 'bg-terracotta text-surface-light shadow-sm'
                     : 'text-[#DDD6C5] hover:bg-[#3A3528] hover:text-surface-light'
@@ -63,18 +67,23 @@ export function AdminLayout() {
               }
             >
               {item.label}
-            </NavLink>
+            </DirectionalNavLink>
           ))}
         </nav>
 
         <div className="mt-auto hidden border-t border-[#3F3A2D] px-6 py-4 text-xs text-[#BEB6A5] lg:block">
           <p className="font-semibold text-card-butter">Hotline điều phối</p>
-          <p className="mt-0.5 font-mono text-surface-light">0945 396 117</p>
+          <p className="mt-0.5 font-mono text-surface-light tabular-nums">
+            0945 396 117
+          </p>
         </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[#DDD4C0] bg-surface-light px-4 py-3.5 sm:px-8">
+        <header
+          style={{ viewTransitionName: 'omsua-admin-topbar' }}
+          className="flex flex-wrap items-center justify-between gap-3 border-b border-[#DDD4C0] bg-surface-light px-4 py-3.5 sm:px-8"
+        >
           <div>
             <p className="text-sm font-semibold text-olive-primary">
               Hệ thống quản trị Ốm Sữa — Đơn hàng &amp; Thực đơn

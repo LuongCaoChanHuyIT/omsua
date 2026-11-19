@@ -1,10 +1,13 @@
 import * as ReactNamespace from 'react';
 import {
   Fragment,
+  startTransition,
   type ComponentType,
   type JSX,
+  type MouseEvent,
   type ReactNode,
 } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 export type ViewTransitionClassValue =
   | string
@@ -20,7 +23,9 @@ export interface AppViewTransitionProps {
   update?: ViewTransitionClassValue;
 }
 
-function FallbackViewTransition({ children }: AppViewTransitionProps): JSX.Element {
+function FallbackViewTransition({
+  children,
+}: AppViewTransitionProps): JSX.Element {
   return <Fragment>{children}</Fragment>;
 }
 
@@ -100,5 +105,75 @@ export function DirectionalPageTransition({
     >
       {children}
     </AppViewTransition>
+  );
+}
+
+const ORDERED_ADMIN_ROUTES = ['/', '/menu', '/branches', '/settings'] as const;
+
+function getAdminRouteIndex(pathname: string): number {
+  const normalized =
+    pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
+  const idx = ORDERED_ADMIN_ROUTES.indexOf(
+    normalized as (typeof ORDERED_ADMIN_ROUTES)[number],
+  );
+  return idx >= 0 ? idx : 0;
+}
+
+export interface DirectionalNavLinkProps {
+  to: string;
+  end?: boolean;
+  children: ReactNode;
+  className: (state: { isActive: boolean }) => string;
+}
+
+export function DirectionalNavLink({
+  to,
+  end = false,
+  children,
+  className,
+}: DirectionalNavLinkProps): JSX.Element {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const isActive = end
+    ? location.pathname === to
+    : location.pathname === to || location.pathname.startsWith(`${to}/`);
+
+  function handleClick(event: MouseEvent<HTMLAnchorElement>) {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    if (location.pathname === to) {
+      return;
+    }
+
+    const currentIdx = getAdminRouteIndex(location.pathname);
+    const targetIdx = getAdminRouteIndex(to);
+    const direction = targetIdx >= currentIdx ? 'nav-forward' : 'nav-back';
+
+    startTransition(() => {
+      addAppTransitionType(direction);
+      navigate(to);
+    });
+  }
+
+  return (
+    <Link
+      to={to}
+      aria-current={isActive ? 'page' : undefined}
+      onClick={handleClick}
+      className={className({ isActive })}
+    >
+      {children}
+    </Link>
   );
 }

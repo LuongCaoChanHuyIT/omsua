@@ -146,5 +146,30 @@ describe('Admin brand favicon, typography, a11y CSS, and zero pure B/W rule', ()
     }
 
     expect(violations).toEqual([]);
+
+    const tsxFiles = collectScannableFiles(
+      path.join(ADMIN_ROOT, 'src'),
+    ).filter((filePath) => filePath.endsWith('.tsx'));
+    expect(tsxFiles.length).toBeGreaterThanOrEqual(5);
+
+    const uiViolations: string[] = [];
+    const uiRules: ReadonlyArray<{ label: string; regex: RegExp }> = [
+      { label: 'sm:min-h-9/10 regression', regex: /\bsm:min-h-(9|10)\b/ },
+      { label: 'sub-12px text-[9/10/11px]', regex: /\btext-\[(9|10|11)px\]/ },
+      { label: 'non-compositor transition-all', regex: /\btransition-all\b/ },
+      { label: 'ASCII three-dot UI copy', regex: /[A-Za-zÀ-ỹ0-9]\.\.\./ },
+    ];
+
+    for (const filePath of tsxFiles) {
+      const content = fs.readFileSync(filePath, 'utf8');
+      const relative = path.relative(ADMIN_ROOT, filePath);
+      for (const rule of uiRules) {
+        const match = content.match(rule.regex);
+        if (match) {
+          uiViolations.push(`${relative}: matched ${rule.label} ("${match[0]}")`);
+        }
+      }
+    }
+    expect(uiViolations).toEqual([]);
   });
 });

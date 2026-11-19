@@ -4,6 +4,7 @@ import {
   type HealthFetchResult,
 } from '@omsua/shared';
 import { useCallback, useEffect, useState } from 'react';
+import { DirectionalPageTransition } from '../components/transitions/AppViewTransition';
 import { fetchBackendHealth } from '../lib/api';
 
 export function SettingsPage() {
@@ -41,7 +42,8 @@ export function SettingsPage() {
   }, []);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <DirectionalPageTransition>
+      <div className="mx-auto max-w-4xl space-y-6">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-subhead-ochre">
           Cấu hình &amp; Kết nối dịch vụ
@@ -70,16 +72,16 @@ export function SettingsPage() {
             type="button"
             onClick={() => void loadHealth()}
             disabled={loading}
-            className="min-h-11 rounded-xl border border-[#D4C9B0] bg-canvas-cream px-4 py-2.5 text-sm font-semibold text-espresso transition hover:border-olive-primary hover:bg-card-butter/50 disabled:opacity-60"
+            className="min-h-11 rounded-xl border border-[#D4C9B0] bg-canvas-cream px-4 py-2.5 text-sm font-semibold text-espresso transition-colors hover:border-olive-primary hover:bg-card-butter/50 disabled:opacity-60"
           >
-            {loading ? 'Đang kiểm tra...' : 'Kiểm tra lại'}
+            {loading ? 'Đang kiểm tra…' : 'Kiểm tra lại'}
           </button>
         </div>
 
         <div className="mt-4">
           {loading && !health ? (
             <p className="text-sm text-warm-muted">
-              Đang kết nối tới Backend...
+              Đang kết nối tới Backend…
             </p>
           ) : health?.ok ? (
             <div className="rounded-xl border border-[#B4C488] bg-[#E3EAD1] p-4 text-sm text-[#45531B]">
@@ -147,6 +149,7 @@ export function SettingsPage() {
           </div>
         </dl>
       </section>
-    </div>
+      </div>
+    </DirectionalPageTransition>
   );
 }
