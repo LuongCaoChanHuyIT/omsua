@@ -89,3 +89,13 @@ export type {
 
 export { normalizeVietnameseText, resolveOrderAge } from './text-and-time';
 export type { OrderAgeBadge } from './text-and-time';
+
+export {
+  createCustomizerDraftState,
+  draftStateToOrderItemInput,
+  reduceCustomizerDraftState,
+} from './customizer-state';
+export type {
+  CustomizerDraftAction,
+  CustomizerDraftState,
+} from './customizer-state';

@@ -24,11 +24,12 @@ export class OrderValidationError extends Error {
   }
 }
 
+const VI_NUMBER_FORMATTER = new Intl.NumberFormat('vi-VN');
+
 export function formatVnd(amount: number): string {
   const rounded = Math.round(amount);
   const sign = rounded < 0 ? '-' : '';
-  const digits = String(Math.abs(rounded));
-  const grouped = digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  const grouped = VI_NUMBER_FORMATTER.format(Math.abs(rounded));
   return `${sign}${grouped}đ`;
 }
 

@@ -70,9 +70,120 @@ select {
   outline-color: var(--color-card-butter);
 }
 
+:root {
+  --duration-exit: 150ms;
+  --duration-enter: 210ms;
+  --duration-move: 340ms;
+}
+
+@keyframes vt-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes vt-slide-x {
+  from {
+    transform: translateX(var(--vt-slide-offset, 36px));
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-old(root) {
+  display: none;
+}
+
+::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-group(omsua-site-header),
+::view-transition-group(omsua-sticky-cart) {
+  animation: none;
+  z-index: 100;
+}
+
+::view-transition-old(omsua-site-header),
+::view-transition-old(omsua-sticky-cart) {
+  display: none;
+}
+
+::view-transition-new(omsua-site-header),
+::view-transition-new(omsua-sticky-cart) {
+  animation: none;
+}
+
+::view-transition-group(.morph) {
+  animation-duration: var(--duration-move);
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+::view-transition-group(.tab-pill) {
+  animation-duration: 220ms;
+  animation-timing-function: cubic-bezier(0.5, 0, 0.2, 1);
+}
+
+::view-transition-old(.tab-pill),
+::view-transition-new(.tab-pill) {
+  animation: none;
+  height: 100%;
+}
+
+::view-transition-old(.fade-out) {
+  animation: var(--duration-exit) ease-in vt-fade reverse;
+}
+
+::view-transition-new(.fade-in) {
+  animation: var(--duration-enter) ease-out var(--duration-exit) both vt-fade;
+}
+
+::view-transition-old(.lightbox-next) {
+  --vt-slide-offset: -36px;
+  animation:
+    var(--duration-exit) ease-in both vt-fade reverse,
+    var(--duration-move) ease-in-out both vt-slide-x reverse;
+}
+
+::view-transition-new(.lightbox-next) {
+  --vt-slide-offset: 36px;
+  animation:
+    var(--duration-enter) ease-out var(--duration-exit) both vt-fade,
+    var(--duration-move) ease-in-out both vt-slide-x;
+}
+
+::view-transition-old(.lightbox-prev) {
+  --vt-slide-offset: 36px;
+  animation:
+    var(--duration-exit) ease-in both vt-fade reverse,
+    var(--duration-move) ease-in-out both vt-slide-x reverse;
+}
+
+::view-transition-new(.lightbox-prev) {
+  --vt-slide-offset: -36px;
+  animation:
+    var(--duration-enter) ease-out var(--duration-exit) both vt-fade,
+    var(--duration-move) ease-in-out both vt-slide-x;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
   }
 
   *,

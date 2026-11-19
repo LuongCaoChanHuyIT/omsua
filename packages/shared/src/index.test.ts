@@ -4,9 +4,15 @@ import tsupConfig from '../tsup.config';
 import {
   DEFAULT_API_BASE_URL,
   DEFAULT_PORTS,
+  OMSUA_PRODUCTS,
+  OMSUA_TOPPINGS,
   createApiResponse,
+  createCustomizerDraftState,
+  draftStateToOrderItemInput,
+  formatVnd,
   normalizeApiBaseUrl,
   normalizeVietnameseText,
+  reduceCustomizerDraftState,
   resolveOrderAge,
 } from './index';
 
@@ -93,5 +99,72 @@ describe('@omsua/shared', () => {
       isOverdue: false,
     });
     expect(resolveOrderAge('not-a-date', 'pending', baseNow)).toBeNull();
+  });
+
+  it('manages headless CustomizerDraftState across drinks and snacks without cross-kind leakage and formats VND via hoisted Intl', () => {
+    expect(formatVnd(0)).toBe('0đ');
+    expect(formatVnd(45000)).toBe('45.000đ');
+    expect(formatVnd(-1250000)).toBe('-1.250.000đ');
+
+    const drink = OMSUA_PRODUCTS.find((p) => p.id === 'tra-sua-atiso')!;
+    const snack = OMSUA_PRODUCTS.find(
+      (p) => p.id === 'banh-trang-tron-top-mo',
+    )!;
+    const toppingsWithSoldOut = OMSUA_TOPPINGS.map((t) =>
+      t.id === 'kem-trung' ? { ...t, isAvailable: false } : t,
+    );
+
+    let drinkDraft = createCustomizerDraftState(drink, {
+      initialToppingIds: ['kem-trung', 'khuc-bach', 'unknown-id'],
+      availableToppings: toppingsWithSoldOut,
+    });
+    expect(drinkDraft).toMatchObject({
+      productId: 'tra-sua-atiso',
+      kind: 'drink',
+      size: 'M',
+      sugarLevel: '70',
+      iceLevel: '70',
+      toppingIds: ['khuc-bach'],
+      quantity: 1,
+    });
+
+    drinkDraft = reduceCustomizerDraftState(drinkDraft, {
+      type: 'SET_SIZE',
+      size: 'L',
+    });
+    drinkDraft = reduceCustomizerDraftState(drinkDraft, {
+      type: 'TOGGLE_TOPPING',
+      toppingId: 'tran-chau-den',
+    });
+    drinkDraft = reduceCustomizerDraftState(drinkDraft, {
+      type: 'STEP_QUANTITY',
+      delta: 120,
+    });
+    expect(drinkDraft.toppingIds).toEqual(['khuc-bach', 'tran-chau-den']);
+    expect(drinkDraft.quantity).toBe(99);
+    expect(draftStateToOrderItemInput(drinkDraft)).toEqual({
+      productId: 'tra-sua-atiso',
+      quantity: 99,
+      size: 'L',
+      sugarLevel: '70',
+      iceLevel: '70',
+      toppingIds: ['khuc-bach', 'tran-chau-den'],
+    });
+
+    const snackDraft = reduceCustomizerDraftState(
+      createCustomizerDraftState(snack, { initialSpiceLevel: 'cay-nhieu' }),
+      { type: 'STEP_QUANTITY', delta: -5 },
+    );
+    expect(snackDraft.quantity).toBe(1);
+    const snackInput = draftStateToOrderItemInput(snackDraft);
+    expect(snackInput).toEqual({
+      productId: 'banh-trang-tron-top-mo',
+      quantity: 1,
+      size: 'STD',
+      spiceLevel: 'cay-nhieu',
+    });
+    expect('sugarLevel' in snackInput).toBe(false);
+    expect('iceLevel' in snackInput).toBe(false);
+    expect('toppingIds' in snackInput).toBe(false);
   });
 });

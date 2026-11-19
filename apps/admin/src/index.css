@@ -70,9 +70,107 @@ select {
   outline-color: var(--color-card-butter);
 }
 
+:root {
+  --duration-exit: 150ms;
+  --duration-enter: 210ms;
+  --duration-move: 320ms;
+}
+
+@keyframes vt-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes vt-slide-x {
+  from {
+    transform: translateX(var(--vt-slide-offset, 32px));
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-old(root) {
+  display: none;
+}
+
+::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-group(omsua-admin-sidebar),
+::view-transition-group(omsua-admin-topbar) {
+  animation: none;
+  z-index: 100;
+}
+
+::view-transition-old(omsua-admin-sidebar),
+::view-transition-old(omsua-admin-topbar) {
+  display: none;
+}
+
+::view-transition-new(omsua-admin-sidebar),
+::view-transition-new(omsua-admin-topbar) {
+  animation: none;
+}
+
+::view-transition-group(.tab-pill) {
+  animation-duration: 200ms;
+  animation-timing-function: cubic-bezier(0.5, 0, 0.2, 1);
+}
+
+::view-transition-old(.tab-pill),
+::view-transition-new(.tab-pill) {
+  animation: none;
+  height: 100%;
+}
+
+::view-transition-old(.nav-forward) {
+  --vt-slide-offset: -32px;
+  animation:
+    var(--duration-exit) ease-in both vt-fade reverse,
+    var(--duration-move) ease-in-out both vt-slide-x reverse;
+}
+
+::view-transition-new(.nav-forward) {
+  --vt-slide-offset: 32px;
+  animation:
+    var(--duration-enter) ease-out var(--duration-exit) both vt-fade,
+    var(--duration-move) ease-in-out both vt-slide-x;
+}
+
+::view-transition-old(.nav-back) {
+  --vt-slide-offset: 32px;
+  animation:
+    var(--duration-exit) ease-in both vt-fade reverse,
+    var(--duration-move) ease-in-out both vt-slide-x reverse;
+}
+
+::view-transition-new(.nav-back) {
+  --vt-slide-offset: -32px;
+  animation:
+    var(--duration-enter) ease-out var(--duration-exit) both vt-fade,
+    var(--duration-move) ease-in-out both vt-slide-x;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
   }
 
   *,
