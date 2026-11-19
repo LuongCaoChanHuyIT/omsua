@@ -67,14 +67,33 @@ OmSua/
 
 ### Điểm nhấn kỹ thuật theo từng phân hệ
 
-- **`@omsua/shared`**: Nguồn chân lý duy nhất (*Single Source of Truth*) cho `OMSUA_COLORS`, `OMSUA_BRAND`, danh mục chuẩn (`OMSUA_CATEGORIES`, `OMSUA_PRODUCTS`, `OMSUA_TOPPINGS`, `OMSUA_BRANCHES`), hàm chuẩn hóa khóa giỏ hàng `canonicalizeCartItemKey`, cùng bộ giải quyết dòng đơn `resolveOrderLine` và tổng tiền `calculateOrderTotals`.
+- **`@omsua/shared`**: Nguồn chân lý duy nhất (*Single Source of Truth*) cho `OMSUA_COLORS`, `OMSUA_BRAND`, danh mục chuẩn (`OMSUA_CATEGORIES`, `OMSUA_PRODUCTS`, `OMSUA_TOPPINGS`, `OMSUA_BRANCHES`), manifest ảnh thực tế & liên kết mạng xã hội (`FANPAGE_GALLERY_ITEMS`, `PRODUCT_PHOTO_BY_ID`, `BRANCH_PHOTO_BY_ID`, `OMSUA_SOCIAL_LINKS`, `getProductPhoto`, `getBranchPhoto`), hàm chuẩn hóa khóa giỏ hàng `canonicalizeCartItemKey`, cùng bộ giải quyết dòng đơn `resolveOrderLine` và tổng tiền `calculateOrderTotals`.
 - **`@omsua/backend`**: Sử dụng mô-đun gốc `node:sqlite` (`DatabaseSync`) của Node.js 22 (không phụ thuộc addon C++ bên ngoài), tự động khởi tạo lược đồ & seed dữ liệu chuẩn khi khởi động, kiểm tra tính hợp lệ đầu vào bằng `class-validator` (`whitelist: true`, `forbidNonWhitelisted: true`) và cung cấp tài liệu tương tác OpenAPI tại `/api/docs`.
-- **`@omsua/web`**: Trang đặt món thương mại mang đậm hơi thở Đà Lạt với bộ minh họa SVG thủ công riêng biệt cho từng món (búp Atiso, linh vật Bé Búp Atiso, khay topping macro), hộp tùy chỉnh Size / Đường / Đá / Độ cay / Topping tính giá trực tiếp, ngăn giỏ hàng lưu trữ bền vững (`localStorage`), đặt hàng kèm mã chuyển khoản VietQR tự động, tra cứu trạng thái đơn theo mã `OM-YYYYMMDD-XXXX`, trang 404 tiếng Việt đồng bộ thương hiệu và tách thư mục biên dịch `.next-dev` (khi chạy `next dev`) độc lập khỏi `.next` (`next build`).
+- **`@omsua/web`**: Trang đặt món thương mại mang đậm hơi thở Đà Lạt kết hợp **ảnh thực tế `.webp` tối ưu từ Fanpage chính thức `@trasuadalatomsua`** với **38 minh họa Studio SVG thủ công** thông qua `<ProductMedia />` (có nút chuyển đổi `"Ảnh thực tế" / "Minh họa Studio"` và tự động dự phòng `onError` sang `<ProductIllustration />`), thư viện ảnh thực tế `#khong-gian` (`<FanpageGallerySection />` + `<PhotoLightboxModal />` hỗ trợ lọc danh mục & điều hướng bàn phím), hộp tùy chỉnh Size / Đường / Đá / Độ cay / Topping tính giá trực tiếp, ngăn giỏ hàng lưu trữ bền vững (`localStorage`), đặt hàng kèm mã chuyển khoản VietQR tự động, tra cứu trạng thái đơn theo mã `OM-YYYYMMDD-XXXX`, trang 404 tiếng Việt đồng bộ thương hiệu và tách thư mục biên dịch `.next-dev` (khi chạy `next dev`) độc lập khỏi `.next` (`next build`).
 - **`@omsua/admin`**: Bảng điều phối vận hành chuyên dụng cho thu ngân & barista:
   - Tải đơn toàn chi nhánh kèm **bộ đếm trực tiếp trên từng tab trạng thái**, **4 thẻ KPI doanh thu hợp lệ** và **tự động làm mới ngầm mỗi `12s`** không gây nhấp nháy giao diện (*zero-flicker background polling* có khóa chống ghi đè khi đang chuyển trạng thái).
   - **Tìm kiếm tức thì không phân biệt dấu tiếng Việt** trên mã đơn, tên cơ sở, tên khách, SĐT, địa chỉ, ghi chú đơn, tên món và topping (ví dụ: `"nguyen minh anh"`, `"duc trong"`, `"atiso"`, `"nau mat"`).
   - **Khóa xác nhận 2 bước khi `Hủy đơn`** (`Hủy đơn` -> `Xác nhận hủy đơn` / `Giữ lại`) trên các đơn `pending`, `preparing`, `delivering` tránh thao tác nhầm giờ cao điểm, đồng thời giữ 1 chạm nhanh cho `Xác nhận pha chế`, `Giao hàng`, `Hoàn tất` và hiển thị sẵn cú pháp đối soát `CK: OMSUA <Mã đơn> <SĐT>` cho đơn QR.
-  - Quản lý **Thực đơn 30 món** với bộ lọc trạng thái / nhóm món, tìm kiếm nhanh và nút bật/tắt `Còn món` ↔ `Tạm hết` đồng bộ tức thì sang Storefront.
+  - Quản lý **Thực đơn 30 món** (kèm nhãn `"Ảnh thực tế"` cho các món đã đồng bộ ảnh Fanpage) và trang **4 Chi nhánh** hiển thị banner mặt tiền `.webp` thực tế (có cơ chế ẩn an toàn khi `onError`), với nút bật/tắt `Còn món` ↔ `Tạm hết` đồng bộ tức thì sang Storefront.
+
+### Đồng bộ Ảnh Thực tế Fanpage & Kiến trúc Hiển thị Lai (`Hybrid Media`)
+
+Để tránh hoàn toàn lỗi hết hạn chữ ký URL của CDN Facebook (`scontent.*.fbcdn.net` HTTP `403`), hệ thống lưu trữ tĩnh toàn bộ ảnh thực tế dưới định dạng `.webp` cục bộ và chỉ dùng liên kết bài đăng vĩnh viễn `https://www.facebook.com/...` cho nút tham khảo ngoài:
+
+```text
+scripts/
+└── sync-fanpage-photos.mjs                    # Tải, xác thực header/kích thước bằng sharp & nén chuẩn WebP
+apps/web/public/images/fanpage/
+├── branches/                                  # 4 ảnh mặt tiền & không gian cơ sở Đà Lạt / Đức Trọng
+├── space/                                     # 4 ảnh góc quán sương sớm & hiên gỗ thông
+├── products/                                  # 10 ảnh thực tế trà sữa Atiso, dâu tằm, cà phê, bánh tráng...
+└── seasonal/                                  # Ảnh bộ sưu tập theo mùa trên Fanpage
+apps/admin/public/images/fanpage/
+└── branches/                                  # Bản sao 4 ảnh mặt tiền cơ sở cho trang Quản trị Chi nhánh
+```
+
+- **Chạy lại trình đồng bộ ảnh**: `pnpm sync:photos` sử dụng `sharp` để kiểm tra `Content-Type: image/*`, xác minh kích thước tối thiểu `200x200`, tự động xoay EXIF và xuất `.webp` (`quality: 82`).
+- **Dự phòng 2 lớp (`<ProductMedia />` + `<ProductIllustration />`)**: Mọi thẻ món trên Storefront ưu tiên hiển thị ảnh `.webp` thực tế nếu có trong `PRODUCT_PHOTO_BY_ID`, tự động lùi về minh họa vector `<ProductIllustration />` của đúng món đó khi chưa có ảnh thực tế, khi người dùng chọn chế độ `"Minh họa Studio"`, hoặc ngay khi sự kiện `onError` xảy ra.
 
 ---
 
@@ -305,6 +324,7 @@ pnpm dev
 | Lệnh | Mô tả chi tiết |
 |---|---|
 | `pnpm build:shared` | Biên dịch gói `@omsua/shared` ra CJS/ESM + khai báo kiểu `.d.ts` |
+| `pnpm sync:photos` | Tải, xác thực kích thước/định dạng bằng `sharp` và xuất bộ ảnh `.webp` từ Fanpage vào `apps/web/public` & `apps/admin/public` |
 | `pnpm dev` | Build `@omsua/shared`, sau đó chạy song song `shared` (watch), `backend`, `web` và `admin` |
 | `pnpm dev:backend` | Chạy riêng máy chủ NestJS ở chế độ theo dõi thay đổi (`:4000`) |
 | `pnpm dev:web` | Chạy riêng Storefront Next.js ở chế độ phát triển (`:3000`) |

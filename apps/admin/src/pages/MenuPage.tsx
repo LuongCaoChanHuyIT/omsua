@@ -1,5 +1,6 @@
 import {
   formatVnd,
+  getProductPhoto,
   type CatalogPayload,
   type ProductCategoryId,
   type ProductItem,
@@ -75,6 +76,11 @@ function AdminProductCard({ product, toggling, onToggle }: ProductCardProps) {
             {product.isNew ? (
               <span className="rounded-full border border-[#E6B38E] bg-[#F6DFCE] px-2.5 py-0.5 text-[11px] font-semibold text-[#9A460B]">
                 Món mới
+              </span>
+            ) : null}
+            {getProductPhoto(product.id) ? (
+              <span className="rounded-full border border-[#B4C488] bg-card-sage/65 px-2.5 py-0.5 text-[11px] font-semibold text-espresso">
+                Ảnh thực tế
               </span>
             ) : null}
           </div>

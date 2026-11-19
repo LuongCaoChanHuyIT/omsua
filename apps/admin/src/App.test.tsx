@@ -1599,4 +1599,71 @@ describe('Admin App routes & operational portals', () => {
     });
     expect(swaggerLink.className).toContain('min-h-11');
   });
+
+  it('renders fanpage storefront photos on BranchesPage (with onError fallback) and Ảnh thực tế badges on MenuPage', async () => {
+    const catalog = getDefaultCatalog();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation(async (input: string) => {
+        if (input.endsWith('/branches')) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              success: true,
+              data: OMSUA_BRANCHES,
+              timestamp: '2026-11-19T08:00:00.000Z',
+            }),
+          };
+        }
+        if (input.endsWith('/catalog')) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              success: true,
+              data: catalog,
+              timestamp: '2026-11-19T08:00:00.000Z',
+            }),
+          };
+        }
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            success: true,
+            data: [],
+            timestamp: '2026-11-19T08:00:00.000Z',
+          }),
+        };
+      }),
+    );
+
+    const { unmount } = render(
+      <MemoryRouter initialEntries={['/branches']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+
+    const cs1Photo = await screen.findByTestId('branch-photo-cs1-hoang-dieu');
+    expect(cs1Photo).toHaveAttribute(
+      'src',
+      '/images/fanpage/branches/branch-hoang-dieu.webp',
+    );
+    fireEvent.error(cs1Photo);
+    expect(
+      screen.queryByTestId('branch-photo-cs1-hoang-dieu'),
+    ).not.toBeInTheDocument();
+
+    unmount();
+
+    render(
+      <MemoryRouter initialEntries={['/menu']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+
+    const atisoCard = await screen.findByTestId('menu-product-tra-sua-atiso');
+    expect(within(atisoCard).getByText('Ảnh thực tế')).toBeInTheDocument();
+  });
 });

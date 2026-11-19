@@ -27,13 +27,18 @@ const FORBIDDEN_BW_PATTERNS: ReadonlyArray<{ label: string; regex: RegExp }> = [
   },
 ];
 
+const BINARY_ASSET_EXTENSION_REGEX = /\.(webp|png|jpe?g|gif|ico|avif|woff2?)$/i;
+
 function collectScannableFiles(targetPath: string): string[] {
   if (!fs.existsSync(targetPath)) {
     return [];
   }
   const stat = fs.statSync(targetPath);
   if (stat.isFile()) {
-    if (/\.test\.(ts|tsx)$/.test(targetPath)) {
+    if (
+      /\.test\.(ts|tsx)$/.test(targetPath) ||
+      BINARY_ASSET_EXTENSION_REGEX.test(targetPath)
+    ) {
       return [];
     }
     return [targetPath];
@@ -47,7 +52,11 @@ function collectScannableFiles(targetPath: string): string[] {
     const childPath = path.join(targetPath, entry.name);
     if (entry.isDirectory()) {
       results.push(...collectScannableFiles(childPath));
-    } else if (entry.isFile() && !/\.test\.(ts|tsx)$/.test(entry.name)) {
+    } else if (
+      entry.isFile() &&
+      !/\.test\.(ts|tsx)$/.test(entry.name) &&
+      !BINARY_ASSET_EXTENSION_REGEX.test(entry.name)
+    ) {
       results.push(childPath);
     }
   }

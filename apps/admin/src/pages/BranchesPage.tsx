@@ -1,6 +1,7 @@
 import {
   OMSUA_BRANCHES,
   formatVnd,
+  getBranchPhoto,
   type BranchInfo,
   type OrderRecord,
 } from '@omsua/shared';
@@ -52,6 +53,9 @@ export function BranchesPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [isFallbackBranches, setIsFallbackBranches] = useState<boolean>(false);
   const [ordersError, setOrdersError] = useState<string | null>(null);
+  const [failedPhotoBranchIds, setFailedPhotoBranchIds] = useState<Set<string>>(
+    () => new Set(),
+  );
   const requestSeqRef = useRef<number>(0);
 
   const loadData = useCallback(async () => {
@@ -233,6 +237,9 @@ export function BranchesPage() {
       <div className="grid gap-5 md:grid-cols-2">
         {branches.map((branch) => {
           const stats = computeBranchStats(branch.id, orders);
+          const branchPhoto = getBranchPhoto(branch.id);
+          const showBranchPhoto =
+            branchPhoto !== null && !failedPhotoBranchIds.has(branch.id);
 
           return (
             <article
@@ -241,6 +248,28 @@ export function BranchesPage() {
               className="flex flex-col justify-between rounded-2xl border border-[#DDD4C0] bg-surface-light p-6 shadow-xs"
             >
               <div>
+                {showBranchPhoto ? (
+                  <div className="mb-4 overflow-hidden rounded-xl border border-[#DDD4C0] bg-canvas-cream">
+                    <img
+                      data-testid={`branch-photo-${branch.id}`}
+                      src={branchPhoto.src}
+                      alt=""
+                      aria-hidden="true"
+                      loading="lazy"
+                      decoding="async"
+                      onError={() => {
+                        setFailedPhotoBranchIds((prev) => {
+                          if (prev.has(branch.id)) return prev;
+                          const next = new Set(prev);
+                          next.add(branch.id);
+                          return next;
+                        });
+                      }}
+                      className="h-40 w-full rounded-xl object-cover"
+                    />
+                  </div>
+                ) : null}
+
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="rounded-full border border-[#DEC98A] bg-card-butter px-3 py-0.5 text-xs font-semibold text-olive-primary">
                     {branch.shortLabel}
