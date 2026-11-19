@@ -13,13 +13,17 @@ import {
   PRODUCT_PHOTO_BY_ID,
 } from '@omsua/shared';
 import { describe, expect, it } from 'vitest';
-import { validateAndOptimizePhotoBuffer } from '../../../../scripts/sync-fanpage-photos.mjs';
+import {
+  FANPAGE_PHOTO_SOURCES,
+  validateAndOptimizePhotoBuffer,
+} from '../../../../scripts/sync-fanpage-photos.mjs';
 
 const nextPkgPath = realpathSync(
   path.resolve(__dirname, '..', '..', 'node_modules', 'next', 'package.json'),
 );
 const sharp = createRequire(nextPkgPath)('sharp') as (input?: unknown) => {
   png: () => { toBuffer: () => Promise<Buffer> };
+  metadata: () => Promise<{ width?: number; height?: number }>;
 };
 
 describe('Fanpage local WebP assets & sharp validation pipeline', () => {
@@ -83,6 +87,17 @@ describe('Fanpage local WebP assets & sharp validation pipeline', () => {
       }),
     ).rejects.toThrow(/extract/i);
 
+    await expect(
+      validateAndOptimizePhotoBuffer(widePngBuffer, 'image/png', {
+        maxDimension: 640,
+        extract: { left: 1.00005, top: 0, width: 0.00001, height: 1 },
+      }),
+    ).rejects.toThrow(/Invalid extract box/i);
+
+    await expect(
+      validateAndOptimizePhotoBuffer(widePngBuffer, 'image/png', 0),
+    ).rejects.toThrow(/Invalid maxDimension/i);
+
     const squarePngBuffer = await sharp({
       create: {
         width: 600,
@@ -102,7 +117,7 @@ describe('Fanpage local WebP assets & sharp validation pipeline', () => {
     ).rejects.toThrow(/dimensions too small/i);
   });
 
-  it('ships valid, non-empty RIFF WEBP files for every gallery, product, and branch photo in web and admin public dirs with zero orphan .webp files', () => {
+  it('ships valid, high-resolution (>=320x380) RIFF WEBP files for every gallery, product, and branch photo in web and admin public dirs with zero orphan .webp files', async () => {
     const collectDiskWebp = (dir: string, rootPublic: string): string[] => {
       if (!existsSync(dir)) return [];
       const out: string[] = [];
@@ -117,15 +132,26 @@ describe('Fanpage local WebP assets & sharp validation pipeline', () => {
       return out;
     };
 
-    const assertValidWebpFile = (fullPath: string, label: string) => {
+    const assertValidWebpFile = async (fullPath: string, label: string) => {
       expect(existsSync(fullPath), `Missing asset: ${label}`).toBe(true);
       const size = statSync(fullPath).size;
       expect(size).toBeGreaterThan(2048);
       expect(size).toBeLessThan(400 * 1024);
 
-      const header = readFileSync(fullPath).subarray(0, 12);
+      const fileBytes = readFileSync(fullPath);
+      const header = fileBytes.subarray(0, 12);
       expect(header.subarray(0, 4).toString('ascii')).toBe('RIFF');
       expect(header.subarray(8, 12).toString('ascii')).toBe('WEBP');
+
+      const meta = await sharp(fileBytes).metadata();
+      expect(
+        meta.width ?? 0,
+        `Width < 320px on ${label} (${String(meta.width)}x${String(meta.height)})`,
+      ).toBeGreaterThanOrEqual(320);
+      expect(
+        meta.height ?? 0,
+        `Height < 380px on ${label} (${String(meta.width)}x${String(meta.height)})`,
+      ).toBeGreaterThanOrEqual(380);
     };
 
     const webPublic = path.resolve(__dirname, '..', '..', 'public');
@@ -145,15 +171,25 @@ describe('Fanpage local WebP assets & sharp validation pipeline', () => {
     ]);
 
     for (const relSrc of allWebPaths) {
-      assertValidWebpFile(path.join(webPublic, relSrc), `web:${relSrc}`);
+      await assertValidWebpFile(path.join(webPublic, relSrc), `web:${relSrc}`);
     }
 
     const expectedAdminPaths = new Set<string>(
       Object.values(BRANCH_PHOTO_BY_ID).map((meta) => meta.src),
     );
     for (const relSrc of expectedAdminPaths) {
-      assertValidWebpFile(path.join(adminPublic, relSrc), `admin:${relSrc}`);
+      await assertValidWebpFile(
+        path.join(adminPublic, relSrc),
+        `admin:${relSrc}`,
+      );
     }
+
+    const expectedSourceWebPaths = new Set<string>(
+      FANPAGE_PHOTO_SOURCES.map(
+        (entry: { relPath: string }) => `/images/fanpage/${entry.relPath}`,
+      ),
+    );
+    expect(expectedSourceWebPaths).toEqual(allWebPaths);
 
     const actualWebFiles = collectDiskWebp(
       path.join(webPublic, 'images', 'fanpage'),

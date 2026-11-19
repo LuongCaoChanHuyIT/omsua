@@ -115,8 +115,8 @@ export const PRODUCT_PHOTO_BY_ID: Readonly<Record<string, ProductPhotoMeta>> = {
   },
   'tra-me-thot-not': {
     src: '/images/fanpage/products/drink-tra-me-thot-not.webp',
-    objectPosition: 'center 55%',
-    postUrl: 'https://www.facebook.com/photo/?fbid=983624600302207',
+    objectPosition: 'center 42%',
+    postUrl: 'https://www.facebook.com/photo/?fbid=1669588588372468',
   },
   'tra-so-ri-buoi-hong': {
     src: '/images/fanpage/products/drink-tra-so-ri-buoi-hong.webp',
@@ -158,7 +158,7 @@ export const PRODUCT_PHOTO_BY_ID: Readonly<Record<string, ProductPhotoMeta>> = {
       'https://www.facebook.com/photo/?fbid=1068464915151508&set=a.792794062718596',
   },
 
-  // 4. CÀ PHÊ PHA PHIN & COLD BREW (5/6 — ca-phe-den is text-only on menu board)
+  // 4. CÀ PHÊ PHA PHIN & COLD BREW (4/6 — ca-phe-sua & ca-phe-den keep Studio SVG)
   'cold-brew-me': {
     src: '/images/fanpage/products/drink-cold-brew-me.webp',
     objectPosition: 'center 36%',
@@ -174,12 +174,6 @@ export const PRODUCT_PHOTO_BY_ID: Readonly<Record<string, ProductPhotoMeta>> = {
     objectPosition: 'center 54%',
     postUrl:
       'https://www.facebook.com/photo/?fbid=967429995255001&set=a.792098612788141',
-  },
-  'ca-phe-sua': {
-    src: '/images/fanpage/products/drink-ca-phe-sua.webp',
-    objectPosition: 'center 48%',
-    postUrl:
-      'https://www.facebook.com/photo/?fbid=891659929498675&set=a.792794062718596',
   },
   'bac-xiu-da-lat': {
     src: '/images/fanpage/products/drink-bac-xiu-da-lat.webp',

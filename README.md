@@ -78,22 +78,22 @@ OmSua/
 
 ### Đồng bộ Ảnh Thực tế Fanpage & Kiến trúc Hiển thị Lai (`Hybrid Media`)
 
-Để tránh hoàn toàn lỗi hết hạn chữ ký URL của CDN Facebook (`scontent.*.fbcdn.net` HTTP `403`), hệ thống lưu trữ tĩnh toàn bộ **47 tệp ảnh `.webp` độ phân giải cao** cục bộ (khai thác từ toàn bộ 16 album công khai của `@trasuadalatomsua` ở chế độ Photo Theater) và chỉ dùng liên kết bài đăng vĩnh viễn `https://www.facebook.com/photo/?fbid=...` cho nút tham khảo ngoài:
+Để tránh hoàn toàn lỗi hết hạn chữ ký URL của CDN Facebook (`scontent.*.fbcdn.net` HTTP `403`), hệ thống lưu trữ tĩnh toàn bộ **46 tệp ảnh `.webp` độ phân giải cao** cục bộ (khai thác từ toàn bộ 16 album công khai của `@trasuadalatomsua` ở chế độ Photo Theater) và chỉ dùng liên kết bài đăng vĩnh viễn `https://www.facebook.com/photo/?fbid=...` cho nút tham khảo ngoài:
 
 ```text
 scripts/
 └── sync-fanpage-photos.mjs                    # Tải Photo Theater, cắt khung tỷ lệ extract bằng sharp & nén WebP
-apps/web/public/images/fanpage/                # Tổng cộng 47 tệp .webp (0 tệp mồ côi)
+apps/web/public/images/fanpage/                # Tổng cộng 46 tệp .webp (0 tệp mồ côi)
 ├── branches/                                  # 4 ảnh mặt tiền riêng biệt 1:1 cho 4 cơ sở Đà Lạt / Đức Trọng
 ├── space/                                     # 5 ảnh góc tiệm nắng sớm, Chợ Đà Lạt mùa dã quỳ & túi tote Atiso
-├── products/                                  # 32 ảnh thực tế riêng biệt 1:1 (21/24 đồ uống, 6/6 bánh tráng, 5/8 topping macro)
+├── products/                                  # 31 ảnh thực tế riêng biệt 1:1 (20/24 đồ uống, 6/6 bánh tráng, 5/8 topping macro)
 └── seasonal/                                  # 6 ảnh bộ sưu tập theo mùa & nông sản Đà Lạt cho thư viện 16 mục
 apps/admin/public/images/fanpage/
 └── branches/                                  # Bản sao 4 ảnh mặt tiền cơ sở (xác thực RIFF/WEBP) cho trang Quản trị Chi nhánh
 ```
 
 - **Chạy lại trình đồng bộ ảnh**: `pnpm sync:photos` sử dụng `sharp` kèm `AbortSignal.timeout(15_000)` để kiểm tra `Content-Type: image/*`, tự động xoay EXIF, hỗ trợ cắt khung tỷ lệ `extract: { left, top, width, height }` từ các poster nhiều ly, xác minh kích thước sau cắt `>= 200x200`, xuất `.webp` (`quality: 84`) và tự động dọn sạch mọi tệp `.webp` cũ không còn tham chiếu.
-- **Dự phòng 2 lớp (`<ProductMedia />` + `<ProductIllustration />`)**: 32/38 món có ảnh chụp thực tế riêng biệt 1:1 trên Fanpage hiển thị ảnh `.webp` sắc nét; 6 món chỉ có Video Reel hoặc chưa chụp ảnh tĩnh trên Fanpage (`tra-sua-flan-chay-canh`, `sua-tuoi-duong-den`, `ca-phe-den`, `banh-flan`, `tran-chau-trang`, `thach-cu-nang`) cùng chế độ `"Minh họa Studio"` và sự kiện `onError` tự động lùi về minh họa vector `<ProductIllustration />` riêng của đúng món đó.
+- **Dự phòng 2 lớp (`<ProductMedia />` + `<ProductIllustration />`)**: 31/38 món có ảnh chụp thực tế riêng biệt 1:1 trên Fanpage hiển thị ảnh `.webp` sắc nét; 7 món chỉ có Video Reel hoặc chưa chụp ảnh tĩnh đúng món trên Fanpage (`tra-sua-flan-chay-canh`, `sua-tuoi-duong-den`, `ca-phe-sua`, `ca-phe-den`, `banh-flan`, `tran-chau-trang`, `thach-cu-nang`) cùng chế độ `"Minh họa Studio"` và sự kiện `onError` tự động lùi về minh họa vector `<ProductIllustration />` riêng của đúng món đó.
 
 ---
 

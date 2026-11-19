@@ -40,6 +40,9 @@ describe('ProductMedia hybrid photo + studio SVG fallback', () => {
       'src',
       '/images/fanpage/products/drink-quyt-nhai-cat-tuong.webp',
     );
+    expect((nextImg as HTMLImageElement).style.objectPosition).toBe(
+      'center 38%',
+    );
   });
 
   it('renders accessible img label when alt is passed, and renders SVG directly when preferIllustration is true or product has no photo', () => {

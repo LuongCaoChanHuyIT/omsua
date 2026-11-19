@@ -43,9 +43,22 @@ const sharp = loadSharp();
 
 function normalizeOptions(optionsOrMaxDim) {
   if (typeof optionsOrMaxDim === 'number') {
+    if (!Number.isFinite(optionsOrMaxDim) || optionsOrMaxDim <= 0) {
+      throw new Error(`Invalid maxDimension "${String(optionsOrMaxDim)}".`);
+    }
     return { maxDimension: optionsOrMaxDim, extract: undefined };
   }
   if (optionsOrMaxDim && typeof optionsOrMaxDim === 'object') {
+    if (
+      optionsOrMaxDim.maxDimension !== undefined &&
+      (typeof optionsOrMaxDim.maxDimension !== 'number' ||
+        !Number.isFinite(optionsOrMaxDim.maxDimension) ||
+        optionsOrMaxDim.maxDimension <= 0)
+    ) {
+      throw new Error(
+        `Invalid maxDimension "${String(optionsOrMaxDim.maxDimension)}".`,
+      );
+    }
     return {
       maxDimension:
         typeof optionsOrMaxDim.maxDimension === 'number'
@@ -58,6 +71,9 @@ function normalizeOptions(optionsOrMaxDim) {
 }
 
 function computePixelExtract(extract, imgWidth, imgHeight) {
+  if (!extract || typeof extract !== 'object') {
+    throw new Error('Invalid extract box: expected an object.');
+  }
   const { left, top, width, height } = extract;
   const nums = [left, top, width, height];
   if (nums.some((val) => typeof val !== 'number' || !Number.isFinite(val))) {
@@ -66,6 +82,8 @@ function computePixelExtract(extract, imgWidth, imgHeight) {
   if (
     left < 0 ||
     top < 0 ||
+    left >= 1 ||
+    top >= 1 ||
     width <= 0 ||
     height <= 0 ||
     left + width > 1.0001 ||
@@ -218,7 +236,7 @@ const URLS = {
   drinkOolongSenGung:
     'https://scontent.fsgn5-2.fna.fbcdn.net/v/t39.30808-6/568854882_1453754916622504_4229840527950897988_n.jpg?stp=dst-jpg_tt6&cstp=mx1080x1350&ctp=s1080x1350&_nc_cat=108&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeFdOUiCGhLyD9P2FMQO8ZbIEBd1Kxj7bLwQF3UrGPtsvAYS4cjPXtj4ziCL8FcPS-a2vT1PEkZ6axcddi-D5DiK&_nc_ohc=Vl6L7ilQxjwQ7kNvwHpqaoD&_nc_oc=Adpu5c2Ea9VTpgcyaDj5LOKBxH-kxlZ7wFo2peq8O9XA-QxQtf7qy4IYDCr7dWYbvARX_VEEJINVvp45E2wR5_26&_nc_zt=23&_nc_ht=scontent.fsgn5-2.fna&_nc_gid=XrX1d5zjugEXKwRpIHqFvQ&_nc_ss=7b2a8&oh=00_AQRn3Xos5ieqqxR3PEU163JPb3G02C2CVU0SyQW0UZn5zw&oe=6B0484F2',
   drinkQuytNhai:
-    'https://scontent.fsgn5-21.fna.fbcdn.net/v/t39.30808-6/619618333_1535984968399498_2149815520543420901_n.jpg?stp=dst-jpg_tt6&cstp=mx1638x2048&ctp=s640x640&_nc_cat=107&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeFZaLXn21c9uDoCtuodAEfr5aTux8rpwdvlpO7HyunB2-o9Rny5VowxXOVZwPSWQZXOcqLqoHpz76uq-1HwLv2n&_nc_ohc=qnI9xWxFa_UQ7kNvwG44qfE&_nc_oc=AdqS2-WNnUbTqWFj-golXU8s3YAWt1lN6xBcWvgCE2-eLt2Y4EMUXgBkyTakq0PcyZ6OASjL6YBHI-WMZpG-mTT1&_nc_zt=23&_nc_ht=scontent.fsgn5-21.fna&_nc_gid=OMST3HZ2LIBDCJ0C5tgUJg&_nc_ss=7b2a8&oh=00_AQSz-6aN1g1JUQ3asUEOfE-d5otNMkwpPIHFGX37Wni1dw&oe=6B046985',
+    'https://scontent.fsgn5-21.fna.fbcdn.net/v/t39.30808-6/619618333_1535984968399498_2149815520543420901_n.jpg?stp=dst-jpg_tt6&cstp=mx1638x2048&ctp=s1638x2048&_nc_cat=107&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeFZaLXn21c9uDoCtuodAEfr5aTux8rpwdvlpO7HyunB2-o9Rny5VowxXOVZwPSWQZXOcqLqoHpz76uq-1HwLv2n&_nc_ohc=5UKvKbVqe8cQ7kNvwFtROns&_nc_oc=AdrZlMrU6RRGxJ4f_b2Y9BS8ezKKmPk4D5R6Yb82qitQnnovgn2V0YIi310RWLScIeHsOcL7OBsolKfA3crHeFw8&_nc_zt=23&_nc_ht=scontent.fsgn5-21.fna&_nc_gid=CIAa40BvWIQTQTaCouZ3RQ&_nc_ss=7b2a8&oh=00_AQSOoSjpbpA6U5qCnLsS4eeHgSH4LCqbx7bJ4C8fhhm-Rw&oe=6B046985',
   posterAtisoSenChiaDuo:
     'https://scontent.fsgn5-7.fna.fbcdn.net/v/t39.30808-6/493996793_1295573342440663_8554935026684742209_n.jpg?stp=cp6_dst-jpg_tt6&cstp=mx1440x1196&ctp=s1440x1196&_nc_cat=104&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeGymT5sfZUPaXpiVKu6XwFdjoet08jYc1aOh63TyNhzVvB3oKzo0qa974dcLo8vOuMkF2aVXtA0__HhiMLxPZR6&_nc_ohc=2rr45NZpgAsQ7kNvwFySSqT&_nc_oc=AdpSfC4YJBxHE5E-FfFyNZ1nVrojluJ7yCUPWE9ZoJfjzLIL6RnaP3O0DGX3ZiupyB_FKoTg8MuC30kOgmDa_6yY&_nc_zt=23&_nc_ht=scontent.fsgn5-7.fna&_nc_gid=q7te-uiImd7NAn64R-7KvQ&_nc_ss=7b2a8&oh=00_AQSV8PZpLlYGDpXOhZjCyQGGD80lbebk0N-xmPqQjTWiCg&oe=6B04855A',
   drinkTraMeDacRim:
@@ -239,8 +257,6 @@ const URLS = {
     'https://scontent.fsgn5-14.fna.fbcdn.net/v/t39.30808-6/493685741_1293237769340887_2654817426972789318_n.jpg?stp=dst-jpg_tt6&cstp=mx1080x1351&ctp=s1080x1351&_nc_cat=110&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeEM4MvwdZpTBjYfncFepfiQChoI2H0Vr78KGgjYfRWvv7w0NhkPsEFjy8AleA5ru72zhf3W5oUr-xEjtFYBMAsq&_nc_ohc=haFrt8cqK9oQ7kNvwH1TEl_&_nc_oc=AdpB7QVTNcYhnJkDUPkxa8jDW1LT99l58pInKOuFvnIAUdZ3j1iYLbcXyp43R03ls-vxV8SY-7d0ij9mjZ3B4Kal&_nc_zt=23&_nc_ht=scontent.fsgn5-14.fna&_nc_gid=8e5xWehZLU6nFMZnIrcyqQ&_nc_ss=7b2a8&oh=00_AQRguigAWgpAfEzkaHWj5LRNGJG1zJrK4BXJVOO48tuX0w&oe=6B045968',
   drinkCaPheTiramisu:
     'https://scontent.fsgn5-18.fna.fbcdn.net/v/t39.30808-6/491396372_1282852653712732_1880512663039686558_n.jpg?stp=dst-jpg_tt6&cstp=mx1080x1351&ctp=s1080x1351&_nc_cat=106&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=f727a1&_nc_eui2=AeFR8NuBQSIPwFRis2Yr6w249eQkoF8av0L15CSgXxq_QgNLEOOC0otWPrxIUqnA2d0vG52j7RsVWYieqn5L6Jxj&_nc_ohc=mfy-ZNdkIewQ7kNvwGHA0YY&_nc_oc=AdpXX9C6BH6ujwgw2-8qzqewdj_2H0cMiOmMbqOcFeZhLVjBTUMh0IYrKnohoe-oQLEbtbfbsXm1vEsBmS9K_omu&_nc_zt=23&_nc_ht=scontent.fsgn5-18.fna&_nc_gid=nfNSALP7CcVSVt7EgiezGg&_nc_ss=7b2a8&oh=00_AQRdWbqLdxoRC7fLK84MnKIHHK-sqBRo74vRmVnYI_VCwg&oe=6B0486D7',
-  posterCoffeeTrio:
-    'https://scontent.fsgn5-3.fna.fbcdn.net/v/t39.30808-6/489624159_1277775404220457_5015849322556943084_n.jpg?stp=dst-jpg_tt6&cstp=mx1079x1350&ctp=s1079x1350&_nc_cat=108&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=f727a1&_nc_eui2=AeEHmvWXXPe1zSy5DZdPKR_tsZfuutVwTVOxl-661XBNUzRXC4-sZ7tv3zgz9iE_AYfr2EQkCvesfuCKy6oIFild&_nc_ohc=45o5EAEKPywQ7kNvwEsaH6-&_nc_oc=AdpcV8rJDa_yNpVGPP3aayTD4nyB9yr0XUZ87PsGuz3A8yqGy79mzIdWgyWRJ0Hc8t0gRGVnD2whRDnM6DBWZ0kK&_nc_zt=23&_nc_ht=scontent.fsgn5-3.fna&_nc_gid=S08NNX3r1aRsyw1GaGbExA&_nc_ss=7b2a8&oh=00_AQQkRrGDsh5xDppkZpKtB3K2Mr0LW_bW5cSZSH4yvUl_lw&oe=6B046B46',
 
   // Snacks (6/6 distinct 1:1)
   posterMonMoi5Mon:
@@ -358,7 +374,7 @@ export const FANPAGE_PHOTO_SOURCES = [
     url: URLS.posterMulberrySeason,
   },
 
-  // 3. Drinks (21/24 distinct 1:1)
+  // 3. Drinks (20/24 distinct 1:1)
   {
     relPath: 'products/drink-tra-sua-atiso.webp',
     mirrorToAdmin: false,
@@ -393,7 +409,7 @@ export const FANPAGE_PHOTO_SOURCES = [
     relPath: 'products/drink-quyt-nhai-cat-tuong.webp',
     mirrorToAdmin: false,
     maxDimension: 720,
-    extract: { left: 0.02, top: 0.22, width: 0.52, height: 0.68 },
+    extract: { left: 0.12, top: 0.292, width: 0.415, height: 0.618 },
     url: URLS.drinkQuytNhai,
   },
   {
@@ -407,14 +423,15 @@ export const FANPAGE_PHOTO_SOURCES = [
     relPath: 'products/drink-tra-dau-tam-da-lat.webp',
     mirrorToAdmin: false,
     maxDimension: 720,
-    extract: { left: 0.04, top: 0.20, width: 0.35, height: 0.70 },
+    extract: { left: 0.03, top: 0.28, width: 0.36, height: 0.53 },
     url: URLS.posterMulberrySeason,
   },
   {
     relPath: 'products/drink-tra-me-thot-not.webp',
     mirrorToAdmin: false,
     maxDimension: 720,
-    url: URLS.drinkTraMeDacRim,
+    extract: { left: 0.04, top: 0.24, width: 0.38, height: 0.48 },
+    url: URLS.posterViNangHaMe,
   },
   {
     relPath: 'products/drink-tra-so-ri-buoi-hong.webp',
@@ -483,17 +500,10 @@ export const FANPAGE_PHOTO_SOURCES = [
     url: URLS.drinkCaPheTiramisu,
   },
   {
-    relPath: 'products/drink-ca-phe-sua.webp',
-    mirrorToAdmin: false,
-    maxDimension: 720,
-    extract: { left: 0.58, top: 0.46, width: 0.40, height: 0.52 },
-    url: URLS.posterCoffeeTrio,
-  },
-  {
     relPath: 'products/drink-bac-xiu-da-lat.webp',
     mirrorToAdmin: false,
     maxDimension: 720,
-    extract: { left: 0.02, top: 0.14, width: 0.47, height: 0.80 },
+    extract: { left: 0.02, top: 0.288, width: 0.45, height: 0.652 },
     url: URLS.posterBacXiuCaPheMuoi,
   },
 
@@ -568,7 +578,7 @@ export const FANPAGE_PHOTO_SOURCES = [
     relPath: 'products/topping-hat-dac-rim.webp',
     mirrorToAdmin: false,
     maxDimension: 512,
-    extract: { left: 0.26, top: 0.34, width: 0.50, height: 0.28 },
+    extract: { left: 0.26, top: 0.36, width: 0.40, height: 0.27 },
     url: URLS.drinkTraMeDacRim,
   },
 ];

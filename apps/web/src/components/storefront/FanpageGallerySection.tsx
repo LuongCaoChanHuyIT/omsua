@@ -111,7 +111,7 @@ export function FanpageGallerySection() {
             <button
               key={item.id}
               type="button"
-              aria-label={`Xem ảnh lớn: ${item.title}`}
+              aria-label={`${item.title} — Xem ảnh lớn`}
               onClick={() => setLightboxIndex(index)}
               className="group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-olive-primary/12 bg-canvas-cream text-left shadow-2xs transition hover:border-olive-primary/35"
             >
@@ -143,7 +143,10 @@ export function FanpageGallerySection() {
                 <p className="line-clamp-1 font-editorial text-xs font-semibold text-espresso sm:text-sm">
                   {item.title}
                 </p>
-                <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-warm-muted">
+                <p
+                  aria-hidden="true"
+                  className="mt-1 line-clamp-2 text-[11px] leading-snug text-warm-muted"
+                >
                   {item.caption}
                 </p>
               </div>

@@ -54,7 +54,7 @@ describe('fanpage-media manifest (@omsua/shared)', () => {
     });
   });
 
-  it('maps 32 unique 1:1 catalog photos (21/24 drinks, 6/6 snacks, 5/8 macro toppings) and 4 unique branch photos with objectPosition', () => {
+  it('maps 31 unique 1:1 catalog photos (20/24 drinks, 6/6 snacks, 5/8 macro toppings) and 4 unique branch photos with objectPosition', () => {
     const validDrinkIds = new Set(
       OMSUA_PRODUCTS.filter((p) => p.kind === 'drink').map((p) => p.id),
     );
@@ -69,7 +69,7 @@ describe('fanpage-media manifest (@omsua/shared)', () => {
     ]);
 
     const mappedEntries = Object.entries(PRODUCT_PHOTO_BY_ID);
-    expect(mappedEntries).toHaveLength(32);
+    expect(mappedEntries).toHaveLength(31);
 
     const seenProductSrcs = new Set<string>();
     let drinkCount = 0;
@@ -92,7 +92,7 @@ describe('fanpage-media manifest (@omsua/shared)', () => {
       if (validToppingIds.has(key)) toppingCount += 1;
     }
 
-    expect(drinkCount).toBe(21);
+    expect(drinkCount).toBe(20);
     expect(snackCount).toBe(6);
     expect(toppingCount).toBe(5);
 
@@ -100,6 +100,7 @@ describe('fanpage-media manifest (@omsua/shared)', () => {
     for (const unphotographedId of [
       'tra-sua-flan-chay-canh',
       'sua-tuoi-duong-den',
+      'ca-phe-sua',
       'ca-phe-den',
       'banh-flan',
       'tran-chau-trang',

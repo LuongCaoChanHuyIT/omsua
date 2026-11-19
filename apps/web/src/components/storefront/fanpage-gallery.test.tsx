@@ -27,11 +27,16 @@ describe('FanpageGallerySection, PhotoLightboxModal & BrandFooter social/branch 
       screen.getByRole('button', { name: 'Tất cả (16)' }),
     ).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByText(/14K người theo dõi/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', {
+        name: /^Không gian sáng sớm ở Ốm — Xem ảnh lớn$/i,
+      }),
+    ).toBeInTheDocument();
 
     fireEvent.click(
       screen.getByRole('button', { name: /Bánh tráng Nhà Ốm \(4\)/i }),
     );
-    const triggers = screen.getAllByRole('button', { name: /Xem ảnh lớn:/i });
+    const triggers = screen.getAllByRole('button', { name: /Xem ảnh lớn$/i });
     expect(triggers).toHaveLength(4);
 
     triggers[3]!.focus();
@@ -98,7 +103,7 @@ describe('FanpageGallerySection, PhotoLightboxModal & BrandFooter social/branch 
       container.querySelectorAll('#khong-gian img[src^="/images/fanpage/"]'),
     ).toHaveLength(15);
 
-    const triggers = screen.getAllByRole('button', { name: /Xem ảnh lớn:/i });
+    const triggers = screen.getAllByRole('button', { name: /Xem ảnh lớn$/i });
     fireEvent.click(triggers[0]!);
 
     const dialog = screen.getByRole('dialog');
