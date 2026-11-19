@@ -16,6 +16,7 @@
     "start:backend": "node apps/backend/dist/main.js",
     "start:web": "pnpm --filter @omsua/web start",
     "start:admin": "pnpm --filter @omsua/admin start",
+    "sync:photos": "node scripts/sync-fanpage-photos.mjs",
     "build": "pnpm build:shared && pnpm --filter './apps/*' build",
     "typecheck": "pnpm build:shared && pnpm -r run typecheck",
     "lint": "pnpm build:shared && pnpm -r run lint",

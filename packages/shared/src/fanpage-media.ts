@@ -50,15 +50,15 @@ export const BRANCH_PHOTO_BY_ID: Readonly<Record<string, BranchPhotoMeta>> = {
   },
   'cs3-158-nct': {
     src: '/images/fanpage/branches/branch-nguyen-cong-tru.webp',
-    caption: 'Góc phố trước hiên Ốm Sữa Nguyễn Công Trứ, Đà Lạt',
+    caption: 'Không gian nắng sớm mộc mạc tại Nguyễn Công Trứ, Đà Lạt',
     postUrl:
-      'https://www.facebook.com/photo.php?fbid=1812186947445964&set=pb.100059640288584.-2207520000&type=3',
+      'https://www.facebook.com/photo/?fbid=1420041026660560&set=a.1027171502614183',
   },
   'cs4-duc-trong': {
     src: '/images/fanpage/branches/branch-duc-trong-vuon-hoa.webp',
-    caption: 'Không gian quầy Ốm Sữa Lâm Đồng — Trà Sữa Atiso Since 2017',
+    caption: 'Mặt tiền vòm 544 Quốc lộ 20, Thị trấn Liên Nghĩa, Đức Trọng',
     postUrl:
-      'https://www.facebook.com/photo/?fbid=989323503065650&set=a.1027171502614183',
+      'https://www.facebook.com/photo/?fbid=1812177980780194&set=pb.100059640288584.-2207520000',
   },
 };
 
@@ -67,19 +67,25 @@ export const PRODUCT_PHOTO_BY_ID: Readonly<Record<string, ProductPhotoMeta>> = {
     src: '/images/fanpage/products/drink-tra-sua-atiso.webp',
     objectPosition: 'center',
     postUrl:
+      'https://www.facebook.com/photo/?fbid=989321219732545&set=a.870975204900481',
+  },
+  'oolong-sen-gung': {
+    src: '/images/fanpage/products/drink-atiso-chuoi.webp',
+    objectPosition: 'center',
+    postUrl:
       'https://www.facebook.com/photo/?fbid=948069193857748&set=a.870975204900481',
   },
-  'tra-sua-atiso-chuoi': {
-    src: '/images/fanpage/products/drink-atiso-chuoi.webp',
+  'tra-dau-tam-da-lat': {
+    src: '/images/fanpage/products/topping-khoai-tam.webp',
     objectPosition: 'center',
     postUrl:
-      'https://www.facebook.com/photo/?fbid=989321219732545&set=a.870975204900481',
+      'https://www.facebook.com/photo/?fbid=1068464915151508&set=a.792794062718596',
   },
-  'tra-atiso-sen-chia': {
-    src: '/images/fanpage/products/drink-atiso-chuoi.webp',
+  'yogurt-dau-tam': {
+    src: '/images/fanpage/products/topping-khoai-tam.webp',
     objectPosition: 'center',
     postUrl:
-      'https://www.facebook.com/photo/?fbid=989321219732545&set=a.870975204900481',
+      'https://www.facebook.com/photo/?fbid=1068464915151508&set=a.792794062718596',
   },
   'quyt-nhai-cat-tuong': {
     src: '/images/fanpage/products/drink-quyt-nhai.webp',
@@ -129,11 +135,11 @@ export const PRODUCT_PHOTO_BY_ID: Readonly<Record<string, ProductPhotoMeta>> = {
     postUrl:
       'https://www.facebook.com/photo/?fbid=891659929498675&set=a.792794062718596',
   },
-  'tran-chau-trang': {
-    src: '/images/fanpage/products/topping-khoai-tam.webp',
+  'phoi-suong-toi-ot': {
+    src: '/images/fanpage/products/snack-banh-trang-top-mo.webp',
     objectPosition: 'center',
     postUrl:
-      'https://www.facebook.com/photo/?fbid=1068464915151508&set=a.792794062718596',
+      'https://www.facebook.com/photo/?fbid=1076102457721087&set=pcb.1076102631054403',
   },
   'banh-trang-tron-top-mo': {
     src: '/images/fanpage/products/snack-banh-trang-top-mo.webp',
@@ -141,19 +147,7 @@ export const PRODUCT_PHOTO_BY_ID: Readonly<Record<string, ProductPhotoMeta>> = {
     postUrl:
       'https://www.facebook.com/photo/?fbid=1076102457721087&set=pcb.1076102631054403',
   },
-  'com-chay-cha-bong': {
-    src: '/images/fanpage/products/snack-banh-trang-top-mo.webp',
-    objectPosition: 'center',
-    postUrl:
-      'https://www.facebook.com/photo/?fbid=1076102457721087&set=pcb.1076102631054403',
-  },
   'banh-trang-sot-tac': {
-    src: '/images/fanpage/products/snack-banh-trang-sot-tac.webp',
-    objectPosition: 'center',
-    postUrl:
-      'https://www.facebook.com/photo/?fbid=804925394838796&set=a.792098612788141',
-  },
-  'phoi-suong-toi-ot': {
     src: '/images/fanpage/products/snack-banh-trang-sot-tac.webp',
     objectPosition: 'center',
     postUrl:
@@ -200,12 +194,12 @@ export const FANPAGE_GALLERY_ITEMS: readonly FanpagePhotoItem[] = [
     id: 'space-street-dalat',
     category: 'khong-gian',
     src: '/images/fanpage/space/space-street-dalat.webp',
-    title: 'Nhịp sống trước hiên tiệm Ốm',
+    title: 'Đêm Đà Lạt tại Vườn Hoa Thành Phố',
     caption:
-      'Điểm hẹn quen thuộc của người Đà Lạt và khách ghé thăm từ năm 2017.',
+      'Quầy Trà Sữa Atiso rực đèn ấm áp giữa tiết trời đêm se lạnh Đà Lạt.',
     postUrl:
-      'https://www.facebook.com/photo/?fbid=1812177980780194&set=pb.100059640288584.-2207520000',
-    aspectRatio: '4/5',
+      'https://www.facebook.com/photo/?fbid=989323503065650&set=a.1027171502614183',
+    aspectRatio: '1/1',
   },
   {
     id: 'branch-hoang-dieu',
