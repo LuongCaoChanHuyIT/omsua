@@ -137,7 +137,7 @@ export function BrandFooter({
                         }
                       : undefined
                   }
-                  className={`flex flex-col justify-between rounded-2xl border p-4 transition ${
+                  className={`flex flex-col justify-between rounded-2xl border p-4 transition-colors ${
                     onSelectBranch ? 'cursor-pointer' : ''
                   } ${
                     isSelected
@@ -150,6 +150,8 @@ export function BrandFooter({
                       <div className="mb-3 aspect-[16/9] w-full overflow-hidden rounded-xl border border-surface-light/12">
                         <img
                           src={branchPhoto.src}
+                          width={960}
+                          height={540}
                           alt=""
                           aria-hidden="true"
                           loading="lazy"
@@ -176,7 +178,7 @@ export function BrandFooter({
                       {branch.address}
                     </p>
                   </div>
-                  <p className="mt-3 text-xs font-semibold text-terracotta">
+                  <p className="mt-3 text-xs font-semibold text-terracotta tabular-nums">
                     📞 Hotline: {branch.hotline}
                   </p>
                 </div>
@@ -203,7 +205,7 @@ export function BrandFooter({
                 target="_blank"
                 rel="noreferrer"
                 aria-label="Facebook Fanpage Ốm Sữa"
-                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-olive-primary/20 bg-canvas-cream px-2.5 text-xs font-bold text-espresso transition hover:bg-card-butter"
+                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-olive-primary/20 bg-canvas-cream px-2.5 text-xs font-bold text-espresso transition-colors hover:bg-card-butter"
               >
                 Facebook
               </a>
@@ -212,7 +214,7 @@ export function BrandFooter({
                 target="_blank"
                 rel="noreferrer"
                 aria-label="Instagram Ốm Sữa Đà Lạt"
-                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-olive-primary/20 bg-canvas-cream px-2.5 text-xs font-bold text-espresso transition hover:bg-card-butter"
+                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-olive-primary/20 bg-canvas-cream px-2.5 text-xs font-bold text-espresso transition-colors hover:bg-card-butter"
               >
                 Instagram
               </a>
@@ -221,7 +223,7 @@ export function BrandFooter({
                 target="_blank"
                 rel="noreferrer"
                 aria-label="TikTok Ốm Sữa Pha Chế"
-                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-olive-primary/20 bg-canvas-cream px-2.5 text-xs font-bold text-espresso transition hover:bg-card-butter"
+                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-olive-primary/20 bg-canvas-cream px-2.5 text-xs font-bold text-espresso transition-colors hover:bg-card-butter"
               >
                 TikTok
               </a>

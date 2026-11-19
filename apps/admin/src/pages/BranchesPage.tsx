@@ -253,6 +253,8 @@ export function BranchesPage() {
                     <img
                       data-testid={`branch-photo-${branch.id}`}
                       src={branchPhoto.src}
+                      width={960}
+                      height={540}
                       alt=""
                       aria-hidden="true"
                       loading="lazy"
@@ -298,34 +300,34 @@ export function BranchesPage() {
 
               <dl className="mt-5 grid grid-cols-2 gap-3 border-t border-[#E5DEC9] pt-4 text-center sm:grid-cols-4">
                 <div className="rounded-xl bg-canvas-cream p-3">
-                  <dt className="text-[11px] font-semibold uppercase tracking-wider text-warm-muted">
+                  <dt className="text-xs font-semibold uppercase tracking-wider text-warm-muted">
                     Tổng đơn
                   </dt>
-                  <dd className="mt-1 font-display text-lg font-bold text-espresso">
+                  <dd className="mt-1 font-display text-lg font-bold text-espresso tabular-nums">
                     {stats.totalOrders}
                   </dd>
                 </div>
                 <div className="rounded-xl bg-card-butter/50 p-3">
-                  <dt className="text-[11px] font-semibold uppercase tracking-wider text-olive-primary">
+                  <dt className="text-xs font-semibold uppercase tracking-wider text-olive-primary">
                     Đang xử lý
                   </dt>
-                  <dd className="mt-1 font-display text-lg font-bold text-terracotta">
+                  <dd className="mt-1 font-display text-lg font-bold text-terracotta tabular-nums">
                     {stats.activeOrders}
                   </dd>
                 </div>
                 <div className="rounded-xl bg-[#EFE4CC]/75 p-3">
-                  <dt className="text-[11px] font-semibold uppercase tracking-wider text-[#6E5015]">
+                  <dt className="text-xs font-semibold uppercase tracking-wider text-[#6E5015]">
                     Hoàn tất
                   </dt>
-                  <dd className="mt-1 font-display text-lg font-bold text-[#6E5015]">
+                  <dd className="mt-1 font-display text-lg font-bold text-[#6E5015] tabular-nums">
                     {stats.completedOrders}
                   </dd>
                 </div>
                 <div className="rounded-xl bg-[#E3EAD1]/70 p-3">
-                  <dt className="text-[11px] font-semibold uppercase tracking-wider text-[#45531B]">
+                  <dt className="text-xs font-semibold uppercase tracking-wider text-[#45531B]">
                     Doanh thu
                   </dt>
-                  <dd className="mt-1 font-display text-sm font-bold text-[#45531B] sm:text-base">
+                  <dd className="mt-1 font-display text-sm font-bold text-[#45531B] tabular-nums sm:text-base">
                     {formatVnd(stats.revenue)}
                   </dd>
                 </div>

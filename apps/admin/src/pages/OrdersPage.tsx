@@ -5,6 +5,7 @@ import {
   SPICE_LEVEL_LABELS,
   SUGAR_LEVEL_LABELS,
   formatVnd,
+  resolveOrderAge,
   type OrderLineResolved,
   type OrderRecord,
   type OrderStatus,
@@ -389,35 +390,35 @@ export function OrdersPage() {
         aria-label="Tổng quan đơn hàng"
         className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
       >
-        <div className="rounded-2xl border border-[#DDD4C0] bg-surface-light p-4 shadow-xs">
+        <div className="rounded-2xl border border-[#DDD4C0] bg-surface-light p-4 shadow-paper-rest">
           <p className="text-xs font-semibold uppercase tracking-wider text-warm-muted">
             Tổng đơn hàng
           </p>
-          <p className="mt-1 font-display text-2xl font-bold text-espresso">
+          <p className="mt-1 font-display text-2xl font-bold text-espresso tabular-nums">
             {counts.all}
           </p>
         </div>
-        <div className="rounded-2xl border border-[#DEC98A] bg-card-butter/60 p-4 shadow-xs">
+        <div className="rounded-2xl border border-[#DEC98A] bg-card-butter/60 p-4 shadow-paper-rest">
           <p className="text-xs font-semibold uppercase tracking-wider text-olive-primary">
             Chờ xác nhận
           </p>
-          <p className="mt-1 font-display text-2xl font-bold text-olive-primary">
+          <p className="mt-1 font-display text-2xl font-bold text-olive-primary tabular-nums">
             {counts.pending}
           </p>
         </div>
-        <div className="rounded-2xl border border-[#E6B38E] bg-[#F6DFCE]/70 p-4 shadow-xs">
+        <div className="rounded-2xl border border-[#E6B38E] bg-[#F6DFCE]/70 p-4 shadow-paper-rest">
           <p className="text-xs font-semibold uppercase tracking-wider text-[#9A460B]">
             Đang pha chế &amp; giao
           </p>
-          <p className="mt-1 font-display text-2xl font-bold text-[#9A460B]">
+          <p className="mt-1 font-display text-2xl font-bold text-[#9A460B] tabular-nums">
             {counts.preparing + counts.delivering}
           </p>
         </div>
-        <div className="rounded-2xl border border-[#B4C488] bg-[#E3EAD1]/75 p-4 shadow-xs">
+        <div className="rounded-2xl border border-[#B4C488] bg-[#E3EAD1]/75 p-4 shadow-paper-rest">
           <p className="text-xs font-semibold uppercase tracking-wider text-[#45531B]">
             Doanh thu hợp lệ
           </p>
-          <p className="mt-1 font-display text-2xl font-bold text-[#45531B]">
+          <p className="mt-1 font-display text-2xl font-bold text-[#45531B] tabular-nums">
             {formatVnd(validRevenue)}
           </p>
         </div>
@@ -525,17 +526,22 @@ export function OrdersPage() {
           {filteredOrders.map((order) => {
             const isUpdating = updatingOrderIds.has(order.id);
             const isConfirmingCancel = confirmingCancelOrderId === order.id;
+            const orderAge = resolveOrderAge(order.createdAt, order.status);
 
             return (
               <article
                 key={order.id}
                 data-testid={`order-card-${order.id}`}
-                className="rounded-2xl border border-[#DDD4C0] bg-surface-light p-5 shadow-xs transition hover:border-[#CBBFA4] sm:p-6"
+                className={`rounded-2xl border bg-surface-light p-5 shadow-paper-rest transition-colors sm:p-6 ${
+                  orderAge?.isOverdue
+                    ? 'border-terracotta/55 hover:border-terracotta'
+                    : 'border-[#DDD4C0] hover:border-[#CBBFA4]'
+                }`}
               >
                 <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#E5DEC9] pb-4">
                   <div>
                     <div className="flex flex-wrap items-center gap-2.5">
-                      <span className="font-mono text-base font-bold text-espresso sm:text-lg">
+                      <span className="font-mono text-base font-bold text-espresso tabular-nums sm:text-lg">
                         {order.orderCode}
                       </span>
                       <span
@@ -547,18 +553,32 @@ export function OrdersPage() {
                       <span className="inline-flex items-center rounded-full border border-[#D5CCB6] bg-canvas-cream px-2.5 py-0.5 text-xs font-medium text-espresso">
                         {PAYMENT_METHOD_LABELS[order.paymentMethod]}
                       </span>
+                      {orderAge ? (
+                        <span
+                          data-testid="order-age-badge"
+                          className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold tabular-nums ${
+                            orderAge.isOverdue
+                              ? 'border-terracotta/45 bg-coral-sketch/28 text-espresso'
+                              : 'border-[#D5CCB6] bg-canvas-cream text-warm-muted'
+                          }`}
+                        >
+                          {orderAge.isOverdue
+                            ? `Quá hạn • ${orderAge.label}`
+                            : orderAge.label}
+                        </span>
+                      ) : null}
                     </div>
-                    <p className="mt-1.5 text-xs font-medium text-warm-muted">
+                    <p className="mt-1.5 text-xs font-medium text-warm-muted tabular-nums">
                       {order.branchName} • Đặt lúc{' '}
                       {formatOrderTime(order.createdAt)}
                     </p>
                   </div>
 
                   <div className="text-left sm:text-right">
-                    <p className="text-xs font-medium text-warm-muted">
+                    <p className="text-xs font-medium text-warm-muted tabular-nums">
                       Tổng thanh toán ({order.totalItems} món)
                     </p>
-                    <p className="font-display text-xl font-bold text-terracotta">
+                    <p className="font-display text-xl font-bold text-terracotta tabular-nums">
                       {formatVnd(order.grandTotal)}
                     </p>
                   </div>

@@ -209,4 +209,25 @@ describe('Fanpage local WebP assets & sharp validation pipeline', () => {
       [],
     );
   });
+
+  it('ships valid printable Botanical Press PDF and high-res PNG preview in apps/web/public/brand', async () => {
+    const brandDir = path.resolve(__dirname, '..', '..', 'public', 'brand');
+    const pdfPath = path.join(brandDir, 'omsua-botanical-menu-poster.pdf');
+    const pngPath = path.join(brandDir, 'omsua-botanical-menu-poster.png');
+
+    expect(existsSync(pdfPath)).toBe(true);
+    expect(existsSync(pngPath)).toBe(true);
+
+    const pdfBytes = readFileSync(pdfPath);
+    expect(pdfBytes.byteLength).toBeGreaterThan(10 * 1024);
+    expect(pdfBytes.subarray(0, 5).toString('ascii')).toBe('%PDF-');
+
+    const pngBytes = readFileSync(pngPath);
+    expect(pngBytes.byteLength).toBeGreaterThan(15 * 1024);
+    expect(pngBytes.subarray(1, 4).toString('ascii')).toBe('PNG');
+
+    const pngMeta = await sharp(pngBytes).metadata();
+    expect(pngMeta.width ?? 0).toBeGreaterThanOrEqual(1200);
+    expect(pngMeta.height ?? 0).toBeGreaterThanOrEqual(1600);
+  });
 });

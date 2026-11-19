@@ -10,7 +10,7 @@ const navItems = [
 
 export function AdminLayout() {
   return (
-    <div className="flex min-h-screen flex-col bg-canvas-cream text-espresso lg:flex-row">
+    <div className="flex min-h-screen flex-col bg-canvas-cream bg-paper-grain text-espresso lg:flex-row">
       <a
         href="#admin-main"
         className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-xl focus:border focus:border-card-butter focus:bg-hero-espresso focus:px-4 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-surface-light"
@@ -22,14 +22,17 @@ export function AdminLayout() {
         <div className="border-b border-[#3F3A2D] px-5 py-4 lg:px-6 lg:py-6">
           <div className="flex items-center justify-between gap-3 lg:block">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-card-butter">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-card-butter">
                 Đà Lạt • Since {OMSUA_BRAND.sinceYear}
               </p>
-              <p className="mt-0.5 font-display text-xl font-bold tracking-tight text-surface-light">
+              <p
+                translate="no"
+                className="mt-0.5 font-display text-xl font-bold tracking-tight text-surface-light"
+              >
                 Ốm Sữa Admin
               </p>
             </div>
-            <span className="rounded-full border border-[#4D4636] bg-[#363125] px-2.5 py-1 text-[11px] font-medium text-card-butter lg:mt-3 lg:inline-block">
+            <span className="rounded-full border border-[#4D4636] bg-[#363125] px-2.5 py-1 text-xs font-medium text-card-butter lg:mt-3 lg:inline-block">
               Quầy vận hành
             </span>
           </div>

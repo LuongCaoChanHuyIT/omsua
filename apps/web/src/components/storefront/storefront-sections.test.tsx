@@ -462,6 +462,22 @@ describe('Storefront Sections', () => {
     });
     expect(branch1Btn).toHaveAttribute('aria-pressed', 'true');
     expect(branch4Btn).toHaveAttribute('aria-pressed', 'false');
+
+    const printMenuLink = screen.getByRole('link', {
+      name: /Tải Menu Ấn Phẩm Đà Lạt \(PDF\)/i,
+    });
+    expect(printMenuLink).toHaveAttribute(
+      'href',
+      '/brand/omsua-botanical-menu-poster.pdf',
+    );
+    expect(printMenuLink).toHaveAttribute('download');
+
+    const footerBranchImgs = container.querySelectorAll(
+      'img[src^="/images/fanpage/branches/"]',
+    );
+    expect(footerBranchImgs.length).toBeGreaterThan(0);
+    expect(footerBranchImgs[0]).toHaveAttribute('width', '960');
+    expect(footerBranchImgs[0]).toHaveAttribute('height', '540');
   });
 
   it('filters DrinkMenuSection via diacritic-free search, offers 1-click reset when 0 drinks match, and eliminates sm:min-h-9/10 regressions', () => {

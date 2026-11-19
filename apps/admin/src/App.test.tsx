@@ -1650,6 +1650,8 @@ describe('Admin App routes & operational portals', () => {
       'src',
       '/images/fanpage/branches/branch-cs1-hoang-dieu.webp',
     );
+    expect(cs1Photo).toHaveAttribute('width', '960');
+    expect(cs1Photo).toHaveAttribute('height', '540');
     expect((cs1Photo as HTMLImageElement).style.objectPosition).toBe(
       'center 12%',
     );
@@ -1682,5 +1684,55 @@ describe('Admin App routes & operational portals', () => {
     expect(
       within(flanCard).queryByText('Ảnh thực tế'),
     ).not.toBeInTheDocument();
+  });
+
+  it('renders live order-age SLA badges flagging overdue pending orders (>15m) while never flagging completed orders', async () => {
+    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60_000).toISOString();
+    const twoHoursAgo = new Date(Date.now() - 120 * 60_000).toISOString();
+
+    const overduePending: OrderRecord = {
+      ...mockPendingOrder,
+      id: 'ord-overdue',
+      orderCode: 'OM-20261119-LATE',
+      status: 'pending',
+      createdAt: thirtyMinutesAgo,
+      updatedAt: thirtyMinutesAgo,
+    };
+    const oldCompleted: OrderRecord = {
+      ...mockPendingOrder,
+      id: 'ord-done',
+      orderCode: 'OM-20261119-DONE',
+      status: 'completed',
+      createdAt: twoHoursAgo,
+      updatedAt: twoHoursAgo,
+    };
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: [overduePending, oldCompleted],
+          timestamp: new Date().toISOString(),
+        }),
+      }),
+    );
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+
+    const overdueCard = await screen.findByTestId('order-card-ord-overdue');
+    const overdueBadge = within(overdueCard).getByTestId('order-age-badge');
+    expect(overdueBadge).toHaveTextContent(/Quá hạn • 30 phút trước/i);
+
+    const completedCard = screen.getByTestId('order-card-ord-done');
+    const completedBadge = within(completedCard).getByTestId('order-age-badge');
+    expect(completedBadge).toHaveTextContent(/2 giờ trước/i);
+    expect(completedBadge).not.toHaveTextContent(/Quá hạn/i);
   });
 });

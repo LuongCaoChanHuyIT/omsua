@@ -64,22 +64,22 @@ function AdminProductCard({ product, toggling, onToggle }: ProductCardProps) {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-1.5">
             {product.isSignature ? (
-              <span className="rounded-full bg-card-olive-gold px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-espresso">
+              <span className="rounded-full bg-card-olive-gold px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider text-espresso">
                 Signature
               </span>
             ) : null}
             {product.isBestSeller ? (
-              <span className="rounded-full border border-[#DEC98A] bg-card-butter px-2.5 py-0.5 text-[11px] font-semibold text-olive-primary">
+              <span className="rounded-full border border-[#DEC98A] bg-card-butter px-2.5 py-0.5 text-xs font-semibold text-olive-primary">
                 Bán chạy
               </span>
             ) : null}
             {product.isNew ? (
-              <span className="rounded-full border border-[#E6B38E] bg-[#F6DFCE] px-2.5 py-0.5 text-[11px] font-semibold text-[#9A460B]">
+              <span className="rounded-full border border-[#E6B38E] bg-[#F6DFCE] px-2.5 py-0.5 text-xs font-semibold text-[#9A460B]">
                 Món mới
               </span>
             ) : null}
             {getProductPhoto(product.id) ? (
-              <span className="rounded-full border border-[#B4C488] bg-card-sage/65 px-2.5 py-0.5 text-[11px] font-semibold text-espresso">
+              <span className="rounded-full border border-[#B4C488] bg-card-sage/65 px-2.5 py-0.5 text-xs font-semibold text-espresso">
                 Ảnh thực tế
               </span>
             ) : null}
