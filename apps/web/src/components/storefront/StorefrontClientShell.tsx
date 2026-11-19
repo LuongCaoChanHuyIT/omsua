@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  DRINK_CATEGORY_IDS,
   type BranchInfo,
   type CatalogPayload,
   type DrinkCategoryId,
@@ -39,6 +40,23 @@ interface StorefrontShellInnerProps {
   onRefreshCatalog: () => Promise<void>;
 }
 
+const VALID_DRINK_CATEGORIES = new Set<string>(DRINK_CATEGORY_IDS);
+
+function parseUrlMenuState(search: string): {
+  category: DrinkCategoryId | 'all';
+  query: string;
+  preferIllustration: boolean;
+} {
+  const params = new URLSearchParams(search);
+  const rawCat = params.get('cat')?.trim() ?? '';
+  const category = VALID_DRINK_CATEGORIES.has(rawCat)
+    ? (rawCat as DrinkCategoryId)
+    : 'all';
+  const query = params.get('q')?.trim() ?? '';
+  const preferIllustration = params.get('media') === 'studio';
+  return { category, query, preferIllustration };
+}
+
 function StorefrontShellInner({
   catalog,
   branches,
@@ -55,6 +73,7 @@ function StorefrontShellInner({
   const [activeCategory, setActiveCategory] = useState<DrinkCategoryId | 'all'>(
     'all',
   );
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [preferIllustration, setPreferIllustration] = useState<boolean>(false);
   const [activeSpice, setActiveSpice] = useState<SpiceLevel>('cay-vua');
   const [activeProductForModal, setActiveProductForModal] =
@@ -66,10 +85,54 @@ function StorefrontShellInner({
   const [isOrderLookupOpen, setIsOrderLookupOpen] = useState<boolean>(false);
   const [trackedOrder, setTrackedOrder] = useState<OrderRecord | null>(null);
   const [recentOrderCount, setRecentOrderCount] = useState<number>(0);
+  const hasHydratedUrlRef = useRef<boolean>(false);
 
   useEffect(() => {
     setRecentOrderCount(readRecentOrders().length);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    const parsed = parseUrlMenuState(window.location.search);
+    setActiveCategory(parsed.category);
+    setSearchQuery(parsed.query);
+    setPreferIllustration(parsed.preferIllustration);
+    hasHydratedUrlRef.current = true;
+  }, []);
+
+  useEffect(() => {
+    if (!hasHydratedUrlRef.current || typeof window === 'undefined') {
+      return;
+    }
+    const params = new URLSearchParams(window.location.search);
+    if (activeCategory === 'all') {
+      params.delete('cat');
+    } else {
+      params.set('cat', activeCategory);
+    }
+
+    const trimmedQuery = searchQuery.trim();
+    if (!trimmedQuery) {
+      params.delete('q');
+    } else {
+      params.set('q', trimmedQuery);
+    }
+
+    if (preferIllustration) {
+      params.set('media', 'studio');
+    } else {
+      params.delete('media');
+    }
+
+    const serialized = params.toString();
+    const nextUrl = `${window.location.pathname}${serialized ? `?${serialized}` : ''}${window.location.hash}`;
+    const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (nextUrl !== currentUrl) {
+      window.history.replaceState(null, '', nextUrl);
+    }
+  }, [activeCategory, preferIllustration, searchQuery]);
 
   const syncRecentOrderCount = useCallback(() => {
     setRecentOrderCount(readRecentOrders().length);
@@ -104,8 +167,8 @@ function StorefrontShellInner({
   return (
     <div
       data-api-base-url={apiBaseUrl}
-      className={`min-h-screen bg-canvas-cream text-espresso ${
-        showMobileStickyCartBar ? 'pb-20 lg:pb-0' : ''
+      className={`min-h-screen bg-canvas-cream bg-paper-grain text-espresso ${
+        showMobileStickyCartBar ? 'pb-24 lg:pb-0' : ''
       }`}
     >
       <a
@@ -144,6 +207,8 @@ function StorefrontShellInner({
           drinks={drinks}
           activeCategory={activeCategory}
           onChangeCategory={setActiveCategory}
+          searchQuery={searchQuery}
+          onChangeSearchQuery={setSearchQuery}
           preferIllustration={preferIllustration}
           onToggleMediaMode={setPreferIllustration}
           onSelectDrink={(drink) => {
@@ -195,11 +260,11 @@ function StorefrontShellInner({
       />
 
       {showMobileStickyCartBar && (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-olive-primary/15 bg-hero-espresso/95 p-3 text-surface-light backdrop-blur-md lg:hidden">
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-olive-primary/15 bg-hero-espresso/95 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] text-surface-light backdrop-blur-md lg:hidden">
           <button
             type="button"
             onClick={openCartDrawer}
-            className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center rounded-2xl bg-terracotta px-4 py-3 text-sm font-bold text-surface-light shadow-xs transition hover:opacity-92"
+            className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center rounded-2xl bg-terracotta px-4 py-3 text-sm font-bold text-surface-light tabular-nums transition-opacity hover:opacity-92"
           >
             {totals.totalItems > 0
               ? `Xem giỏ hàng (${totals.totalItems} món) • ${formatVnd(totals.grandTotal)} →`

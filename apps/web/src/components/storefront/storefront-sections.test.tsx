@@ -11,6 +11,7 @@ import { BrandStorySection } from './BrandStorySection';
 import { DrinkMenuSection } from './DrinkMenuSection';
 import { HeroSpotlight } from './HeroSpotlight';
 import { SnackMenuSection } from './SnackMenuSection';
+import { StorefrontClientShell } from './StorefrontClientShell';
 import { StorefrontHeader } from './StorefrontHeader';
 import { ToppingStripSection } from './ToppingStripSection';
 
@@ -461,5 +462,126 @@ describe('Storefront Sections', () => {
     });
     expect(branch1Btn).toHaveAttribute('aria-pressed', 'true');
     expect(branch4Btn).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('filters DrinkMenuSection via diacritic-free search, offers 1-click reset when 0 drinks match, and eliminates sm:min-h-9/10 regressions', () => {
+    const catalog = getDefaultCatalog();
+    const drinks = catalog.products.filter((p) => p.kind === 'drink');
+    const snacks = catalog.products.filter((p) => p.kind === 'snack');
+    const onChangeCategory = vi.fn();
+    const onChangeSearchQuery = vi.fn();
+
+    const { rerender, container } = render(
+      <div>
+        <DrinkMenuSection
+          categories={catalog.categories}
+          drinks={drinks}
+          activeCategory="all"
+          searchQuery="khuc bach"
+          onChangeCategory={onChangeCategory}
+          onChangeSearchQuery={onChangeSearchQuery}
+          onSelectDrink={vi.fn()}
+        />
+        <SnackMenuSection
+          snacks={snacks}
+          activeSpice="cay-vua"
+          onChangeSpice={vi.fn()}
+          onSelectSnack={vi.fn()}
+        />
+      </div>,
+    );
+
+    const searchbox = screen.getByRole('searchbox', {
+      name: /Tìm nhanh thức uống/i,
+    });
+    expect(searchbox).toHaveValue('khuc bach');
+    expect(screen.getByText('Trà Sữa Gạo Rang Khúc Bạch')).toBeInTheDocument();
+    expect(screen.queryByText('Cà Phê Muối')).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(/1 món/i);
+
+    for (const btn of container.querySelectorAll('button')) {
+      expect(btn.className).not.toMatch(/\bsm:min-h-(9|10)\b/);
+    }
+
+    rerender(
+      <DrinkMenuSection
+        categories={catalog.categories}
+        drinks={drinks}
+        activeCategory="coffee"
+        searchQuery="atiso"
+        onChangeCategory={onChangeCategory}
+        onChangeSearchQuery={onChangeSearchQuery}
+        onSelectDrink={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('status')).toHaveTextContent(/0 món/i);
+    const resetBtn = screen.getByRole('button', {
+      name: 'Xóa bộ lọc tìm kiếm',
+    });
+    fireEvent.click(resetBtn);
+    expect(onChangeSearchQuery).toHaveBeenCalledWith('');
+    expect(onChangeCategory).toHaveBeenCalledWith('all');
+  });
+
+  it('clamps malformed URL query params safely and syncs valid ?cat=&q=&media=studio params in StorefrontClientShell', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockRejectedValue(new Error('offline fallback')),
+    );
+    const originalUrl = window.location.href;
+
+    try {
+      window.history.replaceState(
+        null,
+        '',
+        '/?cat=invalid-cat&q=%20%20&media=foo',
+      );
+      const { unmount } = render(
+        <StorefrontClientShell
+          initialCatalog={getDefaultCatalog()}
+          initialBranches={[...OMSUA_BRANCHES]}
+        />,
+      );
+
+      expect(
+        screen.getByRole('button', { name: 'Tất cả (24)' }),
+      ).toHaveAttribute('aria-pressed', 'true');
+      expect(
+        screen.getByRole('button', { name: 'Ảnh thực tế' }),
+      ).toHaveAttribute('aria-pressed', 'true');
+      expect(
+        screen.getByRole('searchbox', { name: /Tìm nhanh thức uống/i }),
+      ).toHaveValue('');
+      unmount();
+
+      window.history.replaceState(
+        null,
+        '',
+        '/?cat=coffee&q=muoi&media=studio',
+      );
+      render(
+        <StorefrontClientShell
+          initialCatalog={getDefaultCatalog()}
+          initialBranches={[...OMSUA_BRANCHES]}
+        />,
+      );
+
+      expect(
+        await screen.findByRole('button', {
+          name: 'Cà Phê Phin (6)',
+          pressed: true,
+        }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Minh họa Studio' }),
+      ).toHaveAttribute('aria-pressed', 'true');
+      expect(
+        screen.getByRole('searchbox', { name: /Tìm nhanh thức uống/i }),
+      ).toHaveValue('muoi');
+    } finally {
+      window.history.replaceState(null, '', originalUrl);
+      vi.unstubAllGlobals();
+    }
   });
 });

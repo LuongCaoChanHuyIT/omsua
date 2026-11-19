@@ -74,7 +74,7 @@ export function PhotoLightboxModal({
       >
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-olive-primary/12 px-5 py-3.5 sm:px-6">
           <div className="min-w-0">
-            <span className="text-[11px] font-bold tracking-wider text-subhead-ochre uppercase">
+            <span className="text-xs font-bold tracking-wider text-subhead-ochre tabular-nums uppercase">
               {`${activeIndex + 1} / ${total}`}
             </span>
             <h3
@@ -95,7 +95,7 @@ export function PhotoLightboxModal({
           </button>
         </div>
 
-        <div className="relative flex min-h-0 flex-1 items-center justify-center bg-hero-espresso p-3 sm:p-5">
+        <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-y-auto overscroll-contain bg-hero-espresso p-3 sm:p-5">
           {isImageBroken ? (
             <div className="flex h-64 w-full items-center justify-center rounded-2xl border border-surface-light/15 bg-surface-light/8 p-6 text-center text-sm text-card-butter">
               Ảnh đang được đồng bộ từ Fanpage Ốm Sữa Đà Lạt

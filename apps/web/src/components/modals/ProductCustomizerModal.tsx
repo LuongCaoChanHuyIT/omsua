@@ -186,6 +186,11 @@ function CustomizerDialogBody({
       ? 'Tùy chỉnh ly của bạn'
       : 'Tùy chỉnh món ăn vặt';
 
+  const sugarRatio = Math.max(0.06, Number(sugarLevel) / 100);
+  const iceRatio = Math.max(0.06, Number(iceLevel) / 100);
+  const iceSummaryText =
+    iceLevel === '0' ? '0% đá riêng' : `${iceLevel}% đá`;
+
   return (
     <div
       onClick={(event) => {
@@ -201,7 +206,7 @@ function CustomizerDialogBody({
         aria-modal="true"
         aria-labelledby={headingId}
         tabIndex={-1}
-        className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-olive-primary/15 bg-surface-light text-espresso shadow-2xl"
+        className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-olive-primary/15 bg-surface-light text-espresso shadow-paper-lift"
       >
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-olive-primary/12 bg-surface-light px-5 py-4 sm:px-6">
           <h2
@@ -214,13 +219,13 @@ function CustomizerDialogBody({
             type="button"
             aria-label="Đóng tùy chỉnh"
             onClick={onClose}
-            className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-olive-primary/15 bg-canvas-cream text-sm font-bold text-espresso transition hover:bg-card-butter/70"
+            className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-olive-primary/15 bg-canvas-cream text-sm font-bold text-espresso transition-colors hover:bg-card-butter/70"
           >
             ✕
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-4 sm:px-6">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-4 sm:px-6">
           <div className="flex items-center gap-4 rounded-2xl border border-olive-primary/15 bg-card-butter p-3.5 sm:p-4">
             <div className="h-24 w-24 shrink-0 overflow-hidden rounded-2xl">
               <ProductMedia
@@ -232,7 +237,7 @@ function CustomizerDialogBody({
             </div>
             <div className="min-w-0 space-y-1">
               {product.isSignature && (
-                <span className="inline-flex items-center rounded-full bg-artichoke px-2.5 py-0.5 text-[10px] font-bold tracking-wide text-surface-light uppercase">
+                <span className="inline-flex items-center rounded-full bg-artichoke px-2.5 py-0.5 text-xs font-bold tracking-wide text-surface-light uppercase">
                   + SIGNATURE
                 </span>
               )}
@@ -242,7 +247,7 @@ function CustomizerDialogBody({
               <p className="text-xs text-warm-muted sm:text-sm">
                 {product.description}
               </p>
-              <p className="pt-0.5 text-sm font-bold text-terracotta">
+              <p className="pt-0.5 text-sm font-bold text-terracotta tabular-nums">
                 Giá gốc: {formatVnd(selectedSizeOption.price)}
               </p>
             </div>
@@ -250,6 +255,59 @@ function CustomizerDialogBody({
 
           {product.kind === 'drink' ? (
             <div className="mt-5 space-y-5">
+              <div
+                data-testid="customizer-cup-gauge"
+                className="space-y-2.5 rounded-2xl border border-olive-primary/14 bg-canvas-cream/80 p-3.5"
+              >
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-xs font-semibold">
+                      <span className="text-warm-muted">Độ ngọt</span>
+                      <span className="font-bold text-terracotta tabular-nums">
+                        {`${sugarLevel}% đường`}
+                      </span>
+                    </div>
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-olive-primary/14">
+                      <div
+                        style={{ transform: `scaleX(${sugarRatio})` }}
+                        className="h-full w-full origin-left rounded-full bg-terracotta transition-transform duration-200"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-xs font-semibold">
+                      <span className="text-warm-muted">Mức đá</span>
+                      <span className="font-bold text-olive-primary tabular-nums">
+                        {iceSummaryText}
+                      </span>
+                    </div>
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-olive-primary/14">
+                      <div
+                        style={{ transform: `scaleX(${iceRatio})` }}
+                        className="h-full w-full origin-left rounded-full bg-olive-primary transition-transform duration-200"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {previewLine.toppings.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5 border-t border-olive-primary/10 pt-2">
+                    <span className="text-xs font-semibold text-warm-muted">
+                      Topping:
+                    </span>
+                    {previewLine.toppings.map((topping) => (
+                      <span
+                        key={topping.id}
+                        className="rounded-full bg-card-butter px-2.5 py-0.5 text-xs font-bold text-espresso"
+                      >
+                        {topping.shortName}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div className="space-y-2.5">
                 <p className="text-xs font-bold tracking-wider text-olive-primary uppercase">
                   1. CHỌN SIZE LY (BẮT BUỘC)
@@ -277,9 +335,9 @@ function CustomizerDialogBody({
                         tabIndex={isActive ? 0 : -1}
                         onClick={() => setSelectedSize(option.size)}
                         onKeyDown={(event) => handleSizeKeyDown(event, index)}
-                        className={`inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-2xl border px-4 py-2.5 text-xs font-bold transition sm:text-sm ${
+                        className={`inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-2xl border px-4 py-2.5 text-xs font-bold tabular-nums transition-colors sm:text-sm ${
                           isActive
-                            ? 'border-hero-espresso bg-hero-espresso text-surface-light shadow-2xs'
+                            ? 'border-hero-espresso bg-hero-espresso text-surface-light'
                             : 'border-olive-primary/20 bg-canvas-cream/70 text-espresso hover:bg-card-butter/45'
                         }`}
                       >
@@ -306,9 +364,9 @@ function CustomizerDialogBody({
                         type="button"
                         aria-pressed={isActive}
                         onClick={() => setSugarLevel(level)}
-                        className={`inline-flex min-h-11 cursor-pointer items-center justify-center rounded-2xl border px-3 py-2.5 text-xs font-bold transition ${
+                        className={`inline-flex min-h-11 cursor-pointer items-center justify-center rounded-2xl border px-3 py-2.5 text-xs font-bold tabular-nums transition-colors ${
                           isActive
-                            ? 'border-terracotta bg-terracotta text-surface-light shadow-2xs'
+                            ? 'border-terracotta bg-terracotta text-surface-light'
                             : 'border-olive-primary/20 bg-canvas-cream/70 text-espresso hover:bg-card-butter/45'
                         }`}
                       >
@@ -332,9 +390,9 @@ function CustomizerDialogBody({
                         type="button"
                         aria-pressed={isActive}
                         onClick={() => setIceLevel(level)}
-                        className={`inline-flex min-h-11 cursor-pointer items-center justify-center rounded-2xl border px-3 py-2.5 text-xs font-bold transition ${
+                        className={`inline-flex min-h-11 cursor-pointer items-center justify-center rounded-2xl border px-3 py-2.5 text-xs font-bold tabular-nums transition-colors ${
                           isActive
-                            ? 'border-olive-primary bg-olive-primary text-surface-light shadow-2xs'
+                            ? 'border-olive-primary bg-olive-primary text-surface-light'
                             : 'border-olive-primary/20 bg-canvas-cream/70 text-espresso hover:bg-card-butter/45'
                         }`}
                       >
@@ -358,7 +416,7 @@ function CustomizerDialogBody({
                     return (
                       <label
                         key={topping.id}
-                        className={`flex min-h-11 items-center justify-between gap-3 rounded-2xl border p-2.5 transition ${
+                        className={`flex min-h-11 items-center justify-between gap-3 rounded-2xl border p-2.5 transition-colors ${
                           !topping.isAvailable
                             ? 'cursor-not-allowed border-olive-primary/10 bg-canvas-cream/40 opacity-60'
                             : isChecked
@@ -384,7 +442,7 @@ function CustomizerDialogBody({
                           />
                           <span
                             aria-hidden="true"
-                            className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-xs font-bold transition peer-focus-visible:ring-2 peer-focus-visible:ring-olive-primary peer-focus-visible:ring-offset-1 ${
+                            className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-xs font-bold transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-olive-primary peer-focus-visible:ring-offset-1 ${
                               isChecked
                                 ? 'border-hero-espresso bg-hero-espresso text-surface-light'
                                 : 'border-olive-primary/35 bg-surface-light text-transparent'
@@ -397,7 +455,7 @@ function CustomizerDialogBody({
                           </span>
                         </div>
 
-                        <span className="shrink-0 text-xs font-bold text-terracotta sm:text-sm">
+                        <span className="shrink-0 text-xs font-bold text-terracotta tabular-nums sm:text-sm">
                           {topping.isAvailable
                             ? `+${formatVnd(topping.price)}`
                             : 'Tạm hết'}
@@ -423,9 +481,9 @@ function CustomizerDialogBody({
                         type="button"
                         aria-pressed={isActive}
                         onClick={() => setSpiceLevel(level)}
-                        className={`inline-flex min-h-11 cursor-pointer items-center justify-center rounded-2xl border px-3 py-2.5 text-xs font-bold transition sm:text-sm ${
+                        className={`inline-flex min-h-11 cursor-pointer items-center justify-center rounded-2xl border px-3 py-2.5 text-xs font-bold transition-colors sm:text-sm ${
                           isActive
-                            ? 'border-terracotta bg-terracotta text-surface-light shadow-2xs'
+                            ? 'border-terracotta bg-terracotta text-surface-light'
                             : 'border-olive-primary/20 bg-canvas-cream/70 text-espresso hover:bg-card-butter/45'
                         }`}
                       >
@@ -451,11 +509,11 @@ function CustomizerDialogBody({
                 aria-label="Giảm số lượng"
                 disabled={quantity <= 1}
                 onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
-                className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl text-base font-bold text-warm-muted transition hover:text-espresso disabled:cursor-not-allowed disabled:opacity-40"
+                className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl text-base font-bold text-warm-muted transition-colors hover:text-espresso disabled:cursor-not-allowed disabled:opacity-40"
               >
                 -
               </button>
-              <span className="min-w-6 text-center text-sm font-bold text-espresso">
+              <span className="min-w-6 text-center text-sm font-bold text-espresso tabular-nums">
                 {quantity}
               </span>
               <button
@@ -463,7 +521,7 @@ function CustomizerDialogBody({
                 aria-label="Tăng số lượng"
                 disabled={quantity >= 99}
                 onClick={() => setQuantity((prev) => Math.min(99, prev + 1))}
-                className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl text-base font-bold text-terracotta transition hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
+                className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl text-base font-bold text-terracotta transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 +
               </button>
@@ -472,7 +530,7 @@ function CustomizerDialogBody({
             <button
               type="button"
               onClick={handleConfirm}
-              className="inline-flex min-h-11 flex-1 cursor-pointer items-center justify-center rounded-2xl bg-terracotta px-5 py-3 text-sm font-bold text-surface-light shadow-xs transition hover:opacity-92 sm:text-base"
+              className="inline-flex min-h-11 flex-1 cursor-pointer items-center justify-center rounded-2xl bg-terracotta px-5 py-3 text-sm font-bold text-surface-light shadow-paper-rest tabular-nums transition-opacity hover:opacity-92 sm:text-base"
             >
               Thêm vào giỏ • {formatVnd(previewLine.lineTotal)}
             </button>
@@ -480,7 +538,7 @@ function CustomizerDialogBody({
 
           <p
             aria-live="polite"
-            className="text-center text-xs font-medium text-warm-muted"
+            className="text-center text-xs font-medium text-warm-muted tabular-nums"
           >
             {formatCustomizerBreakdown(previewLine)}
           </p>

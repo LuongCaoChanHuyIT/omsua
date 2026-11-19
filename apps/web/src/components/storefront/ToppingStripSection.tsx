@@ -15,7 +15,7 @@ export function ToppingStripSection({
   preferIllustration = false,
 }: ToppingStripSectionProps) {
   return (
-    <section className="rounded-3xl border border-olive-primary/12 bg-surface-light p-5 shadow-2xs sm:p-7">
+    <section className="rounded-3xl border border-olive-primary/14 bg-surface-light p-5 shadow-paper-rest sm:p-7">
       <div className="mb-4 flex flex-col gap-1.5 lg:flex-row lg:items-baseline lg:justify-between">
         <h2 className="font-display text-xl font-bold tracking-tight text-olive-primary uppercase sm:text-2xl">
           TOPPING NHÀ LÀM MỖI NGÀY
@@ -30,7 +30,7 @@ export function ToppingStripSection({
         {toppings.map((topping) => (
           <div
             key={topping.id}
-            className="flex flex-col items-center rounded-2xl border border-olive-primary/10 bg-canvas-cream/65 p-3 text-center"
+            className="flex flex-col items-center rounded-2xl border border-olive-primary/12 bg-canvas-cream/70 p-3 text-center shadow-paper-rest"
           >
             <div className="h-16 w-16 overflow-hidden rounded-xl">
               <ProductMedia
@@ -43,7 +43,7 @@ export function ToppingStripSection({
             <p className="mt-2 text-xs font-semibold text-espresso">
               {topping.shortName}
             </p>
-            <span className="mt-0.5 text-xs font-bold text-terracotta">
+            <span className="mt-0.5 text-xs font-bold text-terracotta tabular-nums">
               +{formatShortPrice(topping.price)}
             </span>
 
@@ -54,7 +54,7 @@ export function ToppingStripSection({
                     type="button"
                     aria-label={`Chọn topping ${topping.shortName}`}
                     onClick={() => onSelectTopping(topping)}
-                    className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center rounded-full bg-artichoke px-3 py-1.5 text-xs font-bold text-surface-light shadow-2xs transition hover:opacity-92"
+                    className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center rounded-full bg-artichoke px-3 py-1.5 text-xs font-bold text-surface-light transition-opacity hover:opacity-92"
                   >
                     + Chọn
                   </button>

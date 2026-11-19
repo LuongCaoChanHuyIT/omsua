@@ -398,7 +398,7 @@ describe('Interactive Customizer Modal & Cart Checkout Flow', () => {
 
     expect(
       await within(dialog).findByRole('button', {
-        name: 'Đang xử lý đơn hàng...',
+        name: 'Đang xử lý đơn hàng…',
       }),
     ).toBeDisabled();
 
@@ -1373,5 +1373,77 @@ describe('Interactive Customizer Modal & Cart Checkout Flow', () => {
     expect(
       within(drawer).queryByText(/Vietcombank — CN Lâm Đồng/i),
     ).not.toBeInTheDocument();
+  });
+
+  it('updates Customizer Cup Gauge live and focuses the first invalid checkout input with Web Interface Guidelines attributes', () => {
+    const { unmount } = render(
+      <ProductCustomizerModal
+        product={traSuaAtiso}
+        toppings={catalog.toppings}
+        onClose={vi.fn()}
+      />,
+    );
+
+    const gauge = screen.getByTestId('customizer-cup-gauge');
+    expect(gauge).toHaveTextContent('70% đường');
+    expect(gauge).toHaveTextContent('70% đá');
+
+    fireEvent.click(screen.getByRole('button', { name: '30% Ít' }));
+    fireEvent.click(screen.getByRole('button', { name: '0% Đá riêng' }));
+
+    expect(gauge).toHaveTextContent('30% đường');
+    expect(gauge).toHaveTextContent('0% đá riêng');
+    unmount();
+
+    window.localStorage.setItem(
+      'omsua.cart.v1',
+      JSON.stringify({
+        selectedBranchId: 'cs1-hoang-dieu',
+        items: [
+          {
+            productId: 'tra-sua-atiso',
+            quantity: 1,
+            size: 'M',
+            sugarLevel: '70',
+            iceLevel: '70',
+            toppingIds: [],
+          },
+        ],
+      }),
+    );
+
+    render(
+      <CartProvider catalog={catalog} branches={OMSUA_BRANCHES}>
+        <CartCheckoutDrawer isOpen={true} onClose={vi.fn()} />
+      </CartProvider>,
+    );
+
+    const nameInput = screen.getByLabelText(/Họ và tên người nhận/i);
+    const phoneInput = screen.getByLabelText(/Số điện thoại/i);
+    const addressInput = screen.getByLabelText(/Địa chỉ giao hàng/i);
+    const noteInput = screen.getByLabelText(/Ghi chú đơn hàng/i);
+
+    expect(nameInput).toHaveAttribute('autocomplete', 'name');
+    expect(phoneInput).toHaveAttribute('autocomplete', 'tel');
+    expect(phoneInput).toHaveAttribute('inputmode', 'tel');
+    expect(phoneInput).toHaveAttribute('spellcheck', 'false');
+    expect(addressInput).toHaveAttribute('autocomplete', 'street-address');
+    expect(noteInput).toHaveAttribute('autocomplete', 'off');
+
+    // Submit with all fields invalid -> focuses first invalid input (nameInput)
+    fireEvent.click(
+      screen.getByRole('button', { name: /Xác nhận đặt món/i }),
+    );
+    expect(nameInput).toHaveAttribute('aria-invalid', 'true');
+    expect(document.activeElement).toBe(nameInput);
+
+    // Fix name, submit again -> focuses second invalid input (phoneInput)
+    fireEvent.change(nameInput, { target: { value: 'Nguyễn Minh Anh' } });
+    fireEvent.click(
+      screen.getByRole('button', { name: /Xác nhận đặt món/i }),
+    );
+    expect(nameInput).not.toHaveAttribute('aria-invalid', 'true');
+    expect(phoneInput).toHaveAttribute('aria-invalid', 'true');
+    expect(document.activeElement).toBe(phoneInput);
   });
 });

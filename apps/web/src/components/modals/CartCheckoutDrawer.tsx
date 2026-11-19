@@ -11,7 +11,7 @@ import {
   formatShortPrice,
   formatVnd,
 } from '@omsua/shared';
-import { type FormEvent, useCallback, useId, useState } from 'react';
+import { type FormEvent, useCallback, useId, useRef, useState } from 'react';
 import { ProductMedia } from '@/components/artwork/ProductMedia';
 import { useModalAccessibility } from '@/hooks/use-modal-accessibility';
 import { submitOrder } from '@/lib/api';
@@ -35,6 +35,8 @@ export interface CartCheckoutDrawerProps {
   onTrackOrder?: (order: OrderRecord) => void;
 }
 
+type CheckoutFieldKey = 'name' | 'phone' | 'address' | 'note';
+
 const VN_PHONE_REGEX = /^0\d{9,10}$/;
 
 export function CartCheckoutDrawer({
@@ -52,6 +54,11 @@ export function CartCheckoutDrawer({
   const phoneInputId = useId();
   const addressInputId = useId();
   const noteInputId = useId();
+
+  const nameRef = useRef<HTMLInputElement | null>(null);
+  const phoneRef = useRef<HTMLInputElement | null>(null);
+  const addressRef = useRef<HTMLInputElement | null>(null);
+  const noteRef = useRef<HTMLInputElement | null>(null);
 
   const {
     branches,
@@ -74,6 +81,9 @@ export function CartCheckoutDrawer({
   const [note, setNote] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cod');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<
+    Partial<Record<CheckoutFieldKey, string>>
+  >({});
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [confirmedOrder, setConfirmedOrder] = useState<OrderRecord | null>(
     null,
@@ -85,6 +95,7 @@ export function CartCheckoutDrawer({
     }
     setIsBranchPickerOpen(false);
     setErrorMessage(null);
+    setFieldErrors({});
     setConfirmedOrder(null);
     onClose();
   }, [isSubmitting, onClose]);
@@ -108,6 +119,15 @@ export function CartCheckoutDrawer({
     ? 'Phí giao hàng khu vực Đức Trọng:'
     : 'Phí giao hàng nội thành Đà Lạt:';
 
+  function clearFieldError(key: CheckoutFieldKey) {
+    setFieldErrors((prev) => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setErrorMessage(null);
@@ -125,31 +145,46 @@ export function CartCheckoutDrawer({
     }
 
     const trimmedName = customerName.trim();
-    if (trimmedName.length < 2 || trimmedName.length > 80) {
-      setErrorMessage(
-        'Vui lòng nhập họ và tên người nhận (từ 2 đến 80 ký tự).',
-      );
-      return;
-    }
-
-    if (!VN_PHONE_REGEX.test(normalizedPhone)) {
-      setErrorMessage(
-        'Vui lòng nhập số điện thoại hợp lệ gồm 10–11 chữ số bắt đầu bằng số 0.',
-      );
-      return;
-    }
-
     const trimmedAddress = deliveryAddress.trim();
+    const trimmedNote = note.trim();
+
+    const nextFieldErrors: Partial<Record<CheckoutFieldKey, string>> = {};
+    if (trimmedName.length < 2 || trimmedName.length > 80) {
+      nextFieldErrors.name =
+        'Vui lòng nhập họ và tên người nhận (từ 2 đến 80 ký tự).';
+    }
+    if (!VN_PHONE_REGEX.test(normalizedPhone)) {
+      nextFieldErrors.phone =
+        'Vui lòng nhập số điện thoại hợp lệ gồm 10–11 chữ số bắt đầu bằng số 0.';
+    }
     if (trimmedAddress.length < 5 || trimmedAddress.length > 200) {
-      setErrorMessage(
-        'Vui lòng nhập địa chỉ giao hàng chi tiết (tối thiểu 5 ký tự).',
-      );
-      return;
+      nextFieldErrors.address =
+        'Vui lòng nhập địa chỉ giao hàng chi tiết (tối thiểu 5 ký tự).';
+    }
+    if (trimmedNote.length > 300) {
+      nextFieldErrors.note = 'Ghi chú không được vượt quá 300 ký tự.';
     }
 
-    const trimmedNote = note.trim();
-    if (trimmedNote.length > 300) {
-      setErrorMessage('Ghi chú không được vượt quá 300 ký tự.');
+    setFieldErrors(nextFieldErrors);
+
+    if (nextFieldErrors.name) {
+      setErrorMessage(nextFieldErrors.name);
+      nameRef.current?.focus();
+      return;
+    }
+    if (nextFieldErrors.phone) {
+      setErrorMessage(nextFieldErrors.phone);
+      phoneRef.current?.focus();
+      return;
+    }
+    if (nextFieldErrors.address) {
+      setErrorMessage(nextFieldErrors.address);
+      addressRef.current?.focus();
+      return;
+    }
+    if (nextFieldErrors.note) {
+      setErrorMessage(nextFieldErrors.note);
+      noteRef.current?.focus();
       return;
     }
 
@@ -178,6 +213,7 @@ export function CartCheckoutDrawer({
       onOrderCreated?.(result.order);
       clearCart();
       setNote('');
+      setFieldErrors({});
       setConfirmedOrder(result.order);
     } finally {
       setIsSubmitting(false);
@@ -199,12 +235,12 @@ export function CartCheckoutDrawer({
         aria-modal="true"
         aria-labelledby={headingId}
         tabIndex={-1}
-        className="flex h-full w-full max-w-xl flex-col overflow-hidden border-l border-olive-primary/15 bg-surface-light text-espresso shadow-2xl"
+        className="flex h-full w-full max-w-xl flex-col overflow-hidden border-l border-olive-primary/15 bg-surface-light text-espresso shadow-paper-lift"
       >
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-olive-primary/12 bg-surface-light px-5 py-4 sm:px-6">
           <h2
             id={headingId}
-            className="font-display text-2xl font-bold tracking-tight text-espresso"
+            className="font-display text-2xl font-bold tracking-tight text-espresso tabular-nums"
           >
             {confirmedOrder
               ? 'Đặt món thành công'
@@ -215,13 +251,13 @@ export function CartCheckoutDrawer({
             aria-label="Đóng giỏ hàng"
             disabled={isSubmitting}
             onClick={handleClose}
-            className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-olive-primary/15 bg-canvas-cream text-sm font-bold text-espresso transition hover:bg-card-butter/70 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-olive-primary/15 bg-canvas-cream text-sm font-bold text-espresso transition-colors hover:bg-card-butter/70 disabled:cursor-not-allowed disabled:opacity-50"
           >
             ✕
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-5 sm:p-6">
+        <div className="flex-1 overflow-y-auto overscroll-contain p-5 sm:p-6">
           {confirmedOrder ? (
             <div className="space-y-5">
               <div className="space-y-3 rounded-3xl border border-olive-primary/15 bg-card-butter p-5">
@@ -237,7 +273,7 @@ export function CartCheckoutDrawer({
                   <p className="text-xs font-semibold tracking-wider text-warm-muted uppercase">
                     Mã đơn hàng của bạn
                   </p>
-                  <p className="mt-1 font-display text-2xl font-bold text-espresso sm:text-3xl">
+                  <p className="mt-1 font-display text-2xl font-bold text-espresso tabular-nums sm:text-3xl">
                     {confirmedOrder.orderCode}
                   </p>
                 </div>
@@ -251,7 +287,7 @@ export function CartCheckoutDrawer({
 
               {confirmedOrder.items.length > 0 && (
                 <div className="space-y-2.5 rounded-2xl border border-olive-primary/12 bg-canvas-cream/70 p-4">
-                  <p className="text-xs font-bold tracking-wider text-olive-primary uppercase">
+                  <p className="text-xs font-bold tracking-wider text-olive-primary tabular-nums uppercase">
                     Chi tiết món đã đặt ({confirmedOrder.totalItems} món)
                   </p>
                   <ul className="space-y-2">
@@ -266,12 +302,12 @@ export function CartCheckoutDrawer({
                           </p>
                           {item.kind === 'drink' ? (
                             <>
-                              <p className="text-warm-muted">
+                              <p className="text-warm-muted tabular-nums">
                                 Size {item.size} • {item.sugarLevel}% đường •{' '}
                                 {item.iceLevel}% đá
                               </p>
                               {item.toppings.length > 0 && (
-                                <p className="font-semibold text-artichoke">
+                                <p className="font-semibold text-artichoke tabular-nums">
                                   +{' '}
                                   {item.toppings
                                     .map(
@@ -291,12 +327,12 @@ export function CartCheckoutDrawer({
                               • {item.sizeLabel}
                             </p>
                           )}
-                          <p className="font-semibold text-warm-muted">
+                          <p className="font-semibold text-warm-muted tabular-nums">
                             SL: {item.quantity}{' '}
                             {item.kind === 'snack' ? 'phần' : 'ly'}
                           </p>
                         </div>
-                        <span className="shrink-0 font-bold text-terracotta sm:text-sm">
+                        <span className="shrink-0 font-bold text-terracotta tabular-nums sm:text-sm">
                           {formatVnd(item.lineTotal)}
                         </span>
                       </li>
@@ -308,7 +344,7 @@ export function CartCheckoutDrawer({
               <div className="space-y-2 rounded-2xl border border-olive-primary/12 bg-canvas-cream/70 p-4 text-xs sm:text-sm">
                 <div className="flex justify-between gap-2">
                   <span className="text-warm-muted">Người nhận:</span>
-                  <span className="font-semibold text-espresso">
+                  <span className="font-semibold text-espresso tabular-nums">
                     {confirmedOrder.customerName} •{' '}
                     {confirmedOrder.customerPhone}
                   </span>
@@ -337,7 +373,7 @@ export function CartCheckoutDrawer({
                   <span className="font-bold text-espresso">
                     Tổng thanh toán:
                   </span>
-                  <span className="font-bold text-terracotta">
+                  <span className="font-bold text-terracotta tabular-nums">
                     {formatVnd(confirmedOrder.grandTotal)}
                   </span>
                 </div>
@@ -358,14 +394,14 @@ export function CartCheckoutDrawer({
                     handleClose();
                     onTrackOrder?.(orderSnapshot);
                   }}
-                  className="inline-flex min-h-11 flex-1 cursor-pointer items-center justify-center rounded-2xl border border-olive-primary/25 bg-card-butter px-5 py-3 text-sm font-bold text-olive-primary transition hover:opacity-92"
+                  className="inline-flex min-h-11 flex-1 cursor-pointer items-center justify-center rounded-2xl border border-olive-primary/25 bg-card-butter px-5 py-3 text-sm font-bold text-olive-primary transition-opacity hover:opacity-92"
                 >
                   Theo dõi trạng thái đơn
                 </button>
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="inline-flex min-h-11 flex-1 cursor-pointer items-center justify-center rounded-2xl bg-terracotta px-5 py-3 text-sm font-bold text-surface-light shadow-xs transition hover:opacity-92 sm:text-base"
+                  className="inline-flex min-h-11 flex-1 cursor-pointer items-center justify-center rounded-2xl bg-terracotta px-5 py-3 text-sm font-bold text-surface-light shadow-paper-rest transition-opacity hover:opacity-92 sm:text-base"
                 >
                   Tiếp tục đặt món
                 </button>
@@ -383,7 +419,7 @@ export function CartCheckoutDrawer({
               <button
                 type="button"
                 onClick={handleClose}
-                className="mt-2 inline-flex min-h-11 cursor-pointer items-center rounded-full bg-terracotta px-5 py-2.5 text-xs font-bold text-surface-light transition hover:opacity-92 sm:text-sm"
+                className="mt-2 inline-flex min-h-11 cursor-pointer items-center rounded-full bg-terracotta px-5 py-2.5 text-xs font-bold text-surface-light transition-opacity hover:opacity-92 sm:text-sm"
               >
                 Khám phá thực đơn
               </button>
@@ -391,6 +427,7 @@ export function CartCheckoutDrawer({
           ) : (
             <form
               onSubmit={(event) => void handleSubmit(event)}
+              noValidate
               className="space-y-4"
             >
               {unavailableItems.length > 0 && (
@@ -410,7 +447,7 @@ export function CartCheckoutDrawer({
                         removeUnavailableItems();
                         setErrorMessage(null);
                       }}
-                      className="inline-flex min-h-11 cursor-pointer items-center rounded-full bg-terracotta px-3.5 py-1.5 text-xs font-bold text-surface-light transition hover:opacity-92 sm:min-h-9"
+                      className="inline-flex min-h-11 cursor-pointer items-center rounded-full bg-terracotta px-4 py-2 text-xs font-bold text-surface-light transition-opacity hover:opacity-92"
                     >
                       Gỡ món tạm hết
                     </button>
@@ -425,7 +462,7 @@ export function CartCheckoutDrawer({
                         <div className="min-w-0">
                           <p className="font-semibold text-espresso">
                             {item.productName}{' '}
-                            <span className="font-normal text-warm-muted">
+                            <span className="font-normal text-warm-muted tabular-nums">
                               (SL: {item.quantity})
                             </span>
                           </p>
@@ -476,19 +513,19 @@ export function CartCheckoutDrawer({
                             <h3 className="font-editorial text-base leading-snug font-semibold text-espresso">
                               {line.productName}
                             </h3>
-                            <span className="shrink-0 text-sm font-bold text-terracotta">
+                            <span className="shrink-0 text-sm font-bold text-terracotta tabular-nums">
                               {formatVnd(line.lineTotal)}
                             </span>
                           </div>
 
                           {line.kind === 'drink' ? (
                             <>
-                              <p className="text-xs text-warm-muted">
+                              <p className="text-xs text-warm-muted tabular-nums">
                                 Size {line.size} • {line.sugarLevel}% đường •{' '}
                                 {line.iceLevel}% đá
                               </p>
                               {line.toppings.length > 0 && (
-                                <p className="text-xs font-semibold text-artichoke">
+                                <p className="text-xs font-semibold text-artichoke tabular-nums">
                                   +{' '}
                                   {line.toppings
                                     .map(
@@ -526,11 +563,11 @@ export function CartCheckoutDrawer({
                                   line.quantity - 1,
                                 )
                               }
-                              className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-xs font-bold text-warm-muted hover:text-espresso"
+                              className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-xs font-bold text-warm-muted transition-colors hover:text-espresso"
                             >
                               -
                             </button>
-                            <span className="text-xs font-bold text-espresso">
+                            <span className="text-xs font-bold text-espresso tabular-nums">
                               SL: {line.quantity}{' '}
                               {line.kind === 'snack' ? 'phần' : 'ly'}
                             </span>
@@ -544,7 +581,7 @@ export function CartCheckoutDrawer({
                                   line.quantity + 1,
                                 )
                               }
-                              className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-xs font-bold text-terracotta hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
+                              className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-xs font-bold text-terracotta transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
                             >
                               +
                             </button>
@@ -554,7 +591,7 @@ export function CartCheckoutDrawer({
                             type="button"
                             aria-label={`Xóa ${line.productName}`}
                             onClick={() => removeItem(line.canonicalKey)}
-                            className="inline-flex min-h-11 cursor-pointer items-center px-3 text-xs font-semibold text-warm-muted underline-offset-2 hover:text-terracotta hover:underline"
+                            className="inline-flex min-h-11 cursor-pointer items-center px-3 text-xs font-semibold text-warm-muted underline-offset-2 transition-colors hover:text-terracotta hover:underline"
                           >
                             Xóa
                           </button>
@@ -566,20 +603,20 @@ export function CartCheckoutDrawer({
               )}
 
               <div className="space-y-2 rounded-2xl border border-olive-primary/15 bg-card-butter p-4">
-                <p className="text-[11px] font-bold tracking-wider text-olive-primary uppercase">
+                <p className="text-xs font-bold tracking-wider text-olive-primary uppercase">
                   📍 CHI NHÁNH PHỤC VỤ GẦN BẠN NHẤT
                 </p>
                 <p className="text-sm font-bold text-espresso">
                   Ốm Sữa — {selectedBranch.address}
                 </p>
-                <p className="text-xs text-warm-muted">
+                <p className="text-xs text-warm-muted tabular-nums">
                   {deliveryEta} • Hotline: {selectedBranch.hotline}
                 </p>
                 <div>
                   <button
                     type="button"
                     onClick={() => setIsBranchPickerOpen((prev) => !prev)}
-                    className="mt-1 inline-flex min-h-11 cursor-pointer items-center rounded-full border border-olive-primary/20 bg-surface-light px-3.5 py-1.5 text-xs font-semibold text-espresso transition hover:bg-canvas-cream"
+                    className="mt-1 inline-flex min-h-11 cursor-pointer items-center rounded-full border border-olive-primary/20 bg-surface-light px-3.5 py-1.5 text-xs font-semibold text-espresso transition-colors hover:bg-canvas-cream"
                   >
                     Đổi chi nhánh khác
                   </button>
@@ -597,7 +634,7 @@ export function CartCheckoutDrawer({
                             setSelectedBranchId(branch.id);
                             setIsBranchPickerOpen(false);
                           }}
-                          className={`flex min-h-11 w-full cursor-pointer flex-col items-start justify-center rounded-xl border px-3 py-2 text-left text-xs transition ${
+                          className={`flex min-h-11 w-full cursor-pointer flex-col items-start justify-center rounded-xl border px-3 py-2 text-left text-xs transition-colors ${
                             isActive
                               ? 'border-hero-espresso bg-hero-espresso text-surface-light'
                               : 'border-olive-primary/15 bg-surface-light text-espresso hover:bg-canvas-cream'
@@ -632,13 +669,23 @@ export function CartCheckoutDrawer({
                       Họ và tên người nhận
                     </label>
                     <input
+                      ref={nameRef}
                       id={nameInputId}
                       name="customerName"
                       type="text"
+                      autoComplete="name"
+                      aria-invalid={fieldErrors.name ? 'true' : undefined}
                       value={customerName}
-                      onChange={(event) => setCustomerName(event.target.value)}
-                      placeholder="Ví dụ: Nguyễn Lan"
-                      className="min-h-11 w-full rounded-xl border border-olive-primary/20 bg-surface-light px-3 py-2 text-base text-espresso placeholder:text-warm-muted/70 focus:border-olive-primary focus:outline-none sm:text-sm"
+                      onChange={(event) => {
+                        setCustomerName(event.target.value);
+                        clearFieldError('name');
+                      }}
+                      placeholder="Ví dụ: Nguyễn Lan…"
+                      className={`min-h-11 w-full rounded-xl border bg-surface-light px-3 py-2 text-base text-espresso placeholder:text-warm-muted/70 focus:outline-none sm:text-sm ${
+                        fieldErrors.name
+                          ? 'border-terracotta'
+                          : 'border-olive-primary/20 focus:border-olive-primary'
+                      }`}
                     />
                   </div>
 
@@ -650,13 +697,25 @@ export function CartCheckoutDrawer({
                       Số điện thoại
                     </label>
                     <input
+                      ref={phoneRef}
                       id={phoneInputId}
                       name="customerPhone"
                       type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      spellCheck={false}
+                      aria-invalid={fieldErrors.phone ? 'true' : undefined}
                       value={customerPhone}
-                      onChange={(event) => setCustomerPhone(event.target.value)}
-                      placeholder="09xxxxxxxx"
-                      className="min-h-11 w-full rounded-xl border border-olive-primary/20 bg-surface-light px-3 py-2 text-base text-espresso placeholder:text-warm-muted/70 focus:border-olive-primary focus:outline-none sm:text-sm"
+                      onChange={(event) => {
+                        setCustomerPhone(event.target.value);
+                        clearFieldError('phone');
+                      }}
+                      placeholder="09xxxxxxxx…"
+                      className={`min-h-11 w-full rounded-xl border bg-surface-light px-3 py-2 text-base text-espresso tabular-nums placeholder:text-warm-muted/70 focus:outline-none sm:text-sm ${
+                        fieldErrors.phone
+                          ? 'border-terracotta'
+                          : 'border-olive-primary/20 focus:border-olive-primary'
+                      }`}
                     />
                   </div>
                 </div>
@@ -669,13 +728,23 @@ export function CartCheckoutDrawer({
                     Địa chỉ giao hàng
                   </label>
                   <input
+                    ref={addressRef}
                     id={addressInputId}
                     name="deliveryAddress"
                     type="text"
+                    autoComplete="street-address"
+                    aria-invalid={fieldErrors.address ? 'true' : undefined}
                     value={deliveryAddress}
-                    onChange={(event) => setDeliveryAddress(event.target.value)}
-                    placeholder="Số nhà, tên đường, phường/xã tại Đà Lạt hoặc Đức Trọng"
-                    className="min-h-11 w-full rounded-xl border border-olive-primary/20 bg-surface-light px-3 py-2 text-base text-espresso placeholder:text-warm-muted/70 focus:border-olive-primary focus:outline-none sm:text-sm"
+                    onChange={(event) => {
+                      setDeliveryAddress(event.target.value);
+                      clearFieldError('address');
+                    }}
+                    placeholder="Số nhà, tên đường, phường/xã tại Đà Lạt hoặc Đức Trọng…"
+                    className={`min-h-11 w-full rounded-xl border bg-surface-light px-3 py-2 text-base text-espresso placeholder:text-warm-muted/70 focus:outline-none sm:text-sm ${
+                      fieldErrors.address
+                        ? 'border-terracotta'
+                        : 'border-olive-primary/20 focus:border-olive-primary'
+                    }`}
                   />
                 </div>
 
@@ -687,13 +756,19 @@ export function CartCheckoutDrawer({
                     Ghi chú đơn hàng
                   </label>
                   <input
+                    ref={noteRef}
                     id={noteInputId}
                     name="note"
                     type="text"
+                    autoComplete="off"
                     maxLength={300}
+                    aria-invalid={fieldErrors.note ? 'true' : undefined}
                     value={note}
-                    onChange={(event) => setNote(event.target.value)}
-                    placeholder="Ví dụ: Ít ngọt hơn, gọi khi tới cổng (không bắt buộc)"
+                    onChange={(event) => {
+                      setNote(event.target.value);
+                      clearFieldError('note');
+                    }}
+                    placeholder="Ví dụ: Ít ngọt hơn, gọi khi tới cổng (không bắt buộc)…"
                     className="min-h-11 w-full rounded-xl border border-olive-primary/20 bg-surface-light px-3 py-2 text-base text-espresso placeholder:text-warm-muted/70 focus:border-olive-primary focus:outline-none sm:text-sm"
                   />
                 </div>
@@ -701,10 +776,10 @@ export function CartCheckoutDrawer({
 
               <div className="space-y-2 rounded-2xl border border-olive-primary/12 bg-canvas-cream/75 p-4 text-xs sm:text-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-warm-muted">
+                  <span className="text-warm-muted tabular-nums">
                     Tạm tính ({totals.totalItems} món):
                   </span>
-                  <span className="font-bold text-espresso">
+                  <span className="font-bold text-espresso tabular-nums">
                     {formatVnd(totals.subtotal)}
                   </span>
                 </div>
@@ -718,14 +793,16 @@ export function CartCheckoutDrawer({
                   <span className="text-warm-muted">
                     Dụng cụ ống hút &amp; ly giấy thân thiện:
                   </span>
-                  <span className="font-bold text-espresso">0đ</span>
+                  <span className="font-bold text-espresso tabular-nums">
+                    0đ
+                  </span>
                 </div>
 
                 <div className="flex items-center justify-between border-t border-olive-primary/12 pt-2.5">
                   <span className="font-display text-base font-bold text-espresso">
                     Tổng thanh toán:
                   </span>
-                  <span className="text-lg font-extrabold text-terracotta">
+                  <span className="text-lg font-extrabold text-terracotta tabular-nums">
                     {formatVnd(totals.grandTotal)}
                   </span>
                 </div>
@@ -741,9 +818,9 @@ export function CartCheckoutDrawer({
                         type="button"
                         aria-pressed={isActive}
                         onClick={() => setPaymentMethod(method)}
-                        className={`inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-2xl border px-3 py-2.5 text-xs font-bold transition sm:text-sm ${
+                        className={`inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-2xl border px-3 py-2.5 text-xs font-bold transition-colors sm:text-sm ${
                           isActive
-                            ? 'border-hero-espresso bg-hero-espresso text-surface-light shadow-2xs'
+                            ? 'border-hero-espresso bg-hero-espresso text-surface-light'
                             : 'border-olive-primary/20 bg-canvas-cream/70 text-espresso hover:bg-card-butter/45'
                         }`}
                       >
@@ -779,10 +856,10 @@ export function CartCheckoutDrawer({
                     unavailableItems.length > 0 ||
                     lines.length === 0
                   }
-                  className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center rounded-2xl bg-terracotta px-5 py-3.5 text-sm font-bold text-surface-light shadow-xs transition hover:opacity-92 disabled:cursor-not-allowed disabled:opacity-65 sm:text-base"
+                  className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center rounded-2xl bg-terracotta px-5 py-3.5 text-sm font-bold text-surface-light shadow-paper-rest tabular-nums transition-opacity hover:opacity-92 disabled:cursor-not-allowed disabled:opacity-65 sm:text-base"
                 >
                   {isSubmitting
-                    ? 'Đang xử lý đơn hàng...'
+                    ? 'Đang xử lý đơn hàng…'
                     : `Xác nhận đặt món • ${formatVnd(totals.grandTotal)} →`}
                 </button>
 

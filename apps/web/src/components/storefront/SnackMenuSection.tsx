@@ -32,9 +32,9 @@ export function SnackMenuSection({
   return (
     <section
       id="banh-trang"
-      className="scroll-mt-24 rounded-3xl border border-olive-primary/12 bg-surface-light p-5 shadow-2xs sm:p-7"
+      className="scroll-mt-24 rounded-3xl border border-olive-primary/14 bg-surface-light p-5 shadow-paper-rest sm:p-7"
     >
-      <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="mb-5 flex flex-col gap-3 border-b border-olive-primary/12 pb-4 lg:flex-row lg:items-center lg:justify-between">
         <h2 className="font-snack text-xl font-extrabold tracking-tight text-terracotta uppercase sm:text-2xl">
           ✦ BÁNH TRÁNG SNACK ĐÀ LẠT
         </h2>
@@ -56,9 +56,9 @@ export function SnackMenuSection({
                 type="button"
                 aria-pressed={isActive}
                 onClick={() => onChangeSpice(option.value)}
-                className={`inline-flex min-h-11 cursor-pointer items-center rounded-full px-3.5 py-2 text-xs font-bold transition sm:min-h-10 ${
+                className={`inline-flex min-h-11 cursor-pointer items-center rounded-full px-3.5 py-2 text-xs font-bold transition-colors ${
                   isActive
-                    ? 'bg-terracotta text-surface-light shadow-2xs'
+                    ? 'bg-terracotta text-surface-light shadow-paper-rest'
                     : 'border border-olive-primary/15 bg-canvas-cream text-espresso hover:bg-card-butter/60'
                 }`}
               >
@@ -76,7 +76,7 @@ export function SnackMenuSection({
           return (
             <article
               key={snack.id}
-              className="flex flex-col rounded-2xl border border-olive-primary/10 bg-canvas-cream/65 p-3"
+              className="flex flex-col rounded-2xl border border-olive-primary/12 bg-canvas-cream/70 p-3 shadow-paper-rest transition-colors hover:border-olive-primary/28"
             >
               <div className="relative aspect-square w-full overflow-hidden rounded-xl">
                 <ProductMedia
@@ -85,15 +85,15 @@ export function SnackMenuSection({
                   variant="snack"
                   preferIllustration={preferIllustration}
                 />
-                <span className="absolute top-2 left-2 rounded-full bg-coral-sketch px-2 py-0.5 text-[10px] font-bold text-espresso">
+                <span className="absolute top-2 left-2 rounded-full bg-coral-sketch px-2.5 py-0.5 text-xs font-bold text-espresso">
                   {SPICE_LEVEL_LABELS[activeSpice]}
                 </span>
-                <div className="absolute bottom-2 left-2 flex items-center gap-1">
-                  <span className="rounded-full bg-terracotta px-2.5 py-0.5 text-[11px] font-bold text-surface-light">
+                <div className="absolute bottom-2 left-2 flex flex-wrap items-center gap-1">
+                  <span className="rounded-full bg-terracotta px-2.5 py-0.5 text-xs font-bold text-surface-light tabular-nums">
                     {formatShortPrice(price)}
                   </span>
                   {snack.isBestSeller && (
-                    <span className="rounded-full bg-artichoke px-2 py-0.5 text-[9px] font-bold text-surface-light">
+                    <span className="rounded-full bg-artichoke px-2 py-0.5 text-xs font-bold text-surface-light">
                       BEST SELLER
                     </span>
                   )}
@@ -104,7 +104,7 @@ export function SnackMenuSection({
                 <h3 className="font-editorial text-sm font-semibold text-espresso sm:text-base">
                   {snack.name}
                 </h3>
-                <p className="font-editorial text-[11px] italic text-warm-muted">
+                <p className="font-editorial text-xs italic text-warm-muted">
                   {snack.englishName}
                 </p>
                 <p className="mt-1 line-clamp-2 text-xs text-warm-muted">
@@ -116,7 +116,7 @@ export function SnackMenuSection({
                     <button
                       type="button"
                       onClick={() => onSelectSnack(snack, activeSpice)}
-                      className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center rounded-full bg-hero-espresso px-3 py-2 text-xs font-bold text-surface-light transition hover:opacity-90 sm:min-h-10"
+                      className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center rounded-full bg-hero-espresso px-3 py-2 text-xs font-bold text-surface-light transition-opacity hover:opacity-90"
                     >
                       + Thêm món ăn vặt
                     </button>
@@ -124,7 +124,7 @@ export function SnackMenuSection({
                     <button
                       type="button"
                       disabled
-                      className="inline-flex min-h-11 w-full cursor-not-allowed items-center justify-center rounded-full bg-warm-muted/25 px-3 py-2 text-xs font-semibold text-warm-muted sm:min-h-10"
+                      className="inline-flex min-h-11 w-full cursor-not-allowed items-center justify-center rounded-full bg-warm-muted/25 px-3 py-2 text-xs font-semibold text-warm-muted"
                     >
                       Tạm hết
                     </button>

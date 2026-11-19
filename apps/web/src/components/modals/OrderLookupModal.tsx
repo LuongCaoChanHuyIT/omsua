@@ -215,7 +215,7 @@ export function OrderLookupModal({
           </button>
         </div>
 
-        <div className="flex-1 space-y-5 overflow-y-auto px-5 py-4 sm:px-6 sm:py-5">
+        <div className="flex-1 space-y-5 overflow-y-auto overscroll-contain px-5 py-4 sm:px-6 sm:py-5">
           <form onSubmit={handleSubmit} className="space-y-2">
             <label
               htmlFor={codeInputId}
@@ -228,17 +228,19 @@ export function OrderLookupModal({
                 id={codeInputId}
                 name="orderCode"
                 type="text"
+                autoComplete="off"
+                spellCheck={false}
                 value={codeInput}
                 onChange={(event) => setCodeInput(event.target.value)}
-                placeholder="Ví dụ: OM-20261119-AB12"
+                placeholder="Ví dụ: OM-20261119-AB12…"
                 className="min-h-11 flex-1 rounded-2xl border border-olive-primary/20 bg-canvas-cream/65 px-3.5 py-2.5 text-base font-semibold text-espresso uppercase placeholder:font-normal placeholder:normal-case placeholder:text-warm-muted/70 focus:border-olive-primary focus:outline-none sm:text-sm"
               />
               <button
                 type="submit"
                 disabled={isLoading}
-                className="inline-flex min-h-11 shrink-0 cursor-pointer items-center justify-center rounded-2xl bg-terracotta px-5 py-2.5 text-sm font-bold text-surface-light shadow-xs transition hover:opacity-92 disabled:cursor-not-allowed disabled:opacity-65"
+                className="inline-flex min-h-11 shrink-0 cursor-pointer items-center justify-center rounded-2xl bg-terracotta px-5 py-2.5 text-sm font-bold text-surface-light shadow-paper-rest transition-opacity hover:opacity-92 disabled:cursor-not-allowed disabled:opacity-65"
               >
-                {isLoading ? 'Đang tra cứu...' : 'Tra cứu đơn'}
+                {isLoading ? 'Đang tra cứu…' : 'Tra cứu đơn'}
               </button>
             </div>
           </form>
@@ -283,7 +285,7 @@ export function OrderLookupModal({
             <div className="space-y-4 rounded-3xl border border-olive-primary/15 bg-canvas-cream/65 p-4 sm:p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <span className="text-[11px] font-bold tracking-wider text-warm-muted uppercase">
+                  <span className="text-xs font-bold tracking-wider text-warm-muted uppercase">
                     Mã đơn hàng
                   </span>
                   <p className="mt-0.5 font-display text-2xl font-bold text-espresso">
@@ -339,7 +341,7 @@ export function OrderLookupModal({
                               : 'border-olive-primary/12 bg-surface-light/80 text-warm-muted'
                         }`}
                       >
-                        <span className="block text-[10px] font-bold uppercase opacity-80">
+                        <span className="block text-xs font-bold uppercase opacity-85">
                           Bước {index + 1}
                         </span>
                         <span className="mt-0.5 block text-xs font-bold">
