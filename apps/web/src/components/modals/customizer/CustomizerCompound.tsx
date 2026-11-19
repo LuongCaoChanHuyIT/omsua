@@ -90,7 +90,7 @@ export interface CustomizerProviderProps {
   children: ReactNode;
 }
 
-function CustomizerProvider({
+function CustomizerProviderInner({
   product,
   toppings = [],
   defaultSpice = 'cay-vua',
@@ -250,6 +250,11 @@ function CustomizerProvider({
   return (
     <CustomizerContext value={contextValue}>{children}</CustomizerContext>
   );
+}
+
+function CustomizerProvider(props: CustomizerProviderProps) {
+  const resetKey = `${props.product.id}:${props.product.kind}:${props.defaultSpice ?? 'cay-vua'}:${(props.initialToppingIds ?? []).join(',')}`;
+  return <CustomizerProviderInner key={resetKey} {...props} />;
 }
 
 function CustomizerDialog({

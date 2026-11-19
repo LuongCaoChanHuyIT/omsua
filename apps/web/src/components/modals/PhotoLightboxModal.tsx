@@ -19,6 +19,12 @@ import {
 } from '@/components/transitions/AppViewTransition';
 import { useModalAccessibility } from '@/hooks/use-modal-accessibility';
 
+const LIGHTBOX_SHARE_TRANSITION = {
+  'lightbox-next': 'none',
+  'lightbox-prev': 'none',
+  default: 'morph',
+} as const;
+
 export interface PhotoLightboxModalProps {
   items: readonly FanpagePhotoItem[];
   activeIndex: number | null;
@@ -135,7 +141,7 @@ export function PhotoLightboxModal({
           <AppViewTransition
             key={currentItem.id}
             name={sharedVtName}
-            share="morph"
+            share={LIGHTBOX_SHARE_TRANSITION}
             enter={{
               'lightbox-next': 'lightbox-next',
               'lightbox-prev': 'lightbox-prev',

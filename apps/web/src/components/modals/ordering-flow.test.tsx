@@ -1597,4 +1597,89 @@ describe('Interactive Customizer Modal & Cart Checkout Flow', () => {
       'hydrated:true:items:0:pay:qr',
     );
   });
+
+  it('resets draft state cleanly when DrinkCustomizerModal, SnackCustomizerModal, or Customizer.Provider switches product prop without an external key', () => {
+    const quytDrink = catalog.products.find(
+      (p) => p.id === 'quyt-nhai-cat-tuong',
+    )!;
+    const snack1 = catalog.products.find(
+      (p) => p.id === 'banh-trang-tron-top-mo',
+    )!;
+    const snack2 = catalog.products.find(
+      (p) => p.id === 'com-chay-cha-bong',
+    )!;
+    const onAddDrink = vi.fn();
+    const onAddSnack = vi.fn();
+
+    const { rerender, unmount } = render(
+      <DrinkCustomizerModal
+        product={traSuaAtiso}
+        toppings={catalog.toppings}
+        onClose={vi.fn()}
+        onAddToCart={onAddDrink}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('radio', { name: /Size L/i }));
+    fireEvent.click(
+      screen.getByRole('checkbox', { name: /Trân châu đen nấu mật/i }),
+    );
+
+    // Rerender WITHOUT changing key -> must NOT throw OrderValidationError('PRODUCT_NOT_FOUND') and must reset draft
+    rerender(
+      <DrinkCustomizerModal
+        product={quytDrink}
+        toppings={catalog.toppings}
+        onClose={vi.fn()}
+        onAddToCart={onAddDrink}
+      />,
+    );
+
+    expect(
+      screen.getByRole('heading', { name: 'Trà Quýt Nhài Cát Tường' }),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Thêm vào giỏ • 45.000đ' }),
+    );
+    expect(onAddDrink).toHaveBeenCalledWith({
+      productId: 'quyt-nhai-cat-tuong',
+      quantity: 1,
+      size: 'L',
+      sugarLevel: '70',
+      iceLevel: '70',
+      toppingIds: [],
+    });
+    unmount();
+
+    const { rerender: rerenderSnack } = render(
+      <SnackCustomizerModal
+        product={snack1}
+        defaultSpice="cay-nhieu"
+        onClose={vi.fn()}
+        onAddToCart={onAddSnack}
+      />,
+    );
+
+    rerenderSnack(
+      <SnackCustomizerModal
+        product={snack2}
+        defaultSpice="it-cay"
+        onClose={vi.fn()}
+        onAddToCart={onAddSnack}
+      />,
+    );
+
+    expect(
+      screen.getByRole('heading', { name: 'Cơm Cháy Chà Bông' }),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Thêm vào giỏ • 45.000đ' }),
+    );
+    expect(onAddSnack).toHaveBeenCalledWith({
+      productId: 'com-chay-cha-bong',
+      quantity: 1,
+      size: 'STD',
+      spiceLevel: 'it-cay',
+    });
+  });
 });

@@ -9,6 +9,7 @@ import {
   within,
 } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import * as AppViewTransitionModule from '@/components/transitions/AppViewTransition';
 import { BrandFooter } from './BrandFooter';
 import { FanpageGallerySection } from './FanpageGallerySection';
 import { StorefrontClientShell } from './StorefrontClientShell';
@@ -240,5 +241,45 @@ describe('FanpageGallerySection, PhotoLightboxModal & BrandFooter social/branch 
     const cartDialog = screen.getByRole('dialog');
     expect(cartDialog.querySelector('img[src^="/images/fanpage/"]')).toBeNull();
     expect(cartDialog.querySelectorAll('svg').length).toBeGreaterThan(0);
+  });
+
+  it('disables share morph during lightbox-next / lightbox-prev transitions so carousel slides are not shadowed by background grid morphs', () => {
+    const vtSpy = vi.spyOn(AppViewTransitionModule, 'AppViewTransition');
+
+    render(<FanpageGallerySection />);
+
+    const galleryPhotoCallsBeforeOpen = vtSpy.mock.calls
+      .map(([props]) => props)
+      .filter((props) => props.name?.startsWith('gallery-photo-'));
+    expect(galleryPhotoCallsBeforeOpen.length).toBe(16);
+    for (const props of galleryPhotoCallsBeforeOpen) {
+      expect(props.share).toEqual({
+        'lightbox-next': 'none',
+        'lightbox-prev': 'none',
+        default: 'morph',
+      });
+    }
+
+    vtSpy.mockClear();
+
+    const gallerySection = document.getElementById('khong-gian')!;
+    const firstCardBtn = gallerySection.querySelector('article button')!;
+    fireEvent.click(firstCardBtn);
+
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toBeInTheDocument();
+
+    const galleryPhotoCallsWhileOpen = vtSpy.mock.calls
+      .map(([props]) => props)
+      .filter((props) => props.name?.startsWith('gallery-photo-'));
+    // 15 inactive grid cards + 1 active lightbox slide = 16 calls, all guarding share against lightbox-next/prev
+    expect(galleryPhotoCallsWhileOpen.length).toBeGreaterThanOrEqual(16);
+    for (const props of galleryPhotoCallsWhileOpen) {
+      expect(props.share).toEqual({
+        'lightbox-next': 'none',
+        'lightbox-prev': 'none',
+        default: 'morph',
+      });
+    }
   });
 });

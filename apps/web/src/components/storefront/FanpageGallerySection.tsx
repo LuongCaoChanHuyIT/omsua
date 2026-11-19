@@ -20,6 +20,12 @@ const GALLERY_FILTERS: ReadonlyArray<{
   { id: 'banh-trang', label: 'Bánh tráng Nhà Ốm' },
 ];
 
+const GALLERY_SHARE_TRANSITION = {
+  'lightbox-next': 'none',
+  'lightbox-prev': 'none',
+  default: 'morph',
+} as const;
+
 export interface FanpageGallerySectionProps {
   onLightboxOpenChange?: (isOpen: boolean) => void;
 }
@@ -185,7 +191,7 @@ export function FanpageGallerySection({
                   ) : (
                     <AppViewTransition
                       name={vtName}
-                      share="morph"
+                      share={GALLERY_SHARE_TRANSITION}
                       default="none"
                     >
                       {thumbnailNode}
