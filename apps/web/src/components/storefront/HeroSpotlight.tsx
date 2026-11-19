@@ -1,14 +1,13 @@
 'use client';
 
 import { type ProductItem, formatShortPrice } from '@omsua/shared';
-import {
-  AtisoMascot,
-  ProductIllustration,
-} from '@/components/artwork/OmSuaArtwork';
+import { AtisoMascot } from '@/components/artwork/OmSuaArtwork';
+import { ProductMedia } from '@/components/artwork/ProductMedia';
 
 export interface HeroSpotlightProps {
   spotlightProducts: ProductItem[];
   onSelectProduct: (product: ProductItem) => void;
+  preferIllustration?: boolean;
 }
 
 function formatSpotlightPriceLabel(product: ProductItem): string {
@@ -24,6 +23,7 @@ function formatSpotlightPriceLabel(product: ProductItem): string {
 export function HeroSpotlight({
   spotlightProducts,
   onSelectProduct,
+  preferIllustration = false,
 }: HeroSpotlightProps) {
   return (
     <section
@@ -95,10 +95,11 @@ export function HeroSpotlight({
                   className="flex flex-col rounded-2xl border border-surface-light/12 bg-surface-light/6 p-3.5"
                 >
                   <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl">
-                    <ProductIllustration
+                    <ProductMedia
                       productId={product.id}
                       categoryId={product.categoryId}
                       variant="spotlight"
+                      preferIllustration={preferIllustration}
                     />
                     <span
                       className={`absolute top-2.5 left-2.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wide ${badgeClass}`}

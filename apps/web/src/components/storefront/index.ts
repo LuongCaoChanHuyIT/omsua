@@ -1,5 +1,6 @@
 export { BrandFooter, type BrandFooterProps } from './BrandFooter';
 export { BrandStorySection } from './BrandStorySection';
+export { FanpageGallerySection } from './FanpageGallerySection';
 export {
   DrinkMenuSection,
   type DrinkMenuSectionProps,

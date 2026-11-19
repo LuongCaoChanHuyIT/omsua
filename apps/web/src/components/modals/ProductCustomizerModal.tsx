@@ -20,7 +20,7 @@ import {
   resolveOrderLine,
 } from '@omsua/shared';
 import { type KeyboardEvent, useId, useMemo, useRef, useState } from 'react';
-import { ProductIllustration } from '@/components/artwork/OmSuaArtwork';
+import { ProductMedia } from '@/components/artwork/ProductMedia';
 import { useModalAccessibility } from '@/hooks/use-modal-accessibility';
 import { useOptionalCart } from '@/store/cart-store';
 
@@ -220,7 +220,7 @@ function CustomizerDialogBody({
         <div className="flex-1 overflow-y-auto px-5 py-4 sm:px-6">
           <div className="flex items-center gap-4 rounded-2xl border border-olive-primary/15 bg-card-butter p-3.5 sm:p-4">
             <div className="h-24 w-24 shrink-0 overflow-hidden rounded-2xl">
-              <ProductIllustration
+              <ProductMedia
                 productId={product.id}
                 categoryId={product.categoryId}
                 variant={product.kind === 'snack' ? 'snack' : 'card'}
@@ -364,7 +364,7 @@ function CustomizerDialogBody({
                       >
                         <div className="flex min-w-0 items-center gap-3">
                           <div className="h-11 w-11 shrink-0 overflow-hidden rounded-xl">
-                            <ProductIllustration
+                            <ProductMedia
                               toppingId={topping.id}
                               categoryId="topping"
                               variant="topping"

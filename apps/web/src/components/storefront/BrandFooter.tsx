@@ -1,6 +1,12 @@
 'use client';
+/* eslint-disable @next/next/no-img-element */
 
-import type { BranchInfo } from '@omsua/shared';
+import {
+  OMSUA_SOCIAL_LINKS,
+  type BranchInfo,
+  getBranchPhoto,
+} from '@omsua/shared';
+import { useState } from 'react';
 
 export interface BrandFooterProps {
   branches: BranchInfo[];
@@ -85,6 +91,10 @@ export function BrandFooter({
   selectedBranchId,
   onSelectBranch,
 }: BrandFooterProps) {
+  const [failedBranchPhotoIds, setFailedBranchPhotoIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+
   return (
     <footer className="mt-14 bg-hero-espresso text-surface-light">
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -102,6 +112,9 @@ export function BrandFooter({
           <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:col-span-9 lg:grid-cols-4">
             {branches.map((branch) => {
               const isSelected = selectedBranchId === branch.id;
+              const branchPhoto = getBranchPhoto(branch.id);
+              const showPhoto =
+                Boolean(branchPhoto) && !failedBranchPhotoIds.has(branch.id);
 
               return (
                 <div
@@ -133,6 +146,25 @@ export function BrandFooter({
                   }`}
                 >
                   <div>
+                    {showPhoto && branchPhoto && (
+                      <div className="mb-3 aspect-[16/9] w-full overflow-hidden rounded-xl border border-surface-light/12">
+                        <img
+                          src={branchPhoto.src}
+                          alt=""
+                          aria-hidden="true"
+                          loading="lazy"
+                          decoding="async"
+                          onError={() =>
+                            setFailedBranchPhotoIds((prev) => {
+                              const next = new Set(prev);
+                              next.add(branch.id);
+                              return next;
+                            })
+                          }
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                    )}
                     <h3 className="font-editorial text-sm font-semibold text-card-butter">
                       {branch.name}
                     </h3>
@@ -148,15 +180,47 @@ export function BrandFooter({
             })}
           </div>
 
-          <div className="flex items-center gap-3.5 rounded-2xl bg-surface-light p-4 text-espresso lg:col-span-3">
-            <QrFollowGraphic />
-            <div className="min-w-0">
-              <p className="text-xs font-bold tracking-wider text-olive-primary uppercase">
-                THEO DÕI ỐM
-              </p>
-              <p className="mt-1 text-xs leading-snug text-warm-muted">
-                Quét mã kết nối ưu đãi &amp; bản tin mới mỗi ngày từ Đà Lạt
-              </p>
+          <div className="flex flex-col justify-between gap-3.5 rounded-2xl bg-surface-light p-4 text-espresso lg:col-span-3">
+            <div className="flex items-center gap-3.5">
+              <QrFollowGraphic />
+              <div className="min-w-0">
+                <p className="text-xs font-bold tracking-wider text-olive-primary uppercase">
+                  THEO DÕI ỐM
+                </p>
+                <p className="mt-1 text-xs leading-snug text-warm-muted">
+                  Quét mã kết nối ưu đãi &amp; bản tin mới mỗi ngày từ Đà Lạt
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2 border-t border-olive-primary/12 pt-3">
+              <a
+                href={OMSUA_SOCIAL_LINKS.facebook}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Facebook Fanpage Ốm Sữa"
+                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-olive-primary/20 bg-canvas-cream px-2.5 text-xs font-bold text-espresso transition hover:bg-card-butter"
+              >
+                Facebook
+              </a>
+              <a
+                href={OMSUA_SOCIAL_LINKS.instagram}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Instagram Ốm Sữa Đà Lạt"
+                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-olive-primary/20 bg-canvas-cream px-2.5 text-xs font-bold text-espresso transition hover:bg-card-butter"
+              >
+                Instagram
+              </a>
+              <a
+                href={OMSUA_SOCIAL_LINKS.tiktok}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="TikTok Ốm Sữa Pha Chế"
+                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-olive-primary/20 bg-canvas-cream px-2.5 text-xs font-bold text-espresso transition hover:bg-card-butter"
+              >
+                TikTok
+              </a>
             </div>
           </div>
         </div>

@@ -20,6 +20,7 @@ import { CartProvider, useCart } from '@/store/cart-store';
 import { BrandFooter } from './BrandFooter';
 import { BrandStorySection } from './BrandStorySection';
 import { DrinkMenuSection } from './DrinkMenuSection';
+import { FanpageGallerySection } from './FanpageGallerySection';
 import { HeroSpotlight } from './HeroSpotlight';
 import { SnackMenuSection } from './SnackMenuSection';
 import { StorefrontHeader } from './StorefrontHeader';
@@ -54,6 +55,7 @@ function StorefrontShellInner({
   const [activeCategory, setActiveCategory] = useState<DrinkCategoryId | 'all'>(
     'all',
   );
+  const [preferIllustration, setPreferIllustration] = useState<boolean>(false);
   const [activeSpice, setActiveSpice] = useState<SpiceLevel>('cay-vua');
   const [activeProductForModal, setActiveProductForModal] =
     useState<ProductItem | null>(null);
@@ -130,6 +132,7 @@ function StorefrontShellInner({
       <main className="mx-auto flex max-w-7xl flex-col gap-10 px-4 pt-6 sm:px-6 lg:px-8">
         <HeroSpotlight
           spotlightProducts={spotlightProducts}
+          preferIllustration={preferIllustration}
           onSelectProduct={(product) => {
             setInitialToppingIdsForModal([]);
             setActiveProductForModal(product);
@@ -141,6 +144,8 @@ function StorefrontShellInner({
           drinks={drinks}
           activeCategory={activeCategory}
           onChangeCategory={setActiveCategory}
+          preferIllustration={preferIllustration}
+          onToggleMediaMode={setPreferIllustration}
           onSelectDrink={(drink) => {
             setInitialToppingIdsForModal([]);
             setActiveProductForModal(drink);
@@ -149,6 +154,7 @@ function StorefrontShellInner({
 
         <ToppingStripSection
           toppings={catalog.toppings}
+          preferIllustration={preferIllustration}
           onSelectTopping={(topping) => {
             const defaultDrink =
               catalog.products.find(
@@ -169,6 +175,7 @@ function StorefrontShellInner({
           snacks={snacks}
           activeSpice={activeSpice}
           onChangeSpice={setActiveSpice}
+          preferIllustration={preferIllustration}
           onSelectSnack={(snack, spice) => {
             setActiveSpice(spice);
             setInitialToppingIdsForModal([]);
@@ -177,6 +184,8 @@ function StorefrontShellInner({
         />
 
         <BrandStorySection />
+
+        <FanpageGallerySection />
       </main>
 
       <BrandFooter

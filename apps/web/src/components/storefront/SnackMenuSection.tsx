@@ -6,13 +6,14 @@ import {
   type SpiceLevel,
   formatShortPrice,
 } from '@omsua/shared';
-import { ProductIllustration } from '@/components/artwork/OmSuaArtwork';
+import { ProductMedia } from '@/components/artwork/ProductMedia';
 
 export interface SnackMenuSectionProps {
   snacks: ProductItem[];
   activeSpice: SpiceLevel;
   onChangeSpice: (spice: SpiceLevel) => void;
   onSelectSnack: (snack: ProductItem, spice: SpiceLevel) => void;
+  preferIllustration?: boolean;
 }
 
 const SPICE_OPTIONS: Array<{ value: SpiceLevel; baseLabel: string }> = [
@@ -26,6 +27,7 @@ export function SnackMenuSection({
   activeSpice,
   onChangeSpice,
   onSelectSnack,
+  preferIllustration = false,
 }: SnackMenuSectionProps) {
   return (
     <section
@@ -77,10 +79,11 @@ export function SnackMenuSection({
               className="flex flex-col rounded-2xl border border-olive-primary/10 bg-canvas-cream/65 p-3"
             >
               <div className="relative aspect-square w-full overflow-hidden rounded-xl">
-                <ProductIllustration
+                <ProductMedia
                   productId={snack.id}
                   categoryId="snack"
                   variant="snack"
+                  preferIllustration={preferIllustration}
                 />
                 <span className="absolute top-2 left-2 rounded-full bg-coral-sketch px-2 py-0.5 text-[10px] font-bold text-espresso">
                   {SPICE_LEVEL_LABELS[activeSpice]}

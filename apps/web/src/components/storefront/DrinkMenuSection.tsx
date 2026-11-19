@@ -6,7 +6,7 @@ import {
   type ProductItem,
   formatShortPrice,
 } from '@omsua/shared';
-import { ProductIllustration } from '@/components/artwork/OmSuaArtwork';
+import { ProductMedia } from '@/components/artwork/ProductMedia';
 
 export interface DrinkMenuSectionProps {
   categories: CategoryInfo[];
@@ -14,6 +14,8 @@ export interface DrinkMenuSectionProps {
   activeCategory: DrinkCategoryId | 'all';
   onChangeCategory: (cat: DrinkCategoryId | 'all') => void;
   onSelectDrink: (drink: ProductItem) => void;
+  preferIllustration?: boolean;
+  onToggleMediaMode?: (preferIllustration: boolean) => void;
 }
 
 const CATEGORY_CONTAINER_STYLES: Record<DrinkCategoryId, string> = {
@@ -43,6 +45,8 @@ export function DrinkMenuSection({
   activeCategory,
   onChangeCategory,
   onSelectDrink,
+  preferIllustration = false,
+  onToggleMediaMode,
 }: DrinkMenuSectionProps) {
   const visibleCategories =
     activeCategory === 'all'
@@ -52,9 +56,44 @@ export function DrinkMenuSection({
   return (
     <section id="thuc-don" className="scroll-mt-24 space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <h2 className="font-display text-2xl font-bold tracking-tight text-olive-primary uppercase sm:text-[28px]">
-          THỰC ĐƠN NGUYÊN BẢN ỐM SỮA
-        </h2>
+        <div className="flex flex-wrap items-center gap-3">
+          <h2 className="font-display text-2xl font-bold tracking-tight text-olive-primary uppercase sm:text-[28px]">
+            THỰC ĐƠN NGUYÊN BẢN ỐM SỮA
+          </h2>
+
+          {onToggleMediaMode && (
+            <div
+              role="group"
+              aria-label="Chế độ hiển thị hình món"
+              className="inline-flex items-center rounded-full border border-olive-primary/20 bg-surface-light p-1"
+            >
+              <button
+                type="button"
+                aria-pressed={!preferIllustration}
+                onClick={() => onToggleMediaMode(false)}
+                className={`inline-flex min-h-11 cursor-pointer items-center rounded-full px-3.5 py-1.5 text-xs font-bold transition sm:min-h-9 ${
+                  !preferIllustration
+                    ? 'bg-terracotta text-surface-light shadow-2xs'
+                    : 'text-espresso hover:bg-canvas-cream'
+                }`}
+              >
+                Ảnh thực tế
+              </button>
+              <button
+                type="button"
+                aria-pressed={preferIllustration}
+                onClick={() => onToggleMediaMode(true)}
+                className={`inline-flex min-h-11 cursor-pointer items-center rounded-full px-3.5 py-1.5 text-xs font-bold transition sm:min-h-9 ${
+                  preferIllustration
+                    ? 'bg-olive-primary text-surface-light shadow-2xs'
+                    : 'text-espresso hover:bg-canvas-cream'
+                }`}
+              >
+                Minh họa Studio
+              </button>
+            </div>
+          )}
+        </div>
 
         <div
           role="group"
@@ -138,10 +177,11 @@ export function DrinkMenuSection({
                     }`}
                   >
                     <div className="relative h-28 w-24 shrink-0 overflow-hidden rounded-xl sm:w-28">
-                      <ProductIllustration
+                      <ProductMedia
                         productId={drink.id}
                         categoryId={drink.categoryId}
                         variant="card"
+                        preferIllustration={preferIllustration}
                       />
                       {drink.isSignature && (
                         <span className="absolute top-1.5 left-1.5 rounded-full bg-artichoke px-2 py-0.5 text-[9px] font-bold tracking-wide text-surface-light">

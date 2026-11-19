@@ -29,6 +29,7 @@ export function StorefrontHeader({
     { label: 'Thực đơn', href: '#thuc-don' },
     { label: 'Bánh tráng Snack', href: '#banh-trang' },
     { label: 'Câu chuyện Ốm', href: '#cau-chuyen' },
+    { label: 'Không gian Ốm', href: '#khong-gian' },
     { label: `Chi nhánh (${branches.length})`, href: '#chi-nhanh' },
   ];
 

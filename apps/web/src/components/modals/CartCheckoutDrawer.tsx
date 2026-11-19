@@ -12,7 +12,7 @@ import {
   formatVnd,
 } from '@omsua/shared';
 import { type FormEvent, useCallback, useId, useState } from 'react';
-import { ProductIllustration } from '@/components/artwork/OmSuaArtwork';
+import { ProductMedia } from '@/components/artwork/ProductMedia';
 import { useModalAccessibility } from '@/hooks/use-modal-accessibility';
 import { submitOrder } from '@/lib/api';
 import { saveRecentOrder } from '@/lib/recent-orders';
@@ -458,7 +458,7 @@ export function CartCheckoutDrawer({
                       className="flex gap-3.5 rounded-2xl border border-olive-primary/12 bg-canvas-cream/65 p-3.5"
                     >
                       <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl">
-                        <ProductIllustration
+                        <ProductMedia
                           productId={line.productId}
                           categoryId={
                             line.kind === 'snack' ? 'snack' : undefined

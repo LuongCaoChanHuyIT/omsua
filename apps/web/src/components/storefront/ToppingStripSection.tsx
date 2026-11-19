@@ -1,16 +1,18 @@
 'use client';
 
 import { type ToppingItem, formatShortPrice } from '@omsua/shared';
-import { ProductIllustration } from '@/components/artwork/OmSuaArtwork';
+import { ProductMedia } from '@/components/artwork/ProductMedia';
 
 export interface ToppingStripSectionProps {
   toppings: ToppingItem[];
   onSelectTopping?: (topping: ToppingItem) => void;
+  preferIllustration?: boolean;
 }
 
 export function ToppingStripSection({
   toppings,
   onSelectTopping,
+  preferIllustration = false,
 }: ToppingStripSectionProps) {
   return (
     <section className="rounded-3xl border border-olive-primary/12 bg-surface-light p-5 shadow-2xs sm:p-7">
@@ -31,10 +33,11 @@ export function ToppingStripSection({
             className="flex flex-col items-center rounded-2xl border border-olive-primary/10 bg-canvas-cream/65 p-3 text-center"
           >
             <div className="h-16 w-16 overflow-hidden rounded-xl">
-              <ProductIllustration
+              <ProductMedia
                 toppingId={topping.id}
                 categoryId="topping"
                 variant="topping"
+                preferIllustration={preferIllustration}
               />
             </div>
             <p className="mt-2 text-xs font-semibold text-espresso">
