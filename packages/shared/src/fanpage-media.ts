@@ -36,6 +36,13 @@ export const OMSUA_SOCIAL_LINKS = {
   ratingLabel: '96% đề xuất (229 đánh giá)',
 } as const;
 
+export const OMSUA_STORY_PHOTO = {
+  src: '/images/fanpage/space/space-barista-quay-om.webp',
+  alt: 'Barista Ốm Sữa Đà Lạt đang chăm chút từng mẻ trà tại quầy pha chế',
+  objectPosition: 'center 24%',
+  postUrl: 'https://omsua.vn',
+} as const;
+
 export const BRANCH_PHOTO_BY_ID: Readonly<Record<string, BranchPhotoMeta>> = {
   'cs1-hoang-dieu': {
     src: '/images/fanpage/branches/branch-cs1-hoang-dieu.webp',
@@ -67,7 +74,7 @@ export const BRANCH_PHOTO_BY_ID: Readonly<Record<string, BranchPhotoMeta>> = {
 };
 
 export const PRODUCT_PHOTO_BY_ID: Readonly<Record<string, ProductPhotoMeta>> = {
-  // 1. TRÀ SỮA ĐÀ LẠT (5/6 — tra-sua-flan-chay-canh is Reel-only on Fanpage)
+  // 1. TRÀ SỮA ĐÀ LẠT (6/6 — 100%)
   'tra-sua-atiso': {
     src: '/images/fanpage/products/drink-tra-sua-atiso.webp',
     objectPosition: 'center',
@@ -88,6 +95,11 @@ export const PRODUCT_PHOTO_BY_ID: Readonly<Record<string, ProductPhotoMeta>> = {
     src: '/images/fanpage/products/drink-tra-sua-tiramisu.webp',
     objectPosition: 'center',
     postUrl: 'https://www.facebook.com/photo/?fbid=821671889830813',
+  },
+  'tra-sua-flan-chay-canh': {
+    src: '/images/fanpage/products/drink-tra-sua-flan-chay-canh.webp',
+    objectPosition: 'center 28%',
+    postUrl: 'https://omsua.vn/menu',
   },
   'oolong-sen-gung': {
     src: '/images/fanpage/products/drink-oolong-sen-gung.webp',
@@ -129,11 +141,16 @@ export const PRODUCT_PHOTO_BY_ID: Readonly<Record<string, ProductPhotoMeta>> = {
     postUrl: 'https://www.facebook.com/photo/?fbid=1282900063707991',
   },
 
-  // 3. SỮA TƯƠI & ĐÁ XAY CAO NGUYÊN (5/6 — sua-tuoi-duong-den has zero still photo)
+  // 3. SỮA TƯƠI & ĐÁ XAY CAO NGUYÊN (6/6 — 100%)
   'sua-tuoi-kem-trung-nuong': {
     src: '/images/fanpage/products/drink-sua-tuoi-kem-trung-nuong.webp',
     objectPosition: 'center 52%',
     postUrl: 'https://www.facebook.com/photo/?fbid=777807947550541',
+  },
+  'sua-tuoi-duong-den': {
+    src: '/images/fanpage/products/drink-sua-tuoi-duong-den.webp',
+    objectPosition: 'center 52%',
+    postUrl: 'https://www.facebook.com/trasuadalatomsua',
   },
   'matcha-latte': {
     src: '/images/fanpage/products/drink-matcha-latte.webp',
@@ -158,7 +175,7 @@ export const PRODUCT_PHOTO_BY_ID: Readonly<Record<string, ProductPhotoMeta>> = {
       'https://www.facebook.com/photo/?fbid=1068464915151508&set=a.792794062718596',
   },
 
-  // 4. CÀ PHÊ PHA PHIN & COLD BREW (4/6 — ca-phe-sua & ca-phe-den keep Studio SVG)
+  // 4. CÀ PHÊ PHA PHIN & COLD BREW (6/6 — 100%)
   'cold-brew-me': {
     src: '/images/fanpage/products/drink-cold-brew-me.webp',
     objectPosition: 'center 36%',
@@ -175,10 +192,20 @@ export const PRODUCT_PHOTO_BY_ID: Readonly<Record<string, ProductPhotoMeta>> = {
     postUrl:
       'https://www.facebook.com/photo/?fbid=967429995255001&set=a.792098612788141',
   },
+  'ca-phe-sua': {
+    src: '/images/fanpage/products/drink-ca-phe-sua.webp',
+    objectPosition: 'center 46%',
+    postUrl: 'https://omsua.vn/menu',
+  },
   'bac-xiu-da-lat': {
     src: '/images/fanpage/products/drink-bac-xiu-da-lat.webp',
     objectPosition: 'center 42%',
     postUrl: 'https://www.facebook.com/photo/?fbid=1057852299546103',
+  },
+  'ca-phe-den': {
+    src: '/images/fanpage/products/drink-ca-phe-den.webp',
+    objectPosition: 'center 46%',
+    postUrl: 'https://omsua.vn/menu',
   },
 
   // 5. BÁNH TRÁNG SNACK ĐÀ LẠT (6/6 — 100%)
@@ -214,16 +241,26 @@ export const PRODUCT_PHOTO_BY_ID: Readonly<Record<string, ProductPhotoMeta>> = {
     postUrl: 'https://www.facebook.com/photo/?fbid=1044727677525232',
   },
 
-  // 6. TOPPING NHÀ LÀM MACRO (5/8 — banh-flan, tran-chau-trang, thach-cu-nang keep Studio SVG)
+  // 6. TOPPING NHÀ LÀM MACRO (8/8 — 100%)
   'tran-chau-den': {
     src: '/images/fanpage/products/topping-tran-chau-den.webp',
     objectPosition: 'center',
     postUrl: 'https://www.facebook.com/photo/?fbid=1452471570084172',
   },
+  'tran-chau-trang': {
+    src: '/images/fanpage/products/topping-tran-chau-trang.webp',
+    objectPosition: 'center',
+    postUrl: 'https://www.facebook.com/trasuadalatomsua',
+  },
   'kem-trung': {
     src: '/images/fanpage/products/topping-kem-trung.webp',
     objectPosition: 'center',
     postUrl: 'https://www.facebook.com/photo/?fbid=777807947550541',
+  },
+  'banh-flan': {
+    src: '/images/fanpage/products/topping-banh-flan.webp',
+    objectPosition: 'center',
+    postUrl: 'https://omsua.vn/menu',
   },
   'hat-sen': {
     src: '/images/fanpage/products/topping-hat-sen.webp',
@@ -239,6 +276,11 @@ export const PRODUCT_PHOTO_BY_ID: Readonly<Record<string, ProductPhotoMeta>> = {
     src: '/images/fanpage/products/topping-hat-dac-rim.webp',
     objectPosition: 'center',
     postUrl: 'https://www.facebook.com/photo/?fbid=983624600302207',
+  },
+  'thach-cu-nang': {
+    src: '/images/fanpage/products/topping-thach-cu-nang.webp',
+    objectPosition: 'center',
+    postUrl: 'https://www.facebook.com/trasuadalatomsua',
   },
 };
 

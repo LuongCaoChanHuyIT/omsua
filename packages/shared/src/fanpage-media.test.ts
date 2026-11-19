@@ -5,6 +5,7 @@ import {
   OMSUA_BRANCHES,
   OMSUA_PRODUCTS,
   OMSUA_SOCIAL_LINKS,
+  OMSUA_STORY_PHOTO,
   OMSUA_TOPPINGS,
   PRODUCT_PHOTO_BY_ID,
   getBranchPhoto,
@@ -54,7 +55,7 @@ describe('fanpage-media manifest (@omsua/shared)', () => {
     });
   });
 
-  it('maps 31 unique 1:1 catalog photos (20/24 drinks, 6/6 snacks, 5/8 macro toppings) and 4 unique branch photos with objectPosition', () => {
+  it('maps 100% of all 38 catalog items (24/24 drinks, 6/6 snacks, 8/8 toppings), BrandStory photo, and 4 unique branch photos with 1:1 .webp assets', () => {
     const validDrinkIds = new Set(
       OMSUA_PRODUCTS.filter((p) => p.kind === 'drink').map((p) => p.id),
     );
@@ -69,7 +70,7 @@ describe('fanpage-media manifest (@omsua/shared)', () => {
     ]);
 
     const mappedEntries = Object.entries(PRODUCT_PHOTO_BY_ID);
-    expect(mappedEntries).toHaveLength(31);
+    expect(mappedEntries).toHaveLength(38);
 
     const seenProductSrcs = new Set<string>();
     let drinkCount = 0;
@@ -92,22 +93,21 @@ describe('fanpage-media manifest (@omsua/shared)', () => {
       if (validToppingIds.has(key)) toppingCount += 1;
     }
 
-    expect(drinkCount).toBe(20);
+    expect(drinkCount).toBe(24);
     expect(snackCount).toBe(6);
-    expect(toppingCount).toBe(5);
+    expect(toppingCount).toBe(8);
 
-    // Explicitly unphotographed / Reel-only SKUs must remain unmapped so ProductMedia renders bespoke Studio SVG
-    for (const unphotographedId of [
-      'tra-sua-flan-chay-canh',
-      'sua-tuoi-duong-den',
-      'ca-phe-sua',
-      'ca-phe-den',
-      'banh-flan',
-      'tran-chau-trang',
-      'thach-cu-nang',
-    ]) {
-      expect(getProductPhoto(unphotographedId)).toBeNull();
+    for (const catalogId of validCatalogIds) {
+      expect(
+        getProductPhoto(catalogId),
+        `Expected real .webp photo for ${catalogId}`,
+      ).not.toBeNull();
     }
+
+    expect(OMSUA_STORY_PHOTO.src).toBe(
+      '/images/fanpage/space/space-barista-quay-om.webp',
+    );
+    expect(OMSUA_STORY_PHOTO.alt.length).toBeGreaterThan(10);
 
     expect(getProductPhoto('unknown-id')).toBeNull();
     expect(getProductPhoto(undefined)).toBeNull();

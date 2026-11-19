@@ -211,6 +211,37 @@ def verify_storefront(
             f"Expected >= 8 gallery data-vt-name elements on Storefront, got {len(initial_vt_names)}"
         )
 
+    # Verify 100% real .webp photo coverage across all 24 drinks, 8 toppings, 6 snacks, and BrandStory
+    drink_webp_count = page.locator(
+        '#thuc-don article img[src^="/images/fanpage/products/drink-"]'
+    ).count()
+    topping_webp_count = page.locator(
+        'img[src^="/images/fanpage/products/topping-"]'
+    ).count()
+    snack_webp_count = page.locator(
+        '#banh-trang article img[src^="/images/fanpage/products/snack-"]'
+    ).count()
+    story_webp_count = page.locator(
+        '#cau-chuyen img[src="/images/fanpage/space/space-barista-quay-om.webp"]'
+    ).count()
+    if (
+        drink_webp_count != 24
+        or topping_webp_count != 8
+        or snack_webp_count != 6
+        or story_webp_count != 1
+    ):
+        raise AssertionError(
+            f"Expected 100% photo coverage (24 drinks, 8 toppings, 6 snacks, 1 story), "
+            f"got drinks={drink_webp_count}, toppings={topping_webp_count}, "
+            f"snacks={snack_webp_count}, story={story_webp_count}"
+        )
+
+    toppings_heading = page.get_by_role("heading", name="TOPPING NHÀ LÀM MỖI NGÀY")
+    toppings_heading.scroll_into_view_if_needed()
+    page.wait_for_timeout(200)
+    toppings_shot = output_dir / "storefront-toppings-full-photos.png"
+    page.screenshot(path=str(toppings_shot), full_page=False)
+
     # 2. Category pill transition (`Cà Phê`) + diacritic-free search (`atiso`)
     drink_group = page.get_by_role("group", name="Bộ lọc nhóm thức uống")
     coffee_pill = drink_group.get_by_role(
@@ -399,6 +430,15 @@ def verify_admin(
     sidebar_nav = page.locator("aside nav")
     sidebar_nav.get_by_role("link", name="Thực đơn").click()
     page.get_by_role("heading", name="Quản lý Thực đơn").wait_for(state="visible")
+    page.get_by_test_id("menu-product-tra-sua-atiso").wait_for(state="visible")
+    expect(
+        page.locator(
+            'article[data-testid^="menu-product-"] img[src^="/images/fanpage/products/"]'
+        )
+    ).to_have_count(30)
+    admin_menu_shot = output_dir / "admin-menu.png"
+    wait_for_finite_animations(page)
+    page.screenshot(path=str(admin_menu_shot), full_page=False)
 
     sidebar_nav.get_by_role("link", name="Chi nhánh").click()
     page.get_by_role("heading", name="Hệ thống Chi nhánh").wait_for(state="visible")

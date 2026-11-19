@@ -996,6 +996,17 @@ describe('Admin App routes & operational portals', () => {
     expect(newBadge.className).toContain('text-[#9A460B]');
     expect(newBadge.className).not.toContain('text-terracotta');
 
+    // All 30 menu cards display real .webp product thumbnails (including Flan Cháy Cạnh, Sữa Tươi Đường Đen, Cà Phê Sữa, Cà Phê Đen) and hide gracefully on onError
+    const flanCard = screen.getByTestId('menu-product-tra-sua-flan-chay-canh');
+    const flanThumb = flanCard.querySelector('img') as HTMLImageElement;
+    expect(flanThumb).not.toBeNull();
+    expect(flanThumb.getAttribute('src')).toBe(
+      '/images/fanpage/products/drink-tra-sua-flan-chay-canh.webp',
+    );
+    expect(document.querySelectorAll('article[data-testid^="menu-product-"] img')).toHaveLength(30);
+    fireEvent.error(flanThumb);
+    expect(flanCard.querySelector('img')).toBeNull();
+
     // Availability filter pills with counts & aria-pressed
     const availabilityGroup = screen.getByRole('group', {
       name: 'Lọc theo trạng thái món',
@@ -1681,9 +1692,7 @@ describe('Admin App routes & operational portals', () => {
     const flanCard = await screen.findByTestId(
       'menu-product-tra-sua-flan-chay-canh',
     );
-    expect(
-      within(flanCard).queryByText('Ảnh thực tế'),
-    ).not.toBeInTheDocument();
+    expect(within(flanCard).getByText('Ảnh thực tế')).toBeInTheDocument();
   });
 
   it('renders live order-age SLA badges flagging overdue pending orders (>15m) while never flagging completed orders', async () => {

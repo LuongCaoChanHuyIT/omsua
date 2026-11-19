@@ -1,3 +1,8 @@
+'use client';
+/* eslint-disable @next/next/no-img-element */
+
+import { OMSUA_STORY_PHOTO } from '@omsua/shared';
+import { useState } from 'react';
 import { AtisoMascot } from '@/components/artwork/OmSuaArtwork';
 
 const STORY_PILLARS = [
@@ -25,6 +30,8 @@ const STORY_PILLARS = [
 ] as const;
 
 export function BrandStorySection() {
+  const [imageFailed, setImageFailed] = useState<boolean>(false);
+
   return (
     <section
       id="cau-chuyen"
@@ -63,9 +70,29 @@ export function BrandStorySection() {
           </div>
         </div>
 
-        <div className="flex flex-col items-center justify-center rounded-3xl border border-olive-primary/14 bg-card-butter/55 p-6 text-center shadow-paper-rest lg:col-span-5">
-          <AtisoMascot className="h-24 w-24 shrink-0 sm:h-28 sm:w-28" />
-          <p className="mt-3 font-display text-lg font-bold text-olive-primary">
+        <div className="flex flex-col items-center justify-center overflow-hidden rounded-3xl border border-olive-primary/14 bg-card-butter/55 p-4 text-center shadow-paper-rest sm:p-5 lg:col-span-5">
+          {!imageFailed ? (
+            <div className="relative mb-4 aspect-[4/3] w-full overflow-hidden rounded-2xl border border-olive-primary/14 bg-hero-espresso/15 shadow-paper-rest">
+              <img
+                src={OMSUA_STORY_PHOTO.src}
+                alt={OMSUA_STORY_PHOTO.alt}
+                width={600}
+                height={800}
+                loading="lazy"
+                decoding="async"
+                onError={() => setImageFailed(true)}
+                style={{ objectPosition: OMSUA_STORY_PHOTO.objectPosition }}
+                className="h-full w-full object-cover"
+              />
+              <span className="absolute bottom-2.5 left-2.5 inline-flex items-center gap-1.5 rounded-full bg-hero-espresso/85 px-3 py-1 text-xs font-bold text-card-butter backdrop-blur-xs">
+                <AtisoMascot className="h-5 w-5 shrink-0" />
+                <span>Quầy pha chế Ốm Sữa Đà Lạt</span>
+              </span>
+            </div>
+          ) : (
+            <AtisoMascot className="mb-3 h-24 w-24 shrink-0 sm:h-28 sm:w-28" />
+          )}
+          <p className="font-display text-lg font-bold text-olive-primary">
             Mộc mạc • Tinh tế • Nguyên bản
           </p>
           <p className="mt-1 text-xs font-medium text-warm-muted tabular-nums sm:text-sm">

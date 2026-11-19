@@ -76,6 +76,7 @@ export {
   BRANCH_PHOTO_BY_ID,
   FANPAGE_GALLERY_ITEMS,
   OMSUA_SOCIAL_LINKS,
+  OMSUA_STORY_PHOTO,
   PRODUCT_PHOTO_BY_ID,
   getBranchPhoto,
   getProductPhoto,

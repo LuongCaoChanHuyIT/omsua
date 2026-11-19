@@ -63,6 +63,14 @@ describe('ProductMedia hybrid photo + studio SVG fallback', () => {
     expect(container.querySelector('svg')).not.toBeNull();
 
     rerender(<ProductMedia productId="tra-sua-flan-chay-canh" />);
+    const flanImg = container.querySelector('img');
+    expect(flanImg).not.toBeNull();
+    expect(flanImg).toHaveAttribute(
+      'src',
+      '/images/fanpage/products/drink-tra-sua-flan-chay-canh.webp',
+    );
+
+    rerender(<ProductMedia productId="unmapped-custom-sku" />);
     expect(container.querySelector('img')).toBeNull();
     expect(container.querySelector('svg')).not.toBeNull();
 

@@ -10,6 +10,8 @@ import path from 'node:path';
 import {
   BRANCH_PHOTO_BY_ID,
   FANPAGE_GALLERY_ITEMS,
+  OMSUA_PRODUCTS,
+  OMSUA_STORY_PHOTO,
   PRODUCT_PHOTO_BY_ID,
 } from '@omsua/shared';
 import { describe, expect, it } from 'vitest';
@@ -165,6 +167,7 @@ describe('Fanpage local WebP assets & sharp validation pipeline', () => {
     );
 
     const allWebPaths = new Set<string>([
+      OMSUA_STORY_PHOTO.src,
       ...FANPAGE_GALLERY_ITEMS.map((item) => item.src),
       ...Object.values(PRODUCT_PHOTO_BY_ID).map((meta) => meta.src),
       ...Object.values(BRANCH_PHOTO_BY_ID).map((meta) => meta.src),
@@ -174,9 +177,13 @@ describe('Fanpage local WebP assets & sharp validation pipeline', () => {
       await assertValidWebpFile(path.join(webPublic, relSrc), `web:${relSrc}`);
     }
 
-    const expectedAdminPaths = new Set<string>(
-      Object.values(BRANCH_PHOTO_BY_ID).map((meta) => meta.src),
+    const adminMenuProductPaths = OMSUA_PRODUCTS.map(
+      (product) => PRODUCT_PHOTO_BY_ID[product.id]!.src,
     );
+    const expectedAdminPaths = new Set<string>([
+      ...Object.values(BRANCH_PHOTO_BY_ID).map((meta) => meta.src),
+      ...adminMenuProductPaths,
+    ]);
     for (const relSrc of expectedAdminPaths) {
       await assertValidWebpFile(
         path.join(adminPublic, relSrc),

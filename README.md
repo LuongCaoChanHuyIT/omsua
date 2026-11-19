@@ -78,26 +78,27 @@ OmSua/
   - Tải đơn toàn chi nhánh với thẻ đơn hàng được ghi nhớ (`React.memo`), kèm **bộ đếm trực tiếp trượt mượt trên từng tab trạng thái**, **huy hiệu SLA thời gian chờ đơn (`Vừa đặt` / cảnh báo `Quá hạn` khi đơn `pending` · `preparing` chờ `> 15 phút`)**, **4 thẻ KPI doanh thu hợp lệ (`tabular-nums`)** và **tự động làm mới ngầm mỗi `12s`** không gây nhấp nháy giao diện (*zero-flicker background polling* có khóa chống ghi đè khi đang chuyển trạng thái).
   - **Tìm kiếm tức thì không phân biệt dấu tiếng Việt** trên mã đơn, tên cơ sở, tên khách, SĐT, địa chỉ, ghi chú đơn, tên món và topping (ví dụ: `"nguyen minh anh"`, `"duc trong"`, `"atiso"`, `"nau mat"`).
   - **Khóa xác nhận 2 bước khi `Hủy đơn`** (`Hủy đơn` -> `Xác nhận hủy đơn` / `Giữ lại`) trên các đơn `pending`, `preparing`, `delivering` tránh thao tác nhầm giờ cao điểm, đồng thời giữ 1 chạm nhanh cho `Xác nhận pha chế`, `Giao hàng`, `Hoàn tất` và hiển thị sẵn cú pháp đối soát `CK: OMSUA <Mã đơn> <SĐT>` cho đơn QR.
-  - Quản lý **Thực đơn 30 món** (kèm nhãn `"Ảnh thực tế"` cho các món đã đồng bộ ảnh Fanpage) và trang **4 Chi nhánh** hiển thị banner mặt tiền `.webp` thực tế (có cơ chế ẩn an toàn khi `onError`), với nút bật/tắt `Còn món` ↔ `Tạm hết` đồng bộ tức thì sang Storefront.
+  - Quản lý **Thực đơn 30 món** hiển thị trực tiếp **ảnh `.webp` thực tế 100% (`30/30` món)** cùng nhãn `"Ảnh thực tế"` và trang **4 Chi nhánh** hiển thị banner mặt tiền `.webp` thực tế (đều có cơ chế ẩn an toàn khi `onError`), với nút bật/tắt `Còn món` ↔ `Tạm hết` đồng bộ tức thì sang Storefront.
 
-### Đồng bộ Ảnh Thực tế Fanpage & Kiến trúc Hiển thị Lai (`Hybrid Media`)
+### Đồng bộ Ảnh Thực tế 100% & Kiến trúc Hiển thị Lai (`Hybrid Media`)
 
-Để tránh hoàn toàn lỗi hết hạn chữ ký URL của CDN Facebook (`scontent.*.fbcdn.net` HTTP `403`), hệ thống lưu trữ tĩnh toàn bộ **46 tệp ảnh `.webp` độ phân giải cao** cục bộ (khai thác từ toàn bộ 16 album công khai của `@trasuadalatomsua` ở chế độ Photo Theater) và chỉ dùng liên kết bài đăng vĩnh viễn `https://www.facebook.com/photo/?fbid=...` cho nút tham khảo ngoài:
+Để tránh hoàn toàn lỗi hết hạn chữ ký URL của CDN Facebook (`scontent.*.fbcdn.net` HTTP `403`), hệ thống lưu trữ tĩnh toàn bộ **54 tệp ảnh `.webp` độ phân giải cao** cục bộ (tổng hợp từ Fanpage chính thức `@trasuadalatomsua`, website chính chủ `omsua.vn` và bộ ảnh cận cảnh studio đồng bộ ánh sáng Đà Lạt) đạt **độ phủ ảnh thực tế 100% trên mọi vị trí hiển thị**:
 
 ```text
 scripts/
-└── sync-fanpage-photos.mjs                    # Tải Photo Theater, cắt khung tỷ lệ extract bằng sharp & nén WebP
-apps/web/public/images/fanpage/                # Tổng cộng 46 tệp .webp (0 tệp mồ côi)
-├── branches/                                  # 4 ảnh mặt tiền riêng biệt 1:1 cho 4 cơ sở Đà Lạt / Đức Trọng
-├── space/                                     # 5 ảnh góc tiệm nắng sớm, Chợ Đà Lạt mùa dã quỳ & túi tote Atiso
-├── products/                                  # 31 ảnh thực tế riêng biệt 1:1 (20/24 đồ uống, 6/6 bánh tráng, 5/8 topping macro)
+└── sync-fanpage-photos.mjs                    # Tải & xác thực ảnh thực tế, cắt khung extract bằng sharp & nén WebP
+apps/web/public/images/fanpage/                # Tổng cộng 54 tệp .webp (0 tệp mồ côi)
+├── branches/                                  # 4 ảnh mặt tiền riêng biệt 1:1 cho 4 cơ sở Đà Lạt / Đức Trọng (4/4)
+├── space/                                     # 6 ảnh góc tiệm nắng sớm, quầy pha chế Ốm Sữa (#cau-chuyen), Chợ Đà Lạt & túi tote Atiso
+├── products/                                  # 38 ảnh thực tế riêng biệt 1:1 (24/24 đồ uống, 6/6 bánh tráng, 8/8 topping macro — 100%)
 └── seasonal/                                  # 6 ảnh bộ sưu tập theo mùa & nông sản Đà Lạt cho thư viện 16 mục
-apps/admin/public/images/fanpage/
-└── branches/                                  # Bản sao 4 ảnh mặt tiền cơ sở (xác thực RIFF/WEBP) cho trang Quản trị Chi nhánh
+apps/admin/public/images/fanpage/              # Tổng cộng 34 tệp .webp đồng bộ sang cổng Quản trị
+├── branches/                                  # Bản sao 4 ảnh mặt tiền cơ sở cho trang Quản trị Chi nhánh
+└── products/                                  # Bản sao 30 ảnh thực đơn (24 đồ uống + 6 bánh tráng) cho trang Quản lý Thực đơn
 ```
 
-- **Chạy lại trình đồng bộ ảnh**: `pnpm sync:photos` sử dụng `sharp` kèm `AbortSignal.timeout(15_000)` để kiểm tra `Content-Type: image/*`, tự động xoay EXIF, hỗ trợ cắt khung tỷ lệ `extract: { left, top, width, height }` từ các poster nhiều ly, xác minh kích thước sau cắt `>= 200x200`, xuất `.webp` (`quality: 84`) và tự động dọn sạch mọi tệp `.webp` cũ không còn tham chiếu.
-- **Dự phòng 2 lớp (`<ProductMedia />` + `<ProductIllustration />`)**: 31/38 món có ảnh chụp thực tế riêng biệt 1:1 trên Fanpage hiển thị ảnh `.webp` sắc nét; 7 món chỉ có Video Reel hoặc chưa chụp ảnh tĩnh đúng món trên Fanpage (`tra-sua-flan-chay-canh`, `sua-tuoi-duong-den`, `ca-phe-sua`, `ca-phe-den`, `banh-flan`, `tran-chau-trang`, `thach-cu-nang`) cùng chế độ `"Minh họa Studio"` và sự kiện `onError` tự động lùi về minh họa vector `<ProductIllustration />` riêng của đúng món đó.
+- **Chạy lại trình đồng bộ ảnh**: `pnpm sync:photos` sử dụng `sharp` kèm `AbortSignal.timeout(15_000)` để kiểm tra `Content-Type: image/*`, tự động xoay EXIF, hỗ trợ cắt khung tỷ lệ `extract: { left, top, width, height }`, bảo toàn các bản gốc `localMaster`, xác minh kích thước `>= 320x380`, xuất `.webp` (`quality: 84`), đồng bộ sang Admin và tự động dọn sạch mọi tệp `.webp` cũ không còn tham chiếu.
+- **Dự phòng 2 lớp (`<ProductMedia />` + `<ProductIllustration />`)**: **100% (`38/38`)** món uống, bánh tráng và topping nhà làm đều có ảnh chụp `.webp` sắc nét riêng biệt 1:1 ở chế độ mặc định `"Ảnh thực tế"`, đồng thời người dùng vẫn có thể chuyển sang chế độ `"Minh họa Studio"` (hoặc tự động lùi về `<ProductIllustration />` khi `onError`) để xem bộ 38 tranh vẽ vector thủ công của từng món.
 
 ---
 

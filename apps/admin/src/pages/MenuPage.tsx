@@ -56,10 +56,13 @@ const AdminProductCard = memo(function AdminProductCard({
   toggling,
   onToggle,
 }: ProductCardProps) {
+  const photo = getProductPhoto(product.id);
+  const [imageFailed, setImageFailed] = useState<boolean>(false);
+
   return (
     <article
       data-testid={`menu-product-${product.id}`}
-      className={`flex flex-col justify-between rounded-2xl border p-4 shadow-xs transition sm:p-5 ${
+      className={`flex flex-col justify-between rounded-2xl border p-4 shadow-xs transition-colors sm:p-5 ${
         product.isAvailable
           ? 'border-[#DDD4C0] bg-surface-light'
           : 'border-[#E6ABA6] bg-[#F3ECE6] opacity-90'
@@ -83,7 +86,7 @@ const AdminProductCard = memo(function AdminProductCard({
                 Món mới
               </span>
             ) : null}
-            {getProductPhoto(product.id) ? (
+            {photo ? (
               <span className="rounded-full border border-[#B4C488] bg-card-sage/65 px-2.5 py-0.5 text-xs font-semibold text-espresso">
                 Ảnh thực tế
               </span>
@@ -101,15 +104,40 @@ const AdminProductCard = memo(function AdminProductCard({
           </span>
         </div>
 
-        <h3 className="mt-3 font-editorial text-lg font-semibold text-espresso">
-          {product.name}
-        </h3>
-        <p className="font-editorial text-xs italic text-warm-muted">
-          {product.englishName}
-        </p>
-        <p className="mt-2 text-xs leading-relaxed text-espresso/85">
-          {product.description}
-        </p>
+        <div className="mt-3 flex items-start gap-3.5">
+          {photo && !imageFailed ? (
+            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-[#DDD4C0] bg-canvas-cream">
+              <img
+                src={photo.src}
+                alt=""
+                aria-hidden="true"
+                width={128}
+                height={128}
+                loading="lazy"
+                decoding="async"
+                onError={() => setImageFailed(true)}
+                style={
+                  photo.objectPosition
+                    ? { objectPosition: photo.objectPosition }
+                    : undefined
+                }
+                className="h-full w-full object-cover"
+              />
+            </div>
+          ) : null}
+
+          <div className="min-w-0 flex-1">
+            <h3 className="font-editorial text-lg font-semibold text-espresso">
+              {product.name}
+            </h3>
+            <p className="font-editorial text-xs italic text-warm-muted">
+              {product.englishName}
+            </p>
+            <p className="mt-1.5 text-xs leading-relaxed text-espresso/85">
+              {product.description}
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#E5DEC9] pt-3.5">

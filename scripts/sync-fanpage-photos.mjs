@@ -2,6 +2,7 @@ import {
   copyFileSync,
   existsSync,
   mkdirSync,
+  readFileSync,
   readdirSync,
   realpathSync,
   unlinkSync,
@@ -209,6 +210,7 @@ const URLS = {
     'https://scontent.fsgn5-22.fna.fbcdn.net/v/t39.30808-6/569019983_1453867183277944_2116466595588687263_n.jpg?stp=dst-jpg_tt6&cstp=mx2048x1536&ctp=s2048x1536&_nc_cat=102&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeFc7bigXR9rfo4hNZ2pKiy0vBS5D4ieyUC8FLkPiJ7JQBsreuVOA0R2F6rVibTX0Vl47oDl7RY1RsfJoGjRO9_N&_nc_ohc=YOv64RJYQLkQ7kNvwGDKBG6&_nc_oc=Adqe8XHdFth8cCTPJqcfkRT89kkMu2Z857yor1l4ZDgHQnH-6qoTTa8z1cctU_8M1bPe-Slqfw2z1AQ-prEAXxKa&_nc_zt=23&_nc_ht=scontent.fsgn5-22.fna&_nc_gid=RJ81-cPVx4smsuQNp4K38Q&_nc_ss=7b2a8&oh=00_AQSz3YOIBOJ_Lb2rb1pkgqZ0yB2DNKHzMg5OttFILx3Gpg&oe=6B0457CE',
   spaceTuiToteAtiso:
     'https://scontent.fsgn5-22.fna.fbcdn.net/v/t39.30808-6/569191972_1453867263277936_3504869054990071016_n.jpg?stp=dst-jpg_tt6&cstp=mx2048x2048&ctp=s2048x2048&_nc_cat=102&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeEVW3VfwEFCQ2wjaNUXFlLdp4B-ho4eTLyngH6Gjh5MvHz8Z1mCVKHj4Z8HqSimKpuYDr4iOO6sveo-M1c2xRgs&_nc_ohc=yvxoSZpgchYQ7kNvwEUjvRj&_nc_oc=AdqidiuxwXF94y2TMHxs3kL13k0R4d0HWfxSJunHB_Jo7Bz2YzOlVAK1iC-AS9DOSbnTorKcQ_3D4f3CB_kNZ5rx&_nc_zt=23&_nc_ht=scontent.fsgn5-22.fna&_nc_gid=udHUX7PKVH6QMZNBaLNVdg&_nc_ss=7b2a8&oh=00_AQR0Bx8qIOzk1SowupHPvT-medqD-RaNV53Bw_N1pLy99w&oe=6B047DBD',
+  spaceBaristaQuayOm: 'https://omsua.vn/images/people/barista.jpg',
 
   // Seasonal & Gallery sets
   galleryAtiso4Bong:
@@ -257,6 +259,10 @@ const URLS = {
     'https://scontent.fsgn5-14.fna.fbcdn.net/v/t39.30808-6/493685741_1293237769340887_2654817426972789318_n.jpg?stp=dst-jpg_tt6&cstp=mx1080x1351&ctp=s1080x1351&_nc_cat=110&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeEM4MvwdZpTBjYfncFepfiQChoI2H0Vr78KGgjYfRWvv7w0NhkPsEFjy8AleA5ru72zhf3W5oUr-xEjtFYBMAsq&_nc_ohc=haFrt8cqK9oQ7kNvwH1TEl_&_nc_oc=AdpB7QVTNcYhnJkDUPkxa8jDW1LT99l58pInKOuFvnIAUdZ3j1iYLbcXyp43R03ls-vxV8SY-7d0ij9mjZ3B4Kal&_nc_zt=23&_nc_ht=scontent.fsgn5-14.fna&_nc_gid=8e5xWehZLU6nFMZnIrcyqQ&_nc_ss=7b2a8&oh=00_AQRguigAWgpAfEzkaHWj5LRNGJG1zJrK4BXJVOO48tuX0w&oe=6B045968',
   drinkCaPheTiramisu:
     'https://scontent.fsgn5-18.fna.fbcdn.net/v/t39.30808-6/491396372_1282852653712732_1880512663039686558_n.jpg?stp=dst-jpg_tt6&cstp=mx1080x1351&ctp=s1080x1351&_nc_cat=106&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=f727a1&_nc_eui2=AeFR8NuBQSIPwFRis2Yr6w249eQkoF8av0L15CSgXxq_QgNLEOOC0otWPrxIUqnA2d0vG52j7RsVWYieqn5L6Jxj&_nc_ohc=mfy-ZNdkIewQ7kNvwGHA0YY&_nc_oc=AdpXX9C6BH6ujwgw2-8qzqewdj_2H0cMiOmMbqOcFeZhLVjBTUMh0IYrKnohoe-oQLEbtbfbsXm1vEsBmS9K_omu&_nc_zt=23&_nc_ht=scontent.fsgn5-18.fna&_nc_gid=nfNSALP7CcVSVt7EgiezGg&_nc_ss=7b2a8&oh=00_AQRdWbqLdxoRC7fLK84MnKIHHK-sqBRo74vRmVnYI_VCwg&oe=6B0486D7',
+  drinkTraSuaFlanChayCanh:
+    'https://omsua.vn/images/product/tra-sua-flan-chay-canh.webp',
+  drinkCaPheSua: 'https://omsua.vn/images/product/cafe-sua.webp',
+  drinkCaPheDen: 'https://omsua.vn/images/product/cafe-den.webp',
 
   // Snacks (6/6 distinct 1:1)
   posterMonMoi5Mon:
@@ -338,6 +344,12 @@ export const FANPAGE_PHOTO_SOURCES = [
     url: URLS.spaceTuiToteAtiso,
   },
   {
+    relPath: 'space/space-barista-quay-om.webp',
+    mirrorToAdmin: false,
+    maxDimension: 960,
+    url: URLS.spaceBaristaQuayOm,
+  },
+  {
     relPath: 'seasonal/gallery-atiso-4-bong.webp',
     mirrorToAdmin: false,
     maxDimension: 1200,
@@ -374,180 +386,207 @@ export const FANPAGE_PHOTO_SOURCES = [
     url: URLS.posterMulberrySeason,
   },
 
-  // 3. Drinks (20/24 distinct 1:1)
+  // 3. Drinks (24/24 — 100% distinct 1:1)
   {
     relPath: 'products/drink-tra-sua-atiso.webp',
-    mirrorToAdmin: false,
+    mirrorToAdmin: true,
     maxDimension: 720,
     url: URLS.drinkTraSuaAtiso,
   },
   {
     relPath: 'products/drink-tra-sua-atiso-chuoi.webp',
-    mirrorToAdmin: false,
+    mirrorToAdmin: true,
     maxDimension: 720,
     url: URLS.drinkTraSuaAtisoChuoi,
   },
   {
     relPath: 'products/drink-tra-sua-gao-rang-khuc-bach.webp',
-    mirrorToAdmin: false,
+    mirrorToAdmin: true,
     maxDimension: 720,
     url: URLS.drinkTraSuaGaoRang,
   },
   {
     relPath: 'products/drink-tra-sua-tiramisu.webp',
-    mirrorToAdmin: false,
+    mirrorToAdmin: true,
     maxDimension: 720,
     url: URLS.drinkTraSuaTiramisu,
   },
   {
+    relPath: 'products/drink-tra-sua-flan-chay-canh.webp',
+    mirrorToAdmin: true,
+    maxDimension: 720,
+    extract: { left: 0.04, top: 0.02, width: 0.9, height: 0.92 },
+    url: URLS.drinkTraSuaFlanChayCanh,
+  },
+  {
     relPath: 'products/drink-oolong-sen-gung.webp',
-    mirrorToAdmin: false,
+    mirrorToAdmin: true,
     maxDimension: 720,
     url: URLS.drinkOolongSenGung,
   },
   {
     relPath: 'products/drink-quyt-nhai-cat-tuong.webp',
-    mirrorToAdmin: false,
+    mirrorToAdmin: true,
     maxDimension: 720,
     extract: { left: 0.12, top: 0.292, width: 0.415, height: 0.618 },
     url: URLS.drinkQuytNhai,
   },
   {
     relPath: 'products/drink-tra-atiso-sen-chia.webp',
-    mirrorToAdmin: false,
+    mirrorToAdmin: true,
     maxDimension: 720,
     extract: { left: 0.03, top: 0.11, width: 0.45, height: 0.85 },
     url: URLS.posterAtisoSenChiaDuo,
   },
   {
     relPath: 'products/drink-tra-dau-tam-da-lat.webp',
-    mirrorToAdmin: false,
+    mirrorToAdmin: true,
     maxDimension: 720,
     extract: { left: 0.03, top: 0.28, width: 0.36, height: 0.53 },
     url: URLS.posterMulberrySeason,
   },
   {
     relPath: 'products/drink-tra-me-thot-not.webp',
-    mirrorToAdmin: false,
+    mirrorToAdmin: true,
     maxDimension: 720,
     extract: { left: 0.04, top: 0.24, width: 0.38, height: 0.48 },
     url: URLS.posterViNangHaMe,
   },
   {
     relPath: 'products/drink-tra-so-ri-buoi-hong.webp',
-    mirrorToAdmin: false,
+    mirrorToAdmin: true,
     maxDimension: 720,
     url: URLS.drinkTraSoRiBuoiHong,
   },
   {
     relPath: 'products/drink-kombucha-chanh-vang.webp',
-    mirrorToAdmin: false,
+    mirrorToAdmin: true,
     maxDimension: 720,
     extract: { left: 0.45, top: 0.08, width: 0.53, height: 0.88 },
     url: URLS.drinkKombuchaChanhVang,
   },
   {
     relPath: 'products/drink-sua-tuoi-kem-trung-nuong.webp',
-    mirrorToAdmin: false,
+    mirrorToAdmin: true,
     maxDimension: 720,
     url: URLS.drinkSuaTuoiKemTrung,
   },
   {
+    relPath: 'products/drink-sua-tuoi-duong-den.webp',
+    mirrorToAdmin: true,
+    maxDimension: 720,
+    localMaster: true,
+  },
+  {
     relPath: 'products/drink-matcha-latte.webp',
-    mirrorToAdmin: false,
+    mirrorToAdmin: true,
     maxDimension: 720,
     extract: { left: 0.46, top: 0.46, width: 0.52, height: 0.52 },
     url: URLS.drinkMatchaLatte,
   },
   {
     relPath: 'products/drink-oreo-tra-da-xay.webp',
-    mirrorToAdmin: false,
+    mirrorToAdmin: true,
     maxDimension: 720,
     extract: { left: 0.06, top: 0.36, width: 0.72, height: 0.64 },
     url: URLS.drinkOreoTraDaXay,
   },
   {
     relPath: 'products/drink-matcha-oreo-da-xay.webp',
-    mirrorToAdmin: false,
+    mirrorToAdmin: true,
     maxDimension: 720,
     url: URLS.drinkMatchaOreoDaXay,
   },
   {
     relPath: 'products/drink-yogurt-dau-tam.webp',
-    mirrorToAdmin: false,
+    mirrorToAdmin: true,
     maxDimension: 720,
     extract: { left: 0.27, top: 0.41, width: 0.46, height: 0.54 },
     url: URLS.posterMulberrySeason,
   },
   {
     relPath: 'products/drink-cold-brew-me.webp',
-    mirrorToAdmin: false,
+    mirrorToAdmin: true,
     maxDimension: 720,
     extract: { left: 0.57, top: 0.31, width: 0.41, height: 0.44 },
     url: URLS.posterViNangHaMe,
   },
   {
     relPath: 'products/drink-ca-phe-muoi.webp',
-    mirrorToAdmin: false,
+    mirrorToAdmin: true,
     maxDimension: 720,
     extract: { left: 0.50, top: 0.14, width: 0.48, height: 0.80 },
     url: URLS.posterBacXiuCaPheMuoi,
   },
   {
     relPath: 'products/drink-ca-phe-kem-tiramisu.webp',
-    mirrorToAdmin: false,
+    mirrorToAdmin: true,
     maxDimension: 720,
     url: URLS.drinkCaPheTiramisu,
   },
   {
+    relPath: 'products/drink-ca-phe-sua.webp',
+    mirrorToAdmin: true,
+    maxDimension: 720,
+    extract: { left: 0.04, top: 0.02, width: 0.9, height: 0.92 },
+    url: URLS.drinkCaPheSua,
+  },
+  {
     relPath: 'products/drink-bac-xiu-da-lat.webp',
-    mirrorToAdmin: false,
+    mirrorToAdmin: true,
     maxDimension: 720,
     extract: { left: 0.02, top: 0.288, width: 0.45, height: 0.652 },
     url: URLS.posterBacXiuCaPheMuoi,
   },
+  {
+    relPath: 'products/drink-ca-phe-den.webp',
+    mirrorToAdmin: true,
+    maxDimension: 720,
+    extract: { left: 0.04, top: 0.02, width: 0.9, height: 0.92 },
+    url: URLS.drinkCaPheDen,
+  },
 
-  // 4. Snacks (6/6 distinct 1:1)
+  // 4. Snacks (6/6 — 100% distinct 1:1)
   {
     relPath: 'products/snack-banh-trang-tron-top-mo.webp',
-    mirrorToAdmin: false,
+    mirrorToAdmin: true,
     maxDimension: 720,
     extract: { left: 0.28, top: 0.18, width: 0.50, height: 0.34 },
     url: URLS.posterMonMoi5Mon,
   },
   {
     relPath: 'products/snack-com-chay-cha-bong.webp',
-    mirrorToAdmin: false,
+    mirrorToAdmin: true,
     maxDimension: 720,
     url: URLS.snackComChayChaBong,
   },
   {
     relPath: 'products/snack-banh-trang-cuon-bo.webp',
-    mirrorToAdmin: false,
+    mirrorToAdmin: true,
     maxDimension: 720,
     url: URLS.snackCuonBo,
   },
   {
     relPath: 'products/snack-banh-trang-sot-tac.webp',
-    mirrorToAdmin: false,
+    mirrorToAdmin: true,
     maxDimension: 720,
     url: URLS.snackSotTac,
   },
   {
     relPath: 'products/snack-phoi-suong-toi-ot.webp',
-    mirrorToAdmin: false,
+    mirrorToAdmin: true,
     maxDimension: 720,
     url: URLS.snackPhoiSuongToiOt,
   },
   {
     relPath: 'products/snack-banh-cham-long-dao.webp',
-    mirrorToAdmin: false,
+    mirrorToAdmin: true,
     maxDimension: 720,
     extract: { left: 0.26, top: 0.54, width: 0.72, height: 0.46 },
     url: URLS.posterMonMoi5Mon,
   },
 
-  // 5. Toppings (Macro bowls & close-ups)
+  // 5. Toppings (8/8 — 100% macro bowls & close-ups)
   {
     relPath: 'products/topping-hat-sen.webp',
     mirrorToAdmin: false,
@@ -575,11 +614,29 @@ export const FANPAGE_PHOTO_SOURCES = [
     url: URLS.drinkTraSuaAtisoChuoi,
   },
   {
+    relPath: 'products/topping-tran-chau-trang.webp',
+    mirrorToAdmin: false,
+    maxDimension: 512,
+    localMaster: true,
+  },
+  {
+    relPath: 'products/topping-banh-flan.webp',
+    mirrorToAdmin: false,
+    maxDimension: 512,
+    localMaster: true,
+  },
+  {
     relPath: 'products/topping-hat-dac-rim.webp',
     mirrorToAdmin: false,
     maxDimension: 512,
     extract: { left: 0.26, top: 0.36, width: 0.40, height: 0.27 },
     url: URLS.drinkTraMeDacRim,
+  },
+  {
+    relPath: 'products/topping-thach-cu-nang.webp',
+    mirrorToAdmin: false,
+    maxDimension: 512,
+    localMaster: true,
   },
 ];
 
@@ -622,40 +679,67 @@ export async function syncAllFanpagePhotos() {
   const downloadCache = new Map();
 
   for (const entry of FANPAGE_PHOTO_SOURCES) {
-    let cached = downloadCache.get(entry.url);
-    if (!cached) {
-      const response = await fetch(entry.url, {
-        signal: AbortSignal.timeout(15_000),
-        headers: {
-          'User-Agent':
-            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-          Accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
-        },
-      });
+    const webDest = path.join(webBase, entry.relPath);
+    let cached = entry.url ? downloadCache.get(entry.url) : undefined;
 
-      if (!response.ok) {
+    if (entry.localMaster) {
+      if (!existsSync(webDest)) {
         throw new Error(
-          `Failed to download ${entry.relPath}: HTTP ${String(response.status)}`,
+          `Missing local master asset on disk for ${entry.relPath}`,
         );
       }
-
       cached = {
-        rawBuffer: Buffer.from(await response.arrayBuffer()),
-        contentType: response.headers.get('content-type'),
+        rawBuffer: readFileSync(webDest),
+        contentType: 'image/webp',
       };
-      downloadCache.set(entry.url, cached);
+    } else if (!cached) {
+      try {
+        const response = await fetch(entry.url, {
+          signal: AbortSignal.timeout(15_000),
+          headers: {
+            'User-Agent':
+              'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+            Accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${String(response.status)}`);
+        }
+
+        cached = {
+          rawBuffer: Buffer.from(await response.arrayBuffer()),
+          contentType: response.headers.get('content-type'),
+        };
+        downloadCache.set(entry.url, cached);
+      } catch (fetchErr) {
+        if (existsSync(webDest)) {
+          cached = {
+            rawBuffer: readFileSync(webDest),
+            contentType: 'image/webp',
+          };
+        } else {
+          throw new Error(
+            `Failed to download ${entry.relPath}: ${fetchErr instanceof Error ? fetchErr.message : String(fetchErr)}`,
+          );
+        }
+      }
     }
+
+    const useExtract =
+      cached.contentType === 'image/webp' && existsSync(webDest) && !downloadCache.has(entry.url)
+        ? undefined
+        : entry.extract;
 
     const { data, width, height } = await validateAndOptimizePhotoBuffer(
       cached.rawBuffer,
       cached.contentType,
       {
         maxDimension: entry.maxDimension,
-        extract: entry.extract,
+        extract: useExtract,
       },
     );
 
-    const webDest = path.join(webBase, entry.relPath);
     expectedWebPaths.add(path.resolve(webDest));
     mkdirSync(path.dirname(webDest), { recursive: true });
     writeFileSync(webDest, data);
