@@ -1,8 +1,16 @@
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
 import { INestApplication } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/app.setup';
+import { CatalogModule } from '../src/catalog/catalog.module';
+import { DatabaseModule } from '../src/database/database.module';
+import { HealthModule } from '../src/health/health.module';
+import { OrdersModule } from '../src/orders/orders.module';
 
 describe('Orders & Catalog Integration (e2e)', () => {
   let app: INestApplication;
@@ -302,5 +310,208 @@ describe('Orders & Catalog Integration (e2e)', () => {
         items: oversizedItems,
       })
       .expect(400);
+  });
+
+  it('enforces boundary limits, rejects invalid quantities, prevents SQLi/XSS table corruption, and resolves GET /api/orders/code/:orderCode (200/400/404)', async () => {
+    // customerName length 1 -> 400
+    await request(app.getHttpServer())
+      .post('/api/orders')
+      .send({ ...validOrderPayload, customerName: 'A' })
+      .expect(400);
+
+    // customerName length 2 -> 201
+    const len2Res = await request(app.getHttpServer())
+      .post('/api/orders')
+      .send({ ...validOrderPayload, customerName: 'An' })
+      .expect(201);
+    expect(len2Res.body.data.customerName).toBe('An');
+
+    // customerName length 81 -> 400
+    await request(app.getHttpServer())
+      .post('/api/orders')
+      .send({ ...validOrderPayload, customerName: 'A'.repeat(81) })
+      .expect(400);
+
+    // note length 301 -> 400
+    await request(app.getHttpServer())
+      .post('/api/orders')
+      .send({ ...validOrderPayload, note: 'N'.repeat(301) })
+      .expect(400);
+
+    // quantity: 0 / -1 / 1.5 / 100 -> 400
+    for (const invalidQuantity of [0, -1, 1.5, 100]) {
+      await request(app.getHttpServer())
+        .post('/api/orders')
+        .send({
+          ...validOrderPayload,
+          items: [
+            {
+              ...validOrderPayload.items[0],
+              quantity: invalidQuantity,
+            },
+          ],
+        })
+        .expect(400);
+    }
+
+    // SQL metacharacters stored & retrieved literally without corrupting tables
+    const sqlMetaName = "Nguyễn '; DROP TABLE orders; --";
+    const sqlMetaNote = "Ít đá '; DROP TABLE order_items; -- <img src=x onerror=alert(1)>";
+    const sqliRes = await request(app.getHttpServer())
+      .post('/api/orders')
+      .send({
+        ...validOrderPayload,
+        customerName: sqlMetaName,
+        note: sqlMetaNote,
+      })
+      .expect(201);
+
+    expect(sqliRes.body.data.customerName).toBe(sqlMetaName);
+    expect(sqliRes.body.data.note).toBe(sqlMetaNote);
+    const createdOrderCode: string = sqliRes.body.data.orderCode;
+
+    // Public order lookup by code (case-insensitive) -> 200
+    const lookupRes = await request(app.getHttpServer())
+      .get(`/api/orders/code/${createdOrderCode.toLowerCase()}`)
+      .expect(200);
+    expect(lookupRes.body.success).toBe(true);
+    expect(lookupRes.body.data).toMatchObject({
+      id: sqliRes.body.data.id,
+      orderCode: createdOrderCode,
+      customerName: sqlMetaName,
+      note: sqlMetaNote,
+      grandTotal: 95000,
+    });
+    expect(lookupRes.body.data.items).toHaveLength(2);
+
+    // Invalid format -> 400
+    await request(app.getHttpServer())
+      .get('/api/orders/code/invalid')
+      .expect(400);
+
+    // Valid format but non-existent -> 404
+    await request(app.getHttpServer())
+      .get('/api/orders/code/OM-20261119-ZZZZ')
+      .expect(404);
+  });
+
+  it('handles 20 concurrent POST /api/orders + concurrent GET /api/orders and PATCH /api/orders/:id/status on a file-backed WAL SQLite DB with zero SQLITE_BUSY errors', async () => {
+    const tempDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'omsua-wal-concurrency-'),
+    );
+    const walSqlitePath = path.join(tempDir, 'omsua-concurrency.sqlite');
+    let walApp: INestApplication | undefined;
+
+    try {
+      const walModule = await Test.createTestingModule({
+        imports: [
+          ConfigModule.forRoot({
+            isGlobal: true,
+            ignoreEnvFile: true,
+            load: [
+              () => ({
+                CORS_ORIGINS: '',
+                SQLITE_PATH: walSqlitePath,
+              }),
+            ],
+          }),
+          DatabaseModule,
+          CatalogModule,
+          OrdersModule,
+          HealthModule,
+        ],
+      }).compile();
+
+      walApp = walModule.createNestApplication();
+      configureApp(walApp);
+      await walApp.listen(0, '127.0.0.1');
+
+      const httpServer = walApp.getHttpServer();
+
+      // Seed one initial order so PATCH /api/orders/:id/status can execute concurrently with the 20 POSTs
+      const seedOrderRes = await request(httpServer)
+        .post('/api/orders')
+        .send({
+          ...validOrderPayload,
+          customerName: 'Khách Khởi Tạo',
+        });
+      expect(seedOrderRes.status).toBe(201);
+      const seedOrderId: string = seedOrderRes.body.data.id;
+
+      const postPromises = Array.from({ length: 20 }, (_, idx) =>
+        request(httpServer)
+          .post('/api/orders')
+          .send({
+            ...validOrderPayload,
+            customerName: `Khách Đồng Thời ${idx + 1}`,
+          }),
+      );
+
+      const getPromises = Array.from({ length: 5 }, () =>
+        request(httpServer).get('/api/orders'),
+      );
+
+      const patchStatuses = [
+        'preparing',
+        'delivering',
+        'completed',
+      ] as const;
+      const patchPromises = patchStatuses.map((status) =>
+        request(httpServer)
+          .patch(`/api/orders/${seedOrderId}/status`)
+          .send({ status }),
+      );
+
+      const [postResponses, getResponses, patchResponses] = await Promise.all([
+        Promise.all(postPromises),
+        Promise.all(getPromises),
+        Promise.all(patchPromises),
+      ]);
+
+      expect(postResponses).toHaveLength(20);
+      for (const res of postResponses) {
+        expect(res.status).toBe(201);
+        expect(res.body.success).toBe(true);
+        expect(res.body.data.orderCode).toMatch(/^OM-\d{8}-[A-Z0-9]{4}$/);
+      }
+
+      const uniqueCodes = new Set(
+        postResponses.map((res) => res.body.data.orderCode as string),
+      );
+      expect(uniqueCodes.size).toBe(20);
+
+      for (const getRes of getResponses) {
+        expect(getRes.status).toBe(200);
+        expect(getRes.body.success).toBe(true);
+      }
+
+      for (const patchRes of patchResponses) {
+        expect(patchRes.status).toBe(200);
+        expect(patchRes.body.success).toBe(true);
+      }
+
+      // Verify GET /api/orders/code/:orderCode retrieves hydrated items accurately for concurrent orders
+      const lookupChecks = await Promise.all(
+        postResponses.map((postRes) =>
+          request(httpServer).get(
+            `/api/orders/code/${postRes.body.data.orderCode as string}`,
+          ),
+        ),
+      );
+      for (let idx = 0; idx < lookupChecks.length; idx += 1) {
+        const lookupRes = lookupChecks[idx]!;
+        expect(lookupRes.status).toBe(200);
+        expect(lookupRes.body.data.customerName).toBe(
+          `Khách Đồng Thời ${idx + 1}`,
+        );
+        expect(lookupRes.body.data.items).toHaveLength(2);
+        expect(lookupRes.body.data.grandTotal).toBe(95000);
+      }
+    } finally {
+      if (walApp) {
+        await walApp.close();
+      }
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
   });
 });

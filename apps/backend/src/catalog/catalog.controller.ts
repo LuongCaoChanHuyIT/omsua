@@ -14,6 +14,12 @@ import {
   type ProductItem,
   createApiResponse,
 } from '@omsua/shared';
+import {
+  BranchesResponseDto,
+  CatalogResponseDto,
+  HttpErrorResponseDto,
+  ProductItemResponseDto,
+} from '../common/swagger-models.dto';
 import { CatalogService } from './catalog.service';
 import { UpdateAvailabilityDto } from './dto/update-availability.dto';
 
@@ -26,7 +32,10 @@ export class CatalogController {
   @ApiOperation({
     summary: 'Get full Ốm Sữa menu catalog (categories, products, toppings)',
   })
-  @ApiOkResponse({ description: 'Full catalog returned successfully' })
+  @ApiOkResponse({
+    type: CatalogResponseDto,
+    description: 'Full catalog returned successfully',
+  })
   getCatalog(): ApiResponse<CatalogPayload> {
     return createApiResponse(this.catalogService.getCatalog());
   }
@@ -39,9 +48,18 @@ export class CatalogController {
     description: 'Product slug ID',
     example: 'tra-sua-atiso',
   })
-  @ApiOkResponse({ description: 'Updated product returned successfully' })
-  @ApiBadRequestResponse({ description: 'Invalid request body' })
-  @ApiNotFoundResponse({ description: 'Product ID not found' })
+  @ApiOkResponse({
+    type: ProductItemResponseDto,
+    description: 'Updated product returned successfully',
+  })
+  @ApiBadRequestResponse({
+    type: HttpErrorResponseDto,
+    description: 'Invalid request body',
+  })
+  @ApiNotFoundResponse({
+    type: HttpErrorResponseDto,
+    description: 'Product ID not found',
+  })
   updateProductAvailability(
     @Param('id') id: string,
     @Body() dto: UpdateAvailabilityDto,
@@ -54,7 +72,10 @@ export class CatalogController {
   @Get('branches')
   @ApiTags('branches')
   @ApiOperation({ summary: 'Get all Ốm Sữa store branches' })
-  @ApiOkResponse({ description: 'Branch list returned successfully' })
+  @ApiOkResponse({
+    type: BranchesResponseDto,
+    description: 'Branch list returned successfully',
+  })
   getBranches(): ApiResponse<BranchInfo[]> {
     return createApiResponse(this.catalogService.getBranches());
   }

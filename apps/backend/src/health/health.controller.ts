@@ -1,6 +1,15 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import type { ApiResponse, HealthStatus } from '@omsua/shared';
+import {
+  HealthResponseDto,
+  HttpErrorResponseDto,
+} from '../common/swagger-models.dto';
 import { HealthQueryDto } from './dto/health-query.dto';
 import { HealthService } from './health.service';
 
@@ -11,7 +20,14 @@ export class HealthController {
 
   @Get()
   @ApiOperation({ summary: 'Check backend service health' })
-  @ApiOkResponse({ description: 'Backend service is healthy' })
+  @ApiOkResponse({
+    type: HealthResponseDto,
+    description: 'Backend service is healthy',
+  })
+  @ApiBadRequestResponse({
+    type: HttpErrorResponseDto,
+    description: 'Invalid query parameter',
+  })
   check(@Query() _query: HealthQueryDto): ApiResponse<HealthStatus> {
     return this.healthService.getHealth();
   }

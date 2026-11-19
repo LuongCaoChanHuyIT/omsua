@@ -50,11 +50,21 @@ describe('CatalogService (SQLite :memory:)', () => {
     }
   });
 
-  it('creates all 5 required SQLite tables with foreign_keys pragma enabled', () => {
+  it('creates all 5 required SQLite tables with foreign_keys, busy_timeout, synchronous pragmas and order indexes', () => {
     const fkRow = databaseService.db.prepare('PRAGMA foreign_keys').get() as
       | { foreign_keys: number }
       | undefined;
     expect(fkRow?.foreign_keys).toBe(1);
+
+    const busyTimeoutRow = databaseService.db
+      .prepare('PRAGMA busy_timeout')
+      .get() as { timeout: number } | undefined;
+    expect(busyTimeoutRow?.timeout).toBe(5000);
+
+    const syncRow = databaseService.db.prepare('PRAGMA synchronous').get() as
+      | { synchronous: number }
+      | undefined;
+    expect(syncRow?.synchronous).toBe(1);
 
     const tableRows = databaseService.db
       .prepare(
@@ -69,6 +79,49 @@ describe('CatalogService (SQLite :memory:)', () => {
       'products',
       'toppings',
     ]);
+
+    const indexRows = databaseService.db
+      .prepare(
+        "SELECT name FROM sqlite_master WHERE type = 'index' AND name IN ('idx_order_items_order_id', 'idx_orders_branch_status_created') ORDER BY name ASC",
+      )
+      .all() as Array<{ name: string }>;
+
+    expect(indexRows.map((row) => row.name)).toEqual([
+      'idx_order_items_order_id',
+      'idx_orders_branch_status_created',
+    ]);
+  });
+
+  it('enables WAL journal_mode on file-backed SQLite databases', async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'omsua-wal-pragma-'));
+    const sqliteFile = path.join(tempDir, 'omsua-wal.sqlite');
+    let walModule: TestingModule | undefined;
+
+    try {
+      walModule = await Test.createTestingModule({
+        imports: [
+          ConfigModule.forRoot({
+            isGlobal: true,
+            ignoreEnvFile: true,
+            load: [() => ({ SQLITE_PATH: sqliteFile })],
+          }),
+          DatabaseModule,
+          CatalogModule,
+        ],
+      }).compile();
+      await walModule.init();
+
+      const walDb = walModule.get<DatabaseService>(DatabaseService);
+      const journalRow = walDb.db.prepare('PRAGMA journal_mode').get() as
+        | { journal_mode: string }
+        | undefined;
+      expect(journalRow?.journal_mode.toLowerCase()).toBe('wal');
+    } finally {
+      if (walModule) {
+        await walModule.close();
+      }
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
   });
 
   it('getCatalog() returns 4 categories, 30 seeded products (24 drinks + 6 snacks), and 8 toppings in seed order', () => {

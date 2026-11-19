@@ -1,3 +1,4 @@
+import * as path from 'node:path';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { CatalogModule } from './catalog/catalog.module';
@@ -9,6 +10,7 @@ import { OrdersModule } from './orders/orders.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: [path.resolve(__dirname, '../.env'), '.env'],
     }),
     DatabaseModule,
     CatalogModule,

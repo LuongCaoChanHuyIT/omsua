@@ -108,6 +108,93 @@ describe('Backend App (e2e)', () => {
     expect(res.text).toContain('Swagger UI');
   });
 
+  it('GET /api/docs-json exposes single-tag operations, /api/orders/code/{orderCode}, and concrete OpenAPI response schemas', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/api/docs-json')
+      .expect(200);
+
+    const doc = res.body as {
+      paths: Record<
+        string,
+        Record<
+          string,
+          {
+            tags?: string[];
+            responses?: Record<
+              string,
+              {
+                content?: {
+                  'application/json'?: {
+                    schema?: { $ref?: string };
+                  };
+                };
+              }
+            >;
+          }
+        >
+      >;
+      components?: {
+        schemas?: Record<string, { properties?: Record<string, unknown> }>;
+      };
+    };
+
+    expect(doc.paths['/api/health']?.get?.tags).toEqual(['health']);
+    expect(doc.paths['/api/catalog']?.get?.tags).toEqual(['catalog']);
+    expect(
+      doc.paths['/api/catalog/products/{id}/availability']?.patch?.tags,
+    ).toEqual(['catalog']);
+    expect(doc.paths['/api/branches']?.get?.tags).toEqual(['branches']);
+    expect(doc.paths['/api/orders']?.post?.tags).toEqual(['orders']);
+    expect(doc.paths['/api/orders']?.get?.tags).toEqual(['orders']);
+    expect(doc.paths['/api/orders/code/{orderCode}']?.get?.tags).toEqual([
+      'orders',
+    ]);
+    expect(doc.paths['/api/orders/{id}/status']?.patch?.tags).toEqual([
+      'orders',
+    ]);
+
+    const schemas = doc.components?.schemas ?? {};
+    const assertConcreteEnvelopeRef = (
+      pathKey: string,
+      method: string,
+      statusCode: string,
+    ) => {
+      const ref =
+        doc.paths[pathKey]?.[method]?.responses?.[statusCode]?.content?.[
+          'application/json'
+        ]?.schema?.$ref;
+      expect(ref).toMatch(/^#\/components\/schemas\/.+/);
+      const schemaName = ref!.replace('#/components/schemas/', '');
+      const schemaObj = schemas[schemaName];
+      expect(schemaObj).toBeDefined();
+      expect(schemaObj?.properties).toHaveProperty('success');
+      expect(schemaObj?.properties).toHaveProperty('data');
+      expect(schemaObj?.properties).toHaveProperty('timestamp');
+    };
+
+    assertConcreteEnvelopeRef('/api/health', 'get', '200');
+    assertConcreteEnvelopeRef('/api/catalog', 'get', '200');
+    assertConcreteEnvelopeRef(
+      '/api/catalog/products/{id}/availability',
+      'patch',
+      '200',
+    );
+    assertConcreteEnvelopeRef('/api/branches', 'get', '200');
+    assertConcreteEnvelopeRef('/api/orders', 'post', '201');
+    assertConcreteEnvelopeRef('/api/orders', 'get', '200');
+    assertConcreteEnvelopeRef('/api/orders/code/{orderCode}', 'get', '200');
+    assertConcreteEnvelopeRef('/api/orders/{id}/status', 'patch', '200');
+
+    expect(
+      doc.paths['/api/orders/code/{orderCode}']?.get?.responses?.['400']
+        ?.content?.['application/json']?.schema?.$ref,
+    ).toMatch(/^#\/components\/schemas\/.+/);
+    expect(
+      doc.paths['/api/orders/code/{orderCode}']?.get?.responses?.['404']
+        ?.content?.['application/json']?.schema?.$ref,
+    ).toMatch(/^#\/components\/schemas\/.+/);
+  });
+
   it('GET /api/catalog returns 200 ApiResponse<CatalogPayload> with 4 categories, 30 products, and 8 toppings', async () => {
     const res = await request(app.getHttpServer())
       .get('/api/catalog')

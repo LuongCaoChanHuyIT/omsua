@@ -1,6 +1,6 @@
-import { parseCorsOrigins } from './cors.config';
+import { parseCorsOrigins, resolveBackendPort } from './cors.config';
 
-describe('parseCorsOrigins', () => {
+describe('parseCorsOrigins & resolveBackendPort', () => {
   it('falls back to web (3000) and admin (3001) when unset or blank', () => {
     expect(parseCorsOrigins(undefined)).toEqual([
       'http://localhost:3000',
@@ -16,5 +16,16 @@ describe('parseCorsOrigins', () => {
     expect(
       parseCorsOrigins(' http://localhost:3000/ , https://admin.omsua.vn/// '),
     ).toEqual(['http://localhost:3000', 'https://admin.omsua.vn']);
+  });
+
+  it('resolveBackendPort checks BACKEND_PORT ?? PORT and falls back to 4000', () => {
+    expect(resolveBackendPort({})).toBe(4000);
+    expect(resolveBackendPort({ PORT: '4100' })).toBe(4100);
+    expect(resolveBackendPort({ BACKEND_PORT: '4200', PORT: '4100' })).toBe(
+      4200,
+    );
+    expect(resolveBackendPort({ BACKEND_PORT: '', PORT: '4100' })).toBe(4100);
+    expect(resolveBackendPort({ BACKEND_PORT: 'invalid' })).toBe(4000);
+    expect(resolveBackendPort({ BACKEND_PORT: '70000' })).toBe(4000);
   });
 });

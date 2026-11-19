@@ -317,4 +317,94 @@ describe('OrdersService (SQLite :memory:)', () => {
       }),
     ).toThrow(BadRequestException);
   });
+
+  it('looks up orders by normalized OM-YYYYMMDD-XXXX orderCode and throws 400/404 appropriately', () => {
+    const created = ordersService.createOrder(baseOrderPayload);
+
+    const exactFound = ordersService.getOrderByCode(created.orderCode);
+    expect(exactFound).toEqual(created);
+
+    const normalizedFound = ordersService.getOrderByCode(
+      `  ${created.orderCode.toLowerCase()}  `,
+    );
+    expect(normalizedFound).toEqual(created);
+
+    expect(() => ordersService.getOrderByCode('invalid')).toThrow(
+      new BadRequestException(
+        'Mã đơn hàng không đúng định dạng OM-YYYYMMDD-XXXX.',
+      ),
+    );
+    expect(() => ordersService.getOrderByCode('OM-20261119-AB1')).toThrow(
+      BadRequestException,
+    );
+
+    expect(() =>
+      ordersService.getOrderByCode('  om-20261119-zzzz  '),
+    ).toThrow(
+      new NotFoundException('Không tìm thấy đơn hàng OM-20261119-ZZZZ.'),
+    );
+  });
+
+  it('enforces field length boundaries, quantity bounds, and stores SQL metacharacters literally', () => {
+    expect(() =>
+      ordersService.createOrder({
+        ...baseOrderPayload,
+        customerName: 'A',
+      }),
+    ).toThrow(BadRequestException);
+
+    const minNameOrder = ordersService.createOrder({
+      ...baseOrderPayload,
+      customerName: 'An',
+    });
+    expect(minNameOrder.customerName).toBe('An');
+
+    expect(() =>
+      ordersService.createOrder({
+        ...baseOrderPayload,
+        customerName: 'A'.repeat(81),
+      }),
+    ).toThrow(BadRequestException);
+
+    expect(() =>
+      ordersService.createOrder({
+        ...baseOrderPayload,
+        note: 'N'.repeat(301),
+      }),
+    ).toThrow(BadRequestException);
+
+    for (const invalidQty of [0, -1, 1.5, 100]) {
+      expect(() =>
+        ordersService.createOrder({
+          ...baseOrderPayload,
+          items: [
+            {
+              productId: 'tra-sua-atiso',
+              quantity: invalidQty,
+              size: 'M',
+              sugarLevel: '70',
+              iceLevel: '70',
+            },
+          ],
+        }),
+      ).toThrow(BadRequestException);
+    }
+
+    const sqlInjectionString = "Nguyễn '; DROP TABLE orders; --";
+    const sqliOrder = ordersService.createOrder({
+      ...baseOrderPayload,
+      customerName: sqlInjectionString,
+      deliveryAddress: `99 Đường Đà Lạt '; DROP TABLE orders; --`,
+      note: `${sqlInjectionString} <script>alert(1)</script>`,
+    });
+
+    const fetched = ordersService.getOrderByCode(sqliOrder.orderCode);
+    expect(fetched.customerName).toBe(sqlInjectionString);
+    expect(fetched.note).toBe(`${sqlInjectionString} <script>alert(1)</script>`);
+
+    const countRow = databaseService.db
+      .prepare('SELECT COUNT(*) AS count FROM orders')
+      .get() as { count: number };
+    expect(countRow.count).toBe(2);
+  });
 });

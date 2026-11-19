@@ -349,6 +349,31 @@ export class OrdersService {
     return this.hydrateOrders(orderRows);
   }
 
+  getOrderByCode(rawOrderCode: string): OrderRecord {
+    const normalized =
+      typeof rawOrderCode === 'string' ? rawOrderCode.trim().toUpperCase() : '';
+    if (!/^OM-\d{8}-[A-Z0-9]{4}$/.test(normalized)) {
+      throw new BadRequestException(
+        'Mã đơn hàng không đúng định dạng OM-YYYYMMDD-XXXX.',
+      );
+    }
+
+    const row = this.databaseService.db
+      .prepare('SELECT * FROM orders WHERE order_code = ?')
+      .get(normalized) as unknown as OrderRow | undefined;
+
+    if (!row) {
+      throw new NotFoundException(`Không tìm thấy đơn hàng ${normalized}.`);
+    }
+
+    const [hydrated] = this.hydrateOrders([row]);
+    if (!hydrated) {
+      throw new NotFoundException(`Không tìm thấy đơn hàng ${normalized}.`);
+    }
+
+    return hydrated;
+  }
+
   updateOrderStatus(id: string, status: OrderStatus): OrderRecord {
     if (
       typeof status !== 'string' ||

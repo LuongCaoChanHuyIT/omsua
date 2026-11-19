@@ -13,6 +13,9 @@ const BACKEND_PACKAGE_ROOT = path.resolve(__dirname, '../..');
 
 const SCHEMA_DDL = `
 PRAGMA foreign_keys = ON;
+PRAGMA journal_mode = WAL;
+PRAGMA synchronous = NORMAL;
+PRAGMA busy_timeout = 5000;
 
 CREATE TABLE IF NOT EXISTS products (
   id TEXT PRIMARY KEY,
@@ -87,6 +90,9 @@ CREATE TABLE IF NOT EXISTS order_items (
   unit_price INTEGER NOT NULL,
   line_total INTEGER NOT NULL
 );
+
+CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
+CREATE INDEX IF NOT EXISTS idx_orders_branch_status_created ON orders(branch_id, status, created_at DESC);
 `;
 
 @Injectable()
