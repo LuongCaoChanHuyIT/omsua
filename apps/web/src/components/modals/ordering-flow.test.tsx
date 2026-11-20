@@ -1728,8 +1728,8 @@ describe('Interactive Customizer Modal & Cart Checkout Flow', () => {
     expect(cupSvg).toHaveAttribute('data-topping-count', '0');
 
     fireEvent.click(screen.getByRole('radio', { name: /Size L/i }));
-    fireEvent.click(screen.getByRole('button', { name: '30% đường' }));
-    fireEvent.click(screen.getByRole('button', { name: '0% đá riêng' }));
+    fireEvent.click(screen.getByRole('button', { name: '30% Ít' }));
+    fireEvent.click(screen.getByRole('button', { name: '0% Đá riêng' }));
     fireEvent.click(
       screen.getByRole('checkbox', { name: /Trân châu đen nấu mật/i }),
     );
