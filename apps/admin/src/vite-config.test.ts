@@ -161,6 +161,10 @@ describe('Admin brand favicon, typography, a11y CSS, and zero pure B/W rule', ()
     expect(indexCss).toContain('.bg-hero-espresso :focus-visible');
     expect(indexCss).toContain('var(--color-card-butter)');
     expect(indexCss).toContain('prefers-reduced-motion: reduce');
+    expect(indexCss).toContain('--color-terracotta-deep: #A84B0D');
+    expect(indexCss).toContain('--color-artichoke-deep: #4D5922');
+    expect(indexCss).toContain('--color-ochre-deep: #805B1A');
+    expect(indexCss).toContain('@media print');
   });
 
   it('contains zero pure #FFFFFF / #000000 or *-white / *-black tokens across index.html, public/, and src/', () => {
@@ -197,6 +201,15 @@ describe('Admin brand favicon, typography, a11y CSS, and zero pure B/W rule', ()
       { label: 'sub-12px text-[9/10/11px]', regex: /\btext-\[(9|10|11)px\]/ },
       { label: 'non-compositor transition-all', regex: /\btransition-all\b/ },
       { label: 'ASCII three-dot UI copy', regex: /[A-Za-zÀ-ỹ0-9]\.\.\./ },
+      {
+        label: 'low-contrast bg-terracotta/bg-artichoke paired with text-surface-light',
+        regex:
+          /\bbg-(terracotta|artichoke)(?![-a-z0-9])(?=[^\n`"]*text-surface-light)/,
+      },
+      {
+        label: 'low-contrast text-subhead-ochre, text-terracotta, or text-artichoke',
+        regex: /\btext-(subhead-ochre|terracotta|artichoke)(?![-a-z0-9])/,
+      },
     ];
 
     for (const filePath of tsxFiles) {

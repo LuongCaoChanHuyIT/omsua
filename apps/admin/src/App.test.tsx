@@ -1809,4 +1809,152 @@ describe('Admin App routes & operational portals', () => {
       await screen.findByRole('heading', { name: /Quản lý Thực đơn/i }),
     ).toBeInTheDocument();
   });
+
+  it('syncs and clamps URL filters on OrdersPage and MenuPage, toggles Chế độ Thẻ Bếp gọn, and isolates single-order In phiếu bếp printing', async () => {
+    const sampleOrders: OrderRecord[] = [
+      {
+        ...mockPendingOrder,
+        id: 'ord-print-1',
+        orderCode: 'OM-20261120-PR01',
+        customerName: 'Nguyễn Minh Anh',
+        status: 'preparing',
+        branchId: 'cs1-hoang-dieu',
+      },
+      {
+        ...mockPendingOrder,
+        id: 'ord-print-2',
+        orderCode: 'OM-20261120-PR02',
+        customerName: 'Lê Bảo',
+        status: 'preparing',
+        branchId: 'cs1-hoang-dieu',
+      },
+    ];
+    const sampleCatalog = getDefaultCatalog();
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation(async (url: string) => {
+        if (String(url).includes('/catalog')) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              success: true,
+              data: sampleCatalog,
+              timestamp: new Date().toISOString(),
+            }),
+          };
+        }
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            success: true,
+            data: sampleOrders,
+            timestamp: new Date().toISOString(),
+          }),
+        };
+      }),
+    );
+
+    // 1. Valid URL params on OrdersPage + Compact Kitchen Ticket mode + single-card print isolation
+    let printObservedActiveIds: string[] = [];
+    const printSpy = vi.spyOn(window, 'print').mockImplementation(() => {
+      printObservedActiveIds = Array.from(
+        document.querySelectorAll('[data-print-active="true"]'),
+      ).map((el) => el.getAttribute('data-testid') ?? '');
+    });
+
+    const { unmount } = render(
+      <MemoryRouter
+        initialEntries={['/?status=preparing&branch=cs1-hoang-dieu&q=minh']}
+      >
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+
+    const searchInput = await screen.findByRole('searchbox', {
+      name: /Tìm kiếm đơn hàng/i,
+    });
+    expect(searchInput).toHaveValue('minh');
+    expect(screen.getByLabelText(/Lọc theo chi nhánh/i)).toHaveValue(
+      'cs1-hoang-dieu',
+    );
+    expect(
+      await screen.findByText('OM-20261120-PR01'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('OM-20261120-PR02')).not.toBeInTheDocument();
+
+    // Clear search so both orders appear, toggle Compact Kitchen Ticket mode, and print order 1 only
+    fireEvent.change(searchInput, { target: { value: '' } });
+    expect(await screen.findByText('OM-20261120-PR02')).toBeInTheDocument();
+
+    const compactBtn = screen.getByRole('button', {
+      name: /Chế độ Thẻ Bếp gọn/i,
+    });
+    expect(compactBtn).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(compactBtn);
+    expect(compactBtn).toHaveAttribute('aria-pressed', 'true');
+    expect(document.querySelector('[data-view-mode="compact"]')).not.toBeNull();
+
+    const card1 = screen.getByTestId('order-card-ord-print-1');
+    fireEvent.click(within(card1).getByRole('button', { name: /In phiếu bếp/i }));
+    expect(printSpy).toHaveBeenCalledTimes(1);
+    expect(printObservedActiveIds).toEqual(['order-card-ord-print-1']);
+    fireEvent(window, new Event('afterprint'));
+    expect(document.querySelectorAll('[data-print-active="true"]')).toHaveLength(
+      0,
+    );
+    unmount();
+
+    // 2. Malformed URL params on OrdersPage clamp safely to defaults
+    const { unmount: unmountBogus } = render(
+      <MemoryRouter initialEntries={['/?status=bogus&branch=invalid']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+    expect(
+      await screen.findByLabelText(/Lọc theo chi nhánh/i),
+    ).toHaveValue('');
+    expect(
+      screen.getByRole('button', { name: /^Tất cả \(/i }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    unmountBogus();
+
+    // 3. Valid & malformed URL params on MenuPage
+    const { unmount: unmountMenu } = render(
+      <MemoryRouter initialEntries={['/menu?cat=coffee&avail=soldout&q=ca%20phe']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+    expect(
+      await screen.findByRole('button', {
+        name: /Đang tạm hết/i,
+        pressed: true,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Cà Phê Phin', pressed: true }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText(/Tìm món trong thực đơn/i)).toHaveValue(
+      'ca phe',
+    );
+    unmountMenu();
+
+    const { unmount: unmountBogusMenu } = render(
+      <MemoryRouter initialEntries={['/menu?cat=bogus&avail=invalid']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+    expect(
+      await screen.findByRole('button', {
+        name: /Tất cả trạng thái/i,
+        pressed: true,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Tất cả nhóm', pressed: true }),
+    ).toBeInTheDocument();
+    unmountBogusMenu();
+  });
 });

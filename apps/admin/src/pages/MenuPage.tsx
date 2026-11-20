@@ -1,4 +1,5 @@
 import {
+  DRINK_CATEGORY_IDS,
   formatVnd,
   getProductPhoto,
   type CatalogPayload,
@@ -6,12 +7,55 @@ import {
   type ProductItem,
 } from '@omsua/shared';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { DirectionalPageTransition } from '../components/transitions/AppViewTransition';
 import { fetchAdminCatalog, toggleProductAvailability } from '../lib/api';
 import { normalizeVietnameseSearch } from '../lib/text';
 
 type AvailabilityFilter = 'all' | 'available' | 'sold-out';
 type CategoryFilter = 'all' | ProductCategoryId;
+
+const VALID_MENU_CATEGORY_SET = new Set<string>([
+  ...DRINK_CATEGORY_IDS,
+  'snack',
+]);
+
+function clampMenuCategory(raw: string | null): CategoryFilter {
+  if (raw && VALID_MENU_CATEGORY_SET.has(raw)) {
+    return raw as CategoryFilter;
+  }
+  return 'all';
+}
+
+function clampMenuAvailability(raw: string | null): AvailabilityFilter {
+  if (raw === 'available') {
+    return 'available';
+  }
+  if (raw === 'soldout' || raw === 'sold-out') {
+    return 'sold-out';
+  }
+  return 'all';
+}
+
+function buildMenuSearchParams(next: {
+  category: CategoryFilter;
+  availability: AvailabilityFilter;
+  q: string;
+}): URLSearchParams {
+  const params = new URLSearchParams();
+  if (next.category !== 'all') {
+    params.set('cat', next.category);
+  }
+  if (next.availability === 'available') {
+    params.set('avail', 'available');
+  } else if (next.availability === 'sold-out') {
+    params.set('avail', 'soldout');
+  }
+  if (next.q) {
+    params.set('q', next.q);
+  }
+  return params;
+}
 
 function formatSizesSummary(product: ProductItem): string {
   return product.sizes
@@ -141,7 +185,7 @@ const AdminProductCard = memo(function AdminProductCard({
       </div>
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#E5DEC9] pt-3.5">
-        <span className="text-xs font-bold text-terracotta tabular-nums sm:text-sm">
+        <span className="text-xs font-bold text-terracotta-deep tabular-nums sm:text-sm">
           {formatSizesSummary(product)}
         </span>
 
@@ -152,7 +196,7 @@ const AdminProductCard = memo(function AdminProductCard({
           className={`min-h-11 rounded-xl px-3.5 py-2 text-xs font-semibold transition-colors disabled:opacity-60 sm:text-sm ${
             product.isAvailable
               ? 'border border-coral-sketch bg-[#F7DFDC] text-[#8F3530] hover:bg-[#F2CECA]'
-              : 'bg-artichoke text-surface-light shadow-xs hover:bg-[#66762F]'
+              : 'bg-artichoke-deep text-surface-light shadow-xs hover:bg-[#3D471A]'
           }`}
         >
           {product.isAvailable ? 'Tạm hết' : 'Mở bán lại'}
@@ -163,17 +207,62 @@ const AdminProductCard = memo(function AdminProductCard({
 });
 
 export function MenuPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [catalog, setCatalog] = useState<CatalogPayload | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>(
+    () => searchParams.get('q') ?? '',
+  );
   const [availabilityFilter, setAvailabilityFilter] =
-    useState<AvailabilityFilter>('all');
-  const [selectedCategory, setSelectedCategory] =
-    useState<CategoryFilter>('all');
+    useState<AvailabilityFilter>(() =>
+      clampMenuAvailability(searchParams.get('avail')),
+    );
+  const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>(
+    () => clampMenuCategory(searchParams.get('cat')),
+  );
   const [togglingIds, setTogglingIds] = useState<Set<string>>(() => new Set());
   const requestSeqRef = useRef<number>(0);
   const mutationEpochRef = useRef<number>(0);
+
+  useEffect(() => {
+    const nextCategory = clampMenuCategory(searchParams.get('cat'));
+    const nextAvailability = clampMenuAvailability(searchParams.get('avail'));
+    const nextQuery = searchParams.get('q') ?? '';
+
+    setSelectedCategory((prev) => (prev === nextCategory ? prev : nextCategory));
+    setAvailabilityFilter((prev) =>
+      prev === nextAvailability ? prev : nextAvailability,
+    );
+    setSearchQuery((prev) => (prev === nextQuery ? prev : nextQuery));
+
+    const canonical = buildMenuSearchParams({
+      category: nextCategory,
+      availability: nextAvailability,
+      q: nextQuery,
+    });
+    if (canonical.toString() !== searchParams.toString()) {
+      setSearchParams(canonical, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
+  const syncMenuUrl = useCallback(
+    (
+      overrides: Partial<{
+        category: CategoryFilter;
+        availability: AvailabilityFilter;
+        q: string;
+      }>,
+    ) => {
+      const nextParams = buildMenuSearchParams({
+        category: overrides.category ?? selectedCategory,
+        availability: overrides.availability ?? availabilityFilter,
+        q: overrides.q ?? searchQuery,
+      });
+      setSearchParams(nextParams, { replace: true });
+    },
+    [availabilityFilter, searchQuery, selectedCategory, setSearchParams],
+  );
 
   const loadCatalog = useCallback(async () => {
     const seq = ++requestSeqRef.current;
@@ -261,6 +350,7 @@ export function MenuPage() {
     setSearchQuery('');
     setAvailabilityFilter('all');
     setSelectedCategory('all');
+    setSearchParams(new URLSearchParams(), { replace: true });
   };
 
   const totalProducts = catalog?.products.length ?? 0;
@@ -314,7 +404,7 @@ export function MenuPage() {
       <div className="mx-auto max-w-6xl space-y-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-subhead-ochre">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ochre-deep">
             Thực đơn 30 món chuẩn Đà Lạt
           </p>
           <h1 className="mt-1 font-display text-2xl font-bold text-olive-primary sm:text-3xl">
@@ -341,7 +431,10 @@ export function MenuPage() {
             <button
               type="button"
               aria-pressed={availabilityFilter === 'all'}
-              onClick={() => setAvailabilityFilter('all')}
+              onClick={() => {
+                setAvailabilityFilter('all');
+                syncMenuUrl({ availability: 'all' });
+              }}
               className={`rounded-2xl border p-4 text-left transition-colors ${
                 availabilityFilter === 'all'
                   ? 'border-olive-primary bg-surface-light shadow-xs'
@@ -358,7 +451,10 @@ export function MenuPage() {
             <button
               type="button"
               aria-pressed={availabilityFilter === 'available'}
-              onClick={() => setAvailabilityFilter('available')}
+              onClick={() => {
+                setAvailabilityFilter('available');
+                syncMenuUrl({ availability: 'available' });
+              }}
               className={`rounded-2xl border p-4 text-left transition-colors ${
                 availabilityFilter === 'available'
                   ? 'border-[#45531B] bg-[#E3EAD1] shadow-xs'
@@ -375,7 +471,10 @@ export function MenuPage() {
             <button
               type="button"
               aria-pressed={availabilityFilter === 'sold-out'}
-              onClick={() => setAvailabilityFilter('sold-out')}
+              onClick={() => {
+                setAvailabilityFilter('sold-out');
+                syncMenuUrl({ availability: 'sold-out' });
+              }}
               className={`rounded-2xl border p-4 text-left transition-colors ${
                 availabilityFilter === 'sold-out'
                   ? 'border-[#8F3530] bg-[#F7DFDC] shadow-xs'
@@ -400,15 +499,22 @@ export function MenuPage() {
                   type="search"
                   aria-label="Tìm món trong thực đơn"
                   value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
+                  onChange={(event) => {
+                    const nextQ = event.target.value;
+                    setSearchQuery(nextQ);
+                    syncMenuUrl({ q: nextQ });
+                  }}
                   placeholder="Tìm tên món tiếng Việt, tiếng Anh, nguyên liệu…"
                   className="min-h-11 w-full rounded-xl border border-[#D4C9B0] bg-canvas-cream px-3.5 py-2.5 text-base text-espresso placeholder:text-warm-muted focus:border-olive-primary focus:outline-none sm:text-sm"
                 />
                 {searchQuery.length > 0 ? (
                   <button
                     type="button"
-                    onClick={() => setSearchQuery('')}
-                    className="min-h-11 shrink-0 rounded-xl border border-[#D4C9B0] bg-canvas-cream px-3.5 py-2 text-xs font-semibold text-espresso transition hover:border-olive-primary hover:bg-card-butter/60 sm:text-sm"
+                    onClick={() => {
+                      setSearchQuery('');
+                      syncMenuUrl({ q: '' });
+                    }}
+                    className="min-h-11 shrink-0 rounded-xl border border-[#D4C9B0] bg-canvas-cream px-3.5 py-2 text-xs font-semibold text-espresso transition-colors hover:border-olive-primary hover:bg-card-butter/60 sm:text-sm"
                   >
                     Xóa tìm
                   </button>
@@ -442,8 +548,11 @@ export function MenuPage() {
                       key={pill.value}
                       type="button"
                       aria-pressed={isSelected}
-                      onClick={() => setAvailabilityFilter(pill.value)}
-                      className={`min-h-11 rounded-full px-3.5 py-2 text-xs font-semibold transition sm:text-sm ${
+                      onClick={() => {
+                        setAvailabilityFilter(pill.value);
+                        syncMenuUrl({ availability: pill.value });
+                      }}
+                      className={`min-h-11 rounded-full px-3.5 py-2 text-xs font-semibold transition-colors sm:text-sm ${
                         isSelected
                           ? 'bg-hero-espresso text-surface-light shadow-xs'
                           : 'border border-[#D8CEB8] bg-canvas-cream text-espresso hover:bg-card-butter/60'
@@ -464,8 +573,11 @@ export function MenuPage() {
               <button
                 type="button"
                 aria-pressed={selectedCategory === 'all'}
-                onClick={() => setSelectedCategory('all')}
-                className={`min-h-11 rounded-full px-3.5 py-2 text-xs font-semibold transition sm:text-sm ${
+                onClick={() => {
+                  setSelectedCategory('all');
+                  syncMenuUrl({ category: 'all' });
+                }}
+                className={`min-h-11 rounded-full px-3.5 py-2 text-xs font-semibold transition-colors sm:text-sm ${
                   selectedCategory === 'all'
                     ? 'bg-olive-primary text-surface-light shadow-xs'
                     : 'border border-[#D8CEB8] bg-canvas-cream text-espresso hover:bg-card-butter/60'
@@ -480,8 +592,11 @@ export function MenuPage() {
                     key={category.id}
                     type="button"
                     aria-pressed={isSelected}
-                    onClick={() => setSelectedCategory(category.id)}
-                    className={`min-h-11 rounded-full px-3.5 py-2 text-xs font-semibold transition sm:text-sm ${
+                    onClick={() => {
+                      setSelectedCategory(category.id);
+                      syncMenuUrl({ category: category.id });
+                    }}
+                    className={`min-h-11 rounded-full px-3.5 py-2 text-xs font-semibold transition-colors sm:text-sm ${
                       isSelected
                         ? 'bg-olive-primary text-surface-light shadow-xs'
                         : 'border border-[#D8CEB8] bg-canvas-cream text-espresso hover:bg-card-butter/60'
@@ -494,8 +609,11 @@ export function MenuPage() {
               <button
                 type="button"
                 aria-pressed={selectedCategory === 'snack'}
-                onClick={() => setSelectedCategory('snack')}
-                className={`min-h-11 rounded-full px-3.5 py-2 text-xs font-semibold transition sm:text-sm ${
+                onClick={() => {
+                  setSelectedCategory('snack');
+                  syncMenuUrl({ category: 'snack' });
+                }}
+                className={`min-h-11 rounded-full px-3.5 py-2 text-xs font-semibold transition-colors sm:text-sm ${
                   selectedCategory === 'snack'
                     ? 'bg-olive-primary text-surface-light shadow-xs'
                     : 'border border-[#D8CEB8] bg-canvas-cream text-espresso hover:bg-card-butter/60'
@@ -534,7 +652,7 @@ export function MenuPage() {
           <button
             type="button"
             onClick={resetFilters}
-            className="mt-4 min-h-11 rounded-xl bg-terracotta px-5 py-2.5 text-sm font-semibold text-surface-light shadow-xs transition hover:bg-[#C05C16]"
+            className="mt-4 min-h-11 rounded-xl bg-terracotta-deep px-5 py-2.5 text-sm font-semibold text-surface-light shadow-xs transition-colors hover:bg-[#8C3D09]"
           >
             Đặt lại bộ lọc
           </button>
@@ -571,7 +689,7 @@ export function MenuPage() {
           {visibleSnacks.length > 0 ? (
             <section className="space-y-4">
               <div className="rounded-2xl border border-[#E6ABA6] bg-[#F7DFDC]/75 px-5 py-4">
-                <h2 className="font-snack text-lg font-extrabold uppercase tracking-wide text-terracotta sm:text-xl">
+                <h2 className="font-snack text-lg font-extrabold uppercase tracking-wide text-terracotta-deep sm:text-xl">
                   5. Bánh Tráng Snack Đà Lạt
                 </h2>
                 <p className="mt-0.5 text-xs font-medium text-espresso/80 sm:text-sm">

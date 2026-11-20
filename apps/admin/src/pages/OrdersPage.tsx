@@ -1,6 +1,7 @@
 import {
   ICE_LEVEL_LABELS,
   OMSUA_BRANCHES,
+  ORDER_STATUSES,
   PAYMENT_METHOD_LABELS,
   SPICE_LEVEL_LABELS,
   SUGAR_LEVEL_LABELS,
@@ -19,6 +20,8 @@ import {
   useRef,
   useState,
 } from 'react';
+import { flushSync } from 'react-dom';
+import { useSearchParams } from 'react-router-dom';
 import {
   AppViewTransition,
   DirectionalPageTransition,
@@ -29,6 +32,52 @@ import { normalizeVietnameseSearch } from '../lib/text';
 type StatusFilter = 'all' | OrderStatus;
 
 const AUTO_REFRESH_INTERVAL_MS = 12_000;
+const PRINT_RESET_FALLBACK_MS = 60_000;
+
+const VALID_ORDER_STATUS_SET = new Set<string>(ORDER_STATUSES);
+const VALID_BRANCH_ID_SET = new Set<string>(
+  OMSUA_BRANCHES.map((branch) => branch.id),
+);
+
+function clampOrderStatus(raw: string | null): StatusFilter {
+  if (raw && VALID_ORDER_STATUS_SET.has(raw)) {
+    return raw as OrderStatus;
+  }
+  return 'all';
+}
+
+function clampBranchId(raw: string | null): string {
+  if (raw && VALID_BRANCH_ID_SET.has(raw)) {
+    return raw;
+  }
+  return '';
+}
+
+function clampCompactView(raw: string | null): boolean {
+  return raw === 'compact';
+}
+
+function buildOrderSearchParams(next: {
+  status: StatusFilter;
+  branchId: string;
+  q: string;
+  compact: boolean;
+}): URLSearchParams {
+  const params = new URLSearchParams();
+  if (next.status !== 'all') {
+    params.set('status', next.status);
+  }
+  if (next.branchId) {
+    params.set('branch', next.branchId);
+  }
+  if (next.q) {
+    params.set('q', next.q);
+  }
+  if (next.compact) {
+    params.set('view', 'compact');
+  }
+  return params;
+}
 
 const STATUS_FILTER_PILLS: ReadonlyArray<{
   value: StatusFilter;
@@ -172,8 +221,11 @@ function CancelActionControls({
 
 interface AdminOrderCardProps {
   order: OrderRecord;
+  isCompact: boolean;
+  isPrintActive: boolean;
   isUpdating: boolean;
   isConfirmingCancel: boolean;
+  onPrintOrder: (orderId: string) => void;
   onRequestCancel: (orderId: string) => void;
   onDismissCancel: () => void;
   onConfirmCancel: (orderId: string) => void;
@@ -182,8 +234,11 @@ interface AdminOrderCardProps {
 
 const AdminOrderCard = memo(function AdminOrderCard({
   order,
+  isCompact,
+  isPrintActive,
   isUpdating,
   isConfirmingCancel,
+  onPrintOrder,
   onRequestCancel,
   onDismissCancel,
   onConfirmCancel,
@@ -194,12 +249,21 @@ const AdminOrderCard = memo(function AdminOrderCard({
   return (
     <article
       data-testid={`order-card-${order.id}`}
-      className={`rounded-2xl border bg-surface-light p-5 shadow-paper-rest transition-colors sm:p-6 ${
+      data-print-active={isPrintActive ? 'true' : undefined}
+      className={`rounded-2xl border bg-surface-light shadow-paper-rest transition-colors ${
+        isCompact ? 'p-4' : 'p-5 sm:p-6'
+      } ${
         orderAge?.isOverdue
           ? 'border-terracotta/55 hover:border-terracotta'
           : 'border-[#DDD4C0] hover:border-[#CBBFA4]'
       }`}
     >
+      <div className="hidden print:mb-3 print:block print:border-b print:border-dashed print:border-[#29261D] print:pb-2">
+        <p className="font-display text-xs font-bold uppercase tracking-[0.16em] text-espresso">
+          Ốm Sữa Đà Lạt • Phiếu pha chế quầy bếp
+        </p>
+      </div>
+
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#E5DEC9] pb-4">
         <div>
           <div className="flex flex-wrap items-center gap-2.5">
@@ -239,15 +303,25 @@ const AdminOrderCard = memo(function AdminOrderCard({
           <p className="text-xs font-medium text-warm-muted tabular-nums">
             Tổng thanh toán ({order.totalItems} món)
           </p>
-          <p className="font-display text-xl font-bold text-terracotta tabular-nums">
+          <p className="font-display text-xl font-bold text-terracotta-deep tabular-nums">
             {formatVnd(order.grandTotal)}
           </p>
         </div>
       </div>
 
-      <div className="mt-4 grid gap-5 lg:grid-cols-12">
-        <div className="space-y-2 rounded-xl border border-[#E5DEC9] bg-canvas-cream/70 p-4 text-sm lg:col-span-5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-subhead-ochre">
+      <div
+        className={
+          isCompact
+            ? 'mt-3 space-y-3'
+            : 'mt-4 grid gap-5 lg:grid-cols-12'
+        }
+      >
+        <div
+          className={`space-y-2 rounded-xl border border-[#E5DEC9] bg-canvas-cream/70 p-4 text-sm ${
+            isCompact ? '' : 'lg:col-span-5'
+          }`}
+        >
+          <p className="text-xs font-semibold uppercase tracking-wider text-ochre-deep">
             Thông tin giao nhận
           </p>
           <p className="font-semibold text-espresso">
@@ -269,8 +343,8 @@ const AdminOrderCard = memo(function AdminOrderCard({
           ) : null}
         </div>
 
-        <div className="space-y-2.5 lg:col-span-7">
-          <p className="text-xs font-semibold uppercase tracking-wider text-subhead-ochre tabular-nums">
+        <div className={`space-y-2.5 ${isCompact ? '' : 'lg:col-span-7'}`}>
+          <p className="text-xs font-semibold uppercase tracking-wider text-ochre-deep tabular-nums">
             Chi tiết món ({order.items.length} dòng)
           </p>
           <ul className="divide-y divide-[#E5DEC9] rounded-xl border border-[#E5DEC9] bg-canvas-cream/50 px-4">
@@ -281,7 +355,7 @@ const AdminOrderCard = memo(function AdminOrderCard({
               >
                 <div>
                   <p className="font-editorial font-semibold text-espresso">
-                    <span className="mr-1.5 font-sans font-bold text-terracotta tabular-nums">
+                    <span className="mr-1.5 font-sans font-bold text-terracotta-deep tabular-nums">
                       {item.quantity}×
                     </span>
                     {item.productName}
@@ -310,82 +384,106 @@ const AdminOrderCard = memo(function AdminOrderCard({
         </div>
       </div>
 
-      {order.status === 'pending' ||
-      order.status === 'preparing' ||
-      order.status === 'delivering' ? (
-        <div className="mt-5 flex flex-wrap items-center justify-end gap-2.5 border-t border-[#E5DEC9] pt-4">
-          {order.status === 'pending' ? (
-            <>
-              <CancelActionControls
-                orderId={order.id}
-                isConfirming={isConfirmingCancel}
-                isUpdating={isUpdating}
-                onRequestCancel={onRequestCancel}
-                onDismissCancel={onDismissCancel}
-                onConfirmCancel={onConfirmCancel}
-              />
-              <button
-                type="button"
-                disabled={isUpdating}
-                onClick={() => onAdvanceStatus(order.id, 'preparing')}
-                className="min-h-11 rounded-xl bg-terracotta px-4 py-2.5 text-sm font-semibold text-surface-light shadow-xs transition hover:bg-[#C05C16] disabled:opacity-60"
-              >
-                Xác nhận pha chế
-              </button>
-            </>
-          ) : null}
+      <div
+        data-order-actions="true"
+        className="mt-4 flex flex-wrap items-center justify-between gap-2.5 border-t border-[#E5DEC9] pt-4"
+      >
+        <button
+          type="button"
+          onClick={() => onPrintOrder(order.id)}
+          className="min-h-11 rounded-xl border border-[#D4C9B0] bg-canvas-cream px-3.5 py-2 text-xs font-semibold text-espresso transition-colors hover:border-olive-primary hover:bg-card-butter/60 sm:text-sm"
+        >
+          In phiếu bếp
+        </button>
 
-          {order.status === 'preparing' ? (
-            <>
-              <CancelActionControls
-                orderId={order.id}
-                isConfirming={isConfirmingCancel}
-                isUpdating={isUpdating}
-                onRequestCancel={onRequestCancel}
-                onDismissCancel={onDismissCancel}
-                onConfirmCancel={onConfirmCancel}
-              />
-              <button
-                type="button"
-                disabled={isUpdating}
-                onClick={() => onAdvanceStatus(order.id, 'delivering')}
-                className="min-h-11 rounded-xl bg-terracotta px-4 py-2.5 text-sm font-semibold text-surface-light shadow-xs transition hover:bg-[#C05C16] disabled:opacity-60"
-              >
-                Giao hàng
-              </button>
-            </>
-          ) : null}
+        {order.status === 'pending' ||
+        order.status === 'preparing' ||
+        order.status === 'delivering' ? (
+          <div className="flex flex-wrap items-center justify-end gap-2.5">
+            {order.status === 'pending' ? (
+              <>
+                <CancelActionControls
+                  orderId={order.id}
+                  isConfirming={isConfirmingCancel}
+                  isUpdating={isUpdating}
+                  onRequestCancel={onRequestCancel}
+                  onDismissCancel={onDismissCancel}
+                  onConfirmCancel={onConfirmCancel}
+                />
+                <button
+                  type="button"
+                  disabled={isUpdating}
+                  onClick={() => onAdvanceStatus(order.id, 'preparing')}
+                  className="min-h-11 rounded-xl bg-terracotta-deep px-4 py-2.5 text-sm font-semibold text-surface-light shadow-xs transition-colors hover:bg-[#8C3D09] disabled:opacity-60"
+                >
+                  Xác nhận pha chế
+                </button>
+              </>
+            ) : null}
 
-          {order.status === 'delivering' ? (
-            <>
-              <CancelActionControls
-                orderId={order.id}
-                isConfirming={isConfirmingCancel}
-                isUpdating={isUpdating}
-                onRequestCancel={onRequestCancel}
-                onDismissCancel={onDismissCancel}
-                onConfirmCancel={onConfirmCancel}
-              />
-              <button
-                type="button"
-                disabled={isUpdating}
-                onClick={() => onAdvanceStatus(order.id, 'completed')}
-                className="min-h-11 rounded-xl bg-artichoke px-4 py-2.5 text-sm font-semibold text-surface-light shadow-xs transition hover:bg-[#66762F] disabled:opacity-60"
-              >
-                Hoàn tất
-              </button>
-            </>
-          ) : null}
-        </div>
-      ) : null}
+            {order.status === 'preparing' ? (
+              <>
+                <CancelActionControls
+                  orderId={order.id}
+                  isConfirming={isConfirmingCancel}
+                  isUpdating={isUpdating}
+                  onRequestCancel={onRequestCancel}
+                  onDismissCancel={onDismissCancel}
+                  onConfirmCancel={onConfirmCancel}
+                />
+                <button
+                  type="button"
+                  disabled={isUpdating}
+                  onClick={() => onAdvanceStatus(order.id, 'delivering')}
+                  className="min-h-11 rounded-xl bg-terracotta-deep px-4 py-2.5 text-sm font-semibold text-surface-light shadow-xs transition-colors hover:bg-[#8C3D09] disabled:opacity-60"
+                >
+                  Giao hàng
+                </button>
+              </>
+            ) : null}
+
+            {order.status === 'delivering' ? (
+              <>
+                <CancelActionControls
+                  orderId={order.id}
+                  isConfirming={isConfirmingCancel}
+                  isUpdating={isUpdating}
+                  onRequestCancel={onRequestCancel}
+                  onDismissCancel={onDismissCancel}
+                  onConfirmCancel={onConfirmCancel}
+                />
+                <button
+                  type="button"
+                  disabled={isUpdating}
+                  onClick={() => onAdvanceStatus(order.id, 'completed')}
+                  className="min-h-11 rounded-xl bg-artichoke-deep px-4 py-2.5 text-sm font-semibold text-surface-light shadow-xs transition-colors hover:bg-[#3D471A] disabled:opacity-60"
+                >
+                  Hoàn tất
+                </button>
+              </>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
     </article>
   );
 });
 
 export function OrdersPage() {
-  const [selectedBranchId, setSelectedBranchId] = useState<string>('');
-  const [selectedStatus, setSelectedStatus] = useState<StatusFilter>('all');
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedBranchId, setSelectedBranchId] = useState<string>(() =>
+    clampBranchId(searchParams.get('branch')),
+  );
+  const [selectedStatus, setSelectedStatus] = useState<StatusFilter>(() =>
+    clampOrderStatus(searchParams.get('status')),
+  );
+  const [searchQuery, setSearchQuery] = useState<string>(
+    () => searchParams.get('q') ?? '',
+  );
+  const [isCompactView, setIsCompactView] = useState<boolean>(() =>
+    clampCompactView(searchParams.get('view')),
+  );
+  const [printingOrderId, setPrintingOrderId] = useState<string | null>(null);
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -400,8 +498,93 @@ export function OrdersPage() {
   const inFlightMutationsRef = useRef<number>(0);
   const activeForegroundSeqRef = useRef<number>(0);
   const committedMutationsRef = useRef<Map<string, OrderRecord>>(new Map());
+  const printFallbackTimerRef = useRef<number | null>(null);
   const activeBranchRef = useRef<string>(selectedBranchId);
   activeBranchRef.current = selectedBranchId;
+
+  useEffect(() => {
+    const nextBranch = clampBranchId(searchParams.get('branch'));
+    const nextStatus = clampOrderStatus(searchParams.get('status'));
+    const nextQuery = searchParams.get('q') ?? '';
+    const nextCompact = clampCompactView(searchParams.get('view'));
+
+    setSelectedBranchId((prev) => (prev === nextBranch ? prev : nextBranch));
+    setSelectedStatus((prev) => (prev === nextStatus ? prev : nextStatus));
+    setSearchQuery((prev) => (prev === nextQuery ? prev : nextQuery));
+    setIsCompactView((prev) => (prev === nextCompact ? prev : nextCompact));
+
+    const canonical = buildOrderSearchParams({
+      status: nextStatus,
+      branchId: nextBranch,
+      q: nextQuery,
+      compact: nextCompact,
+    });
+    if (canonical.toString() !== searchParams.toString()) {
+      setSearchParams(canonical, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
+  useEffect(() => {
+    const handleAfterPrint = () => {
+      if (printFallbackTimerRef.current !== null) {
+        window.clearTimeout(printFallbackTimerRef.current);
+        printFallbackTimerRef.current = null;
+      }
+      setPrintingOrderId(null);
+    };
+
+    window.addEventListener('afterprint', handleAfterPrint);
+    return () => {
+      window.removeEventListener('afterprint', handleAfterPrint);
+      if (printFallbackTimerRef.current !== null) {
+        window.clearTimeout(printFallbackTimerRef.current);
+        printFallbackTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  const syncOrderUrl = useCallback(
+    (
+      overrides: Partial<{
+        status: StatusFilter;
+        branchId: string;
+        q: string;
+        compact: boolean;
+      }>,
+    ) => {
+      const nextParams = buildOrderSearchParams({
+        status: overrides.status ?? selectedStatus,
+        branchId: overrides.branchId ?? selectedBranchId,
+        q: overrides.q ?? searchQuery,
+        compact: overrides.compact ?? isCompactView,
+      });
+      setSearchParams(nextParams, { replace: true });
+    },
+    [
+      isCompactView,
+      searchQuery,
+      selectedBranchId,
+      selectedStatus,
+      setSearchParams,
+    ],
+  );
+
+  const handlePrintOrder = useCallback((orderId: string) => {
+    if (printFallbackTimerRef.current !== null) {
+      window.clearTimeout(printFallbackTimerRef.current);
+      printFallbackTimerRef.current = null;
+    }
+    flushSync(() => {
+      setPrintingOrderId(orderId);
+    });
+    if (typeof window !== 'undefined' && typeof window.print === 'function') {
+      window.print();
+    }
+    printFallbackTimerRef.current = window.setTimeout(() => {
+      setPrintingOrderId(null);
+      printFallbackTimerRef.current = null;
+    }, PRINT_RESET_FALLBACK_MS);
+  }, []);
 
   const loadOrders = useCallback(async (branchId: string) => {
     const seq = ++fetchSeqRef.current;
@@ -612,9 +795,12 @@ export function OrdersPage() {
   return (
     <DirectionalPageTransition>
       <div className="mx-auto max-w-6xl space-y-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
+        <div
+          data-print-hide="true"
+          className="flex flex-wrap items-start justify-between gap-4"
+        >
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-subhead-ochre">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ochre-deep">
               Điều phối quầy pha chế
             </p>
             <h1 className="mt-1 font-display text-2xl font-bold text-olive-primary sm:text-3xl">
@@ -626,17 +812,37 @@ export function OrdersPage() {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => void loadOrders(selectedBranchId)}
-            disabled={loading}
-            className="min-h-11 rounded-xl border border-[#D4C9B0] bg-surface-light px-4 py-2.5 text-sm font-semibold text-espresso transition hover:border-olive-primary hover:bg-card-butter/50 disabled:opacity-60"
-          >
-            {loading ? 'Đang tải…' : 'Làm mới'}
-          </button>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              type="button"
+              aria-pressed={isCompactView}
+              onClick={() => {
+                const nextCompact = !isCompactView;
+                setIsCompactView(nextCompact);
+                syncOrderUrl({ compact: nextCompact });
+              }}
+              className={`min-h-11 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors ${
+                isCompactView
+                  ? 'border-hero-espresso bg-hero-espresso text-surface-light shadow-xs'
+                  : 'border-[#D4C9B0] bg-surface-light text-espresso hover:border-olive-primary hover:bg-card-butter/50'
+              }`}
+            >
+              Chế độ Thẻ Bếp gọn
+            </button>
+
+            <button
+              type="button"
+              onClick={() => void loadOrders(selectedBranchId)}
+              disabled={loading}
+              className="min-h-11 rounded-xl border border-[#D4C9B0] bg-surface-light px-4 py-2.5 text-sm font-semibold text-espresso transition-colors hover:border-olive-primary hover:bg-card-butter/50 disabled:opacity-60"
+            >
+              {loading ? 'Đang tải…' : 'Làm mới'}
+            </button>
+          </div>
         </div>
 
         <section
+          data-admin-kpi="true"
           aria-label="Tổng quan đơn hàng"
           className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
         >
@@ -674,7 +880,10 @@ export function OrdersPage() {
           </div>
         </section>
 
-        <section className="space-y-4 rounded-2xl border border-[#DDD4C0] bg-surface-light p-4 shadow-xs sm:p-5">
+        <section
+          data-admin-toolbar="true"
+          className="space-y-4 rounded-2xl border border-[#DDD4C0] bg-surface-light p-4 shadow-xs sm:p-5"
+        >
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-1 items-center gap-2">
               <input
@@ -683,15 +892,22 @@ export function OrdersPage() {
                 type="search"
                 aria-label="Tìm kiếm đơn hàng"
                 value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
+                onChange={(event) => {
+                  const nextQ = event.target.value;
+                  setSearchQuery(nextQ);
+                  syncOrderUrl({ q: nextQ });
+                }}
                 placeholder="Tìm mã OM-…, tên khách, SĐT, món…"
                 className="min-h-11 w-full rounded-xl border border-[#D4C9B0] bg-canvas-cream px-3.5 py-2.5 text-base text-espresso placeholder:text-warm-muted focus:border-olive-primary focus:outline-none sm:text-sm"
               />
               {searchQuery.length > 0 ? (
                 <button
                   type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="min-h-11 shrink-0 rounded-xl border border-[#D4C9B0] bg-canvas-cream px-3.5 py-2 text-xs font-semibold text-espresso transition hover:border-olive-primary hover:bg-card-butter/60 sm:text-sm"
+                  onClick={() => {
+                    setSearchQuery('');
+                    syncOrderUrl({ q: '' });
+                  }}
+                  className="min-h-11 shrink-0 rounded-xl border border-[#D4C9B0] bg-canvas-cream px-3.5 py-2 text-xs font-semibold text-espresso transition-colors hover:border-olive-primary hover:bg-card-butter/60 sm:text-sm"
                 >
                   Xóa tìm
                 </button>
@@ -709,12 +925,22 @@ export function OrdersPage() {
                 id="branch-filter"
                 aria-label="Lọc theo chi nhánh"
                 value={selectedBranchId}
-                onChange={(event) => setSelectedBranchId(event.target.value)}
+                onChange={(event) => {
+                  const nextBranch = clampBranchId(event.target.value);
+                  setSelectedBranchId(nextBranch);
+                  syncOrderUrl({ branchId: nextBranch });
+                }}
                 className="min-h-11 w-full rounded-xl border border-[#D4C9B0] bg-canvas-cream px-3.5 py-2 text-base font-medium text-espresso focus:border-olive-primary focus:outline-none sm:text-sm md:w-64"
               >
-                <option value="">Tất cả chi nhánh</option>
+                <option value="" className="bg-surface-light text-espresso">
+                  Tất cả chi nhánh
+                </option>
                 {OMSUA_BRANCHES.map((branch) => (
-                  <option key={branch.id} value={branch.id}>
+                  <option
+                    key={branch.id}
+                    value={branch.id}
+                    className="bg-surface-light text-espresso"
+                  >
                     {branch.name}
                   </option>
                 ))}
@@ -734,11 +960,12 @@ export function OrdersPage() {
                   key={pill.value}
                   type="button"
                   aria-pressed={isSelected}
-                  onClick={() =>
+                  onClick={() => {
                     startTransition(() => {
                       setSelectedStatus(pill.value);
-                    })
-                  }
+                    });
+                    syncOrderUrl({ status: pill.value });
+                  }}
                   className={`relative min-h-11 overflow-hidden rounded-full px-3.5 py-2 text-xs font-semibold transition-colors sm:text-sm ${
                     isSelected
                       ? 'bg-hero-espresso text-surface-light shadow-xs'
@@ -790,13 +1017,21 @@ export function OrdersPage() {
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div
+            data-view-mode={isCompactView ? 'compact' : 'comfortable'}
+            className={
+              isCompactView ? 'grid gap-4 lg:grid-cols-2' : 'space-y-4'
+            }
+          >
             {filteredOrders.map((order) => (
               <AppViewTransition key={order.id} default="none">
                 <AdminOrderCard
                   order={order}
+                  isCompact={isCompactView}
+                  isPrintActive={printingOrderId === order.id}
                   isUpdating={updatingOrderIds.has(order.id)}
                   isConfirmingCancel={confirmingCancelOrderId === order.id}
+                  onPrintOrder={handlePrintOrder}
                   onRequestCancel={handleRequestCancel}
                   onDismissCancel={handleDismissCancel}
                   onConfirmCancel={handleConfirmCancel}

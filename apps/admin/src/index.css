@@ -12,9 +12,12 @@
   --color-espresso: #29261D;
   --color-warm-muted: #6B6255;
   --color-subhead-ochre: #A67C2E;
+  --color-ochre-deep: #805B1A;
   --color-terracotta: #D96B1E;
+  --color-terracotta-deep: #A84B0D;
   --color-coral-sketch: #E07D77;
   --color-artichoke: #7A8B3B;
+  --color-artichoke-deep: #4D5922;
 
   --font-display: "Fraunces", Georgia, serif;
   --font-editorial: "Lora", Georgia, serif;
@@ -180,5 +183,47 @@ select {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  @page {
+    margin: 10mm;
+  }
+
+  body {
+    background-color: #F7F4EC !important;
+    background-image: none !important;
+    color: #29261D !important;
+  }
+
+  aside,
+  header,
+  [data-admin-toolbar],
+  [data-admin-kpi],
+  [data-order-actions],
+  [data-print-hide],
+  article[data-testid^="order-card-"]:not([data-print-active="true"]) {
+    display: none !important;
+  }
+
+  #admin-main {
+    padding: 0 !important;
+  }
+
+  [data-view-mode] {
+    display: block !important;
+  }
+
+  article[data-print-active="true"] {
+    display: block !important;
+    max-width: 148mm;
+    margin: 0 auto !important;
+    padding: 14px !important;
+    border: 1.5px solid #29261D !important;
+    background-color: #F7F4EC !important;
+    color: #29261D !important;
+    box-shadow: none !important;
+    break-inside: avoid;
   }
 }

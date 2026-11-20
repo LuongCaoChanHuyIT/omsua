@@ -45,7 +45,7 @@ export function SettingsPage() {
     <DirectionalPageTransition>
       <div className="mx-auto max-w-4xl space-y-6">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-subhead-ochre">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ochre-deep">
           Cấu hình &amp; Kết nối dịch vụ
         </p>
         <h1 className="mt-1 font-display text-2xl font-bold text-olive-primary sm:text-3xl">
@@ -121,12 +121,12 @@ export function SettingsPage() {
             <dt className="font-medium text-warm-muted">
               Tài liệu OpenAPI (Swagger)
             </dt>
-            <dd className="font-mono font-semibold text-terracotta">
+            <dd className="font-mono font-semibold text-terracotta-deep">
               <a
                 href={swaggerUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex min-h-11 items-center underline decoration-terracotta/50 underline-offset-4 transition hover:text-olive-primary"
+                className="inline-flex min-h-11 items-center underline decoration-terracotta-deep/50 underline-offset-4 transition-colors hover:text-olive-primary"
               >
                 {swaggerUrl}
               </a>

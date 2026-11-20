@@ -157,7 +157,7 @@ export function BranchesPage() {
       <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-subhead-ochre">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ochre-deep">
             Đà Lạt &amp; Đức Trọng • Lâm Đồng
           </p>
           <h1 className="mt-1 font-display text-2xl font-bold text-olive-primary sm:text-3xl">
@@ -203,7 +203,7 @@ export function BranchesPage() {
           <p className="text-xs font-semibold uppercase tracking-wider text-olive-primary">
             Đơn đang xử lý
           </p>
-          <p className="mt-1 font-display text-2xl font-bold text-terracotta tabular-nums">
+          <p className="mt-1 font-display text-2xl font-bold text-terracotta-deep tabular-nums">
             {chainStats.activeOrders}
           </p>
         </div>
@@ -313,7 +313,7 @@ export function BranchesPage() {
                   <dt className="text-xs font-semibold uppercase tracking-wider text-olive-primary">
                     Đang xử lý
                   </dt>
-                  <dd className="mt-1 font-display text-lg font-bold text-terracotta tabular-nums">
+                  <dd className="mt-1 font-display text-lg font-bold text-terracotta-deep tabular-nums">
                     {stats.activeOrders}
                   </dd>
                 </div>

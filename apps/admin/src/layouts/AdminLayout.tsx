@@ -61,7 +61,7 @@ export function AdminLayout() {
               className={({ isActive }) =>
                 `inline-flex min-h-11 items-center rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-colors ${
                   isActive
-                    ? 'bg-terracotta text-surface-light shadow-sm'
+                    ? 'bg-terracotta-deep text-surface-light shadow-sm'
                     : 'text-[#DDD6C5] hover:bg-[#3A3528] hover:text-surface-light'
                 }`
               }
