@@ -139,4 +139,80 @@ describe('DalatMorningMistCanvas seeded flow-field & a11y safety', () => {
       host.remove();
     }
   });
+
+  it('responds to pointer-breeze deflection without calling getBoundingClientRect and stays inert under prefers-reduced-motion', () => {
+    vi.useFakeTimers();
+    try {
+      const rectSpy = vi
+        .spyOn(Element.prototype, 'getBoundingClientRect')
+        .mockReturnValue({
+          x: 0,
+          y: 0,
+          width: 0,
+          height: 0,
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          toJSON: () => ({}),
+        } as DOMRect);
+
+      const moveToPoints: Array<[number, number]> = [];
+      const mockCtx = {
+        clearRect: vi.fn(),
+        beginPath: vi.fn(),
+        moveTo: vi.fn((x: number, y: number) => {
+          moveToPoints.push([x, y]);
+        }),
+        lineTo: vi.fn(),
+        stroke: vi.fn(),
+        arc: vi.fn(),
+        fill: vi.fn(),
+        strokeStyle: '',
+        fillStyle: '',
+        lineWidth: 1,
+      } as unknown as CanvasRenderingContext2D;
+
+      vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(
+        (() => mockCtx) as unknown as typeof HTMLCanvasElement.prototype.getContext,
+      );
+
+      let latestRaf: FrameRequestCallback | null = null;
+      vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
+        latestRaf = cb;
+        return 1;
+      });
+
+      // Baseline frame without pointer breeze
+      const baseline = render(<DalatMorningMistCanvas seed={2017} />);
+      vi.advanceTimersByTime(150);
+      latestRaf!(16);
+      const baselineFirstPoint = moveToPoints[0]!;
+      baseline.unmount();
+
+      // Active pointer-breeze frame
+      moveToPoints.length = 0;
+      latestRaf = null;
+      const { container, unmount } = render(
+        <div data-testid="mist-host">
+          <DalatMorningMistCanvas seed={2017} />
+        </div>,
+      );
+      const canvas = container.querySelector('canvas')!;
+      fireEvent.pointerMove(canvas, { clientX: 580, clientY: 40 });
+      expect(canvas).toHaveAttribute('data-breeze-active', 'true');
+
+      vi.advanceTimersByTime(150);
+      latestRaf!(16);
+      const breezedFirstPoint = moveToPoints[0]!;
+
+      expect(breezedFirstPoint[0]).not.toBeCloseTo(baselineFirstPoint[0], 5);
+      fireEvent.pointerLeave(canvas);
+      expect(canvas).toHaveAttribute('data-breeze-active', 'false');
+      expect(rectSpy).not.toHaveBeenCalled();
+      unmount();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

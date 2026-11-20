@@ -1,6 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from 'react';
 
 export interface DalatMorningMistCanvasProps {
   seed?: number;
@@ -58,10 +64,65 @@ export function DalatMorningMistCanvas({
   defaultPaused = false,
 }: DalatMorningMistCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const hostSizeRef = useRef<{ width: number; height: number }>({
+    width: 640,
+    height: 360,
+  });
+  const breezeRef = useRef<{
+    targetX: number;
+    targetY: number;
+    currentX: number;
+    currentY: number;
+  }>({
+    targetX: 0,
+    targetY: 0,
+    currentX: 0,
+    currentY: 0,
+  });
   const [isPaused, setIsPaused] = useState<boolean>(defaultPaused);
   const [prefersReducedMotion, setPrefersReducedMotion] =
     useState<boolean>(false);
   const [isInView, setIsInView] = useState<boolean>(true);
+
+  const applyPointerBreeze = useCallback(
+    (rawX: number, rawY: number) => {
+      if (isPaused || prefersReducedMotion) {
+        return;
+      }
+      const { width, height } = hostSizeRef.current;
+      const nx = Math.max(-1, Math.min(1, (rawX / width - 0.5) * 2));
+      const ny = Math.max(-1, Math.min(1, (rawY / height - 0.5) * 2));
+      breezeRef.current.targetX = nx;
+      breezeRef.current.targetY = ny;
+      canvasRef.current?.setAttribute('data-breeze-active', 'true');
+    },
+    [isPaused, prefersReducedMotion],
+  );
+
+  const clearPointerBreeze = useCallback(() => {
+    breezeRef.current.targetX = 0;
+    breezeRef.current.targetY = 0;
+    canvasRef.current?.setAttribute('data-breeze-active', 'false');
+  }, []);
+
+  const handleCanvasPointerMove = useCallback(
+    (event: ReactPointerEvent<HTMLCanvasElement>) => {
+      const nativeEvt = event.nativeEvent as PointerEvent & {
+        offsetX?: number;
+        offsetY?: number;
+      };
+      const rawX =
+        typeof nativeEvt.offsetX === 'number' && nativeEvt.offsetX !== 0
+          ? nativeEvt.offsetX
+          : event.clientX;
+      const rawY =
+        typeof nativeEvt.offsetY === 'number' && nativeEvt.offsetY !== 0
+          ? nativeEvt.offsetY
+          : event.clientY;
+      applyPointerBreeze(rawX, rawY);
+    },
+    [applyPointerBreeze],
+  );
 
   useEffect(() => {
     if (
@@ -112,6 +173,63 @@ export function DalatMorningMistCanvas({
   }, [prefersReducedMotion]);
 
   useEffect(() => {
+    const canvas = canvasRef.current;
+    const hostEl = canvas?.parentElement ?? canvas;
+    if (!hostEl || prefersReducedMotion || isPaused) {
+      breezeRef.current.targetX = 0;
+      breezeRef.current.targetY = 0;
+      canvas?.setAttribute('data-breeze-active', 'false');
+      return;
+    }
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (
+      typeof window !== 'undefined' &&
+      typeof window.ResizeObserver === 'function'
+    ) {
+      resizeObserver = new window.ResizeObserver((entries) => {
+        const entry = entries[0];
+        if (entry) {
+          hostSizeRef.current = {
+            width: Math.max(1, entry.contentRect.width || 640),
+            height: Math.max(1, entry.contentRect.height || 360),
+          };
+        }
+      });
+      resizeObserver.observe(hostEl);
+    }
+
+    const onHostPointerMove = (event: PointerEvent) => {
+      const rawX =
+        typeof event.offsetX === 'number' && event.offsetX !== 0
+          ? event.offsetX
+          : event.clientX;
+      const rawY =
+        typeof event.offsetY === 'number' && event.offsetY !== 0
+          ? event.offsetY
+          : event.clientY;
+      applyPointerBreeze(rawX, rawY);
+    };
+
+    const onHostPointerLeave = () => {
+      clearPointerBreeze();
+    };
+
+    hostEl.addEventListener('pointermove', onHostPointerMove, {
+      passive: true,
+    });
+    hostEl.addEventListener('pointerleave', onHostPointerLeave, {
+      passive: true,
+    });
+
+    return () => {
+      resizeObserver?.disconnect();
+      hostEl.removeEventListener('pointermove', onHostPointerMove);
+      hostEl.removeEventListener('pointerleave', onHostPointerLeave);
+    };
+  }, [applyPointerBreeze, clearPointerBreeze, isPaused, prefersReducedMotion]);
+
+  useEffect(() => {
     const syncReducedMotion =
       typeof window !== 'undefined' &&
       typeof window.matchMedia === 'function' &&
@@ -153,20 +271,35 @@ export function DalatMorningMistCanvas({
     const renderFrame = () => {
       ctx.clearRect(0, 0, width, height);
       tick += 0.012;
+      const breeze = breezeRef.current;
+      breeze.currentX += (breeze.targetX - breeze.currentX) * 0.14;
+      breeze.currentY += (breeze.targetY - breeze.currentY) * 0.14;
+      const breezeDriftX = breeze.currentX * 0.85;
+      const breezeDriftY = breeze.currentY * 0.55;
 
       for (let i = 0; i < particles.length; i += 1) {
         const p = particles[i]!;
         const wave =
           Math.sin(p.x * 0.007 + tick + p.phase) * 0.5 +
-          Math.cos(p.y * 0.011 - tick * 0.7) * 0.35;
-        p.x = (p.x + Math.cos(wave) * p.speed + width) % width;
-        p.y = (p.y + Math.sin(wave) * p.speed * 0.65 + height) % height;
+          Math.cos(p.y * 0.011 - tick * 0.7) * 0.35 +
+          breeze.currentX * 0.22;
+        const phylloDriftX = Math.cos(p.phase + tick * 0.8) * 0.06;
+        const phylloDriftY = Math.sin(p.phase + tick * 0.8) * 0.04;
+        const vx = Math.cos(wave) * p.speed + breezeDriftX + phylloDriftX;
+        const vy =
+          Math.sin(wave) * p.speed * 0.65 + breezeDriftY + phylloDriftY;
+
+        p.x = (p.x + vx + width) % width;
+        p.y = (p.y + vy + height) % height;
 
         ctx.beginPath();
         ctx.strokeStyle = p.color;
         ctx.lineWidth = p.radius * 0.9;
         ctx.moveTo(p.x, p.y);
-        ctx.lineTo(p.x - Math.cos(wave) * 18, p.y - Math.sin(wave) * 9);
+        ctx.lineTo(
+          p.x - (Math.cos(wave) + breeze.currentX * 0.45) * 18,
+          p.y - (Math.sin(wave) + breeze.currentY * 0.35) * 9,
+        );
         ctx.stroke();
 
         ctx.beginPath();
@@ -252,6 +385,9 @@ export function DalatMorningMistCanvas({
           width={640}
           height={360}
           aria-hidden="true"
+          data-breeze-active="false"
+          onPointerMove={handleCanvasPointerMove}
+          onPointerLeave={clearPointerBreeze}
           className={`pointer-events-none absolute inset-0 h-full w-full opacity-75 ${className}`}
         />
       )}

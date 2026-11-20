@@ -308,5 +308,24 @@ describe('web config & HomePage Storefront SSR consistency', () => {
     expect(playwrightSource).not.toMatch(
       /(#fff\b|#ffffff\b|#000\b|#000000\b|rgb\(\s*(255\s*,\s*255\s*,\s*255|0\s*,\s*0\s*,\s*0))/i,
     );
+
+    const posterScriptSource = readFileSync(posterScriptPath, 'utf8');
+    expect(posterScriptSource).not.toMatch(
+      /(#fff\b|#ffffff\b|#000\b|#000000\b|rgb\(\s*(255\s*,\s*255\s*,\s*255|0\s*,\s*0\s*,\s*0))/i,
+    );
+
+    const posterPdfPath = path.join(
+      repoRoot,
+      'apps',
+      'web',
+      'public',
+      'brand',
+      'omsua-botanical-menu-poster.pdf',
+    );
+    expect(existsSync(posterPdfPath)).toBe(true);
+    const pdfRaw = readFileSync(posterPdfPath, 'latin1');
+    expect(pdfRaw.startsWith('%PDF-')).toBe(true);
+    const pdfPages = pdfRaw.match(/\/Type\s*\/Page\b/g) ?? [];
+    expect(pdfPages.length).toBeGreaterThanOrEqual(2);
   });
 });
