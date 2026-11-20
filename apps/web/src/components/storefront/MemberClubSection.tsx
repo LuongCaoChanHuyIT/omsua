@@ -37,7 +37,7 @@ function readSavedMemberProfile(): SavedMemberProfile | null {
         favoriteDrink:
           typeof parsed.favoriteDrink === 'string' && parsed.favoriteDrink
             ? parsed.favoriteDrink
-            : 'Trà Sữa Atiso',
+            : 'Dòng Trà Sữa Atiso nguyên bản',
         joinedAt:
           typeof parsed.joinedAt === 'string'
             ? parsed.joinedAt
@@ -55,7 +55,9 @@ export function MemberClubSection({
 }: MemberClubSectionProps = {}) {
   const [nameInput, setNameInput] = useState<string>('');
   const [phoneInput, setPhoneInput] = useState<string>('');
-  const [favoriteDrink, setFavoriteDrink] = useState<string>('Trà Sữa Atiso');
+  const [favoriteDrink, setFavoriteDrink] = useState<string>(
+    'Dòng Trà Sữa Atiso nguyên bản',
+  );
   const [savedProfile, setSavedProfile] = useState<SavedMemberProfile | null>(
     null,
   );
@@ -243,12 +245,11 @@ export function MemberClubSection({
                 className="min-h-11 w-full rounded-xl border border-olive-primary/20 bg-canvas-cream px-3.5 py-2 text-base font-medium text-espresso focus:border-olive-primary focus:outline-none sm:text-sm"
               >
                 {[
-                  'Trà Sữa Atiso',
-                  'Trà Sữa Atiso Chuối',
-                  'Trà Quýt Nhài Cát Tường',
-                  'Sữa Tươi Kem Trứng Nướng',
-                  'Cold Brew Me',
-                  'Bánh Tráng Trộn Tóp Mỡ',
+                  'Dòng Trà Sữa Atiso nguyên bản',
+                  'Dòng Trà Trái Cây & Kombucha',
+                  'Dòng Sữa Tươi Kem Trứng',
+                  'Dòng Cà Phê Phin Cầu Đất',
+                  'Quầy Bánh Tráng Nhà Ốm',
                 ].map((drinkName) => (
                   <option
                     key={drinkName}

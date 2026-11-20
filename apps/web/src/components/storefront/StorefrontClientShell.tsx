@@ -28,6 +28,7 @@ import { readRecentOrders } from '@/lib/recent-orders';
 import { CartProvider, useCart } from '@/store/cart-store';
 import { BrandFooter } from './BrandFooter';
 import { BrandStorySection } from './BrandStorySection';
+import { CareersAndFranchiseSection } from './CareersAndFranchiseSection';
 import {
   DrinkMenuSection,
   FLAVOR_MOOD_OPTIONS,
@@ -35,9 +36,12 @@ import {
 } from './DrinkMenuSection';
 import { FanpageGallerySection } from './FanpageGallerySection';
 import { HeroSpotlight } from './HeroSpotlight';
+import { MemberClubSection } from './MemberClubSection';
+import { NewsSeasonSection } from './NewsSeasonSection';
 import { SnackMenuSection } from './SnackMenuSection';
 import { StorefrontHeader } from './StorefrontHeader';
 import { ToppingStripSection } from './ToppingStripSection';
+import type { NewsCategoryFilter } from './header-nav-config';
 
 export interface StorefrontClientShellProps {
   initialCatalog: CatalogPayload;
@@ -96,6 +100,8 @@ function StorefrontShellInner({
     'all',
   );
   const [activeMood, setActiveMood] = useState<FlavorMoodId>('all');
+  const [activeNewsCategory, setActiveNewsCategory] =
+    useState<NewsCategoryFilter>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [preferIllustration, setPreferIllustration] = useState<boolean>(false);
   const [activeSpice, setActiveSpice] = useState<SpiceLevel>('cay-vua');
@@ -108,11 +114,16 @@ function StorefrontShellInner({
   const [reorderNotice, setReorderNotice] = useState<string | null>(null);
   const [isOrderLookupOpen, setIsOrderLookupOpen] = useState<boolean>(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState<boolean>(false);
+  const [isNewsModalOpen, setIsNewsModalOpen] = useState<boolean>(false);
   const [trackedOrder, setTrackedOrder] = useState<OrderRecord | null>(null);
   const [recentOrderCount, setRecentOrderCount] = useState<number>(0);
   const [hasHydratedUrl, setHasHydratedUrl] = useState<boolean>(false);
   const hasOpenOverlay = Boolean(
-    activeProductForModal || isCartOpen || isOrderLookupOpen || isLightboxOpen,
+    activeProductForModal ||
+      isCartOpen ||
+      isOrderLookupOpen ||
+      isLightboxOpen ||
+      isNewsModalOpen,
   );
 
   useEffect(() => {
@@ -198,7 +209,8 @@ function StorefrontShellInner({
     (totals.totalItems > 0 || unavailableItems.length > 0) &&
     !isCartOpen &&
     !activeProductForModal &&
-    !isOrderLookupOpen;
+    !isOrderLookupOpen &&
+    !isNewsModalOpen;
 
   const openCartDrawer = useCallback(() => {
     setIsCartOpen(true);
@@ -320,6 +332,18 @@ function StorefrontShellInner({
           setIsOrderLookupOpen(true);
           void onRefreshCatalog();
         }}
+        onSelectDrinkCategory={(category) => {
+          startTransition(() => {
+            setActiveCategory(category);
+            setActiveMood('all');
+            setSearchQuery('');
+          });
+        }}
+        onSelectNewsCategory={(newsCat) => {
+          startTransition(() => {
+            setActiveNewsCategory(newsCat);
+          });
+        }}
         suppressViewTransition={hasOpenOverlay}
       />
 
@@ -400,6 +424,20 @@ function StorefrontShellInner({
         <BrandStorySection />
 
         <FanpageGallerySection onLightboxOpenChange={setIsLightboxOpen} />
+
+        <NewsSeasonSection
+          activeCategory={activeNewsCategory}
+          onChangeCategory={(nextCat) => {
+            startTransition(() => {
+              setActiveNewsCategory(nextCat);
+            });
+          }}
+          onModalOpenChange={setIsNewsModalOpen}
+        />
+
+        <MemberClubSection recentOrdersVersion={recentOrderCount} />
+
+        <CareersAndFranchiseSection branches={branches} />
       </main>
 
       <BrandFooter

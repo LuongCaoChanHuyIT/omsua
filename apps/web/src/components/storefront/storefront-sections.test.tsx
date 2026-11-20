@@ -831,4 +831,86 @@ describe('Storefront Sections', () => {
     expect(mobileMenuBtn).toHaveAttribute('aria-expanded', 'true');
     expect(container.querySelector('#mobile-flagship-nav')).not.toBeNull();
   });
+
+  it('wires StorefrontClientShell flagship header category/news jumps, resets conflicting mood/search filters, mounts all 4 brand hubs, and protects hub inputs from / shortcut', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockRejectedValue(new Error('offline fallback')),
+    );
+    try {
+      const { container } = render(
+        <StorefrontClientShell
+          initialCatalog={getDefaultCatalog()}
+          initialBranches={[...OMSUA_BRANCHES]}
+        />,
+      );
+
+      for (const anchorId of [
+        '#topping',
+        '#tin-tuc',
+        '#thanh-vien',
+        '#tuyen-dung',
+        '#nhuong-quyen',
+        '#chi-nhanh',
+      ]) {
+        expect(container.querySelector(anchorId)).not.toBeNull();
+      }
+
+      // Activate a conflicting mood ("dam-vi") and search query ("flan")
+      const drinkMenuEl = container.querySelector('#thuc-don') as HTMLElement;
+      const searchbox = screen.getByRole('searchbox', {
+        name: /Tìm nhanh thức uống/i,
+      });
+      fireEvent.click(screen.getByRole('button', { name: /Đậm trà béo mịn/i }));
+      fireEvent.change(searchbox, { target: { value: 'flan' } });
+      expect(
+        within(drinkMenuEl).queryByText('Trà Dâu Tằm Đà Lạt'),
+      ).not.toBeInTheDocument();
+
+      // Open SẢN PHẨM in header and select "2. Giữ Dáng — Fruit Tea & Kombucha" -> resets mood & search and renders Fruit Tea
+      fireEvent.click(screen.getByRole('button', { name: 'SẢN PHẨM' }));
+      fireEvent.click(
+        screen.getByRole('link', {
+          name: /2\. Giữ Dáng — Fruit Tea & Kombucha/i,
+        }),
+      );
+      expect(searchbox).toHaveValue('');
+      expect(
+        await screen.findByRole('button', { name: 'Tất cả vị', pressed: true }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /Giữ Dáng \(6\)/i }),
+      ).toHaveAttribute('aria-pressed', 'true');
+      expect(
+        within(drinkMenuEl).getByText('Trà Dâu Tằm Đà Lạt'),
+      ).toBeInTheDocument();
+
+      // Open TIN TỨC in header and select "Ưu đãi & Sự kiện tại quán" -> syncs NewsSeasonSection filter
+      fireEvent.click(screen.getByRole('button', { name: 'TIN TỨC' }));
+      fireEvent.click(
+        screen.getByRole('link', { name: /Ưu đãi & Sự kiện tại quán/i }),
+      );
+      const newsSection = container.querySelector('#tin-tuc') as HTMLElement;
+      expect(
+        within(newsSection).getByRole('button', {
+          name: 'Ưu đãi & Sự kiện',
+          pressed: true,
+        }),
+      ).toBeInTheDocument();
+
+      // Pressing "/" inside #thanh-vien phone input must NOT hijack focus to drink searchbox
+      const memberPhoneInput = screen.getByLabelText(/Số điện thoại tích điểm/i);
+      memberPhoneInput.focus();
+      const slashInMemberInput = new KeyboardEvent('keydown', {
+        key: '/',
+        bubbles: true,
+        cancelable: true,
+      });
+      memberPhoneInput.dispatchEvent(slashInMemberInput);
+      expect(slashInMemberInput.defaultPrevented).toBe(false);
+      expect(document.activeElement).toBe(memberPhoneInput);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
 });
