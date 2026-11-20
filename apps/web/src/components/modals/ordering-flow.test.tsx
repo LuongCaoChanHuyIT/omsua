@@ -1710,4 +1710,190 @@ describe('Interactive Customizer Modal & Cart Checkout Flow', () => {
       );
     });
   });
+
+  it('updates live layered cup cross-section SVG (size, sugar meniscus, ice cubes, topping layer) in DrinkCustomizerModal', () => {
+    render(
+      <DrinkCustomizerModal
+        product={traSuaAtiso}
+        toppings={catalog.toppings}
+        onClose={vi.fn()}
+        onAddToCart={vi.fn()}
+      />,
+    );
+
+    const cupSvg = screen.getByTestId('customizer-cup-svg');
+    expect(cupSvg).toHaveAttribute('data-cup-size', 'M');
+    expect(cupSvg).toHaveAttribute('data-sugar-level', '70');
+    expect(cupSvg).toHaveAttribute('data-ice-cubes', '5');
+    expect(cupSvg).toHaveAttribute('data-topping-count', '0');
+
+    fireEvent.click(screen.getByRole('radio', { name: /Size L/i }));
+    fireEvent.click(screen.getByRole('button', { name: '30% đường' }));
+    fireEvent.click(screen.getByRole('button', { name: '0% đá riêng' }));
+    fireEvent.click(
+      screen.getByRole('checkbox', { name: /Trân châu đen nấu mật/i }),
+    );
+    fireEvent.click(
+      screen.getByRole('checkbox', { name: /Khúc bạch hạnh nhân/i }),
+    );
+
+    expect(cupSvg).toHaveAttribute('data-cup-size', 'L');
+    expect(cupSvg).toHaveAttribute('data-sugar-level', '30');
+    expect(cupSvg).toHaveAttribute('data-ice-cubes', '0');
+    expect(cupSvg).toHaveAttribute('data-topping-count', '2');
+  });
+
+  it('restores available items via 1-click Đặt lại giỏ món này in OrderLookupModal and warns gracefully when all items in past order are sold out', async () => {
+    const pastOrder: OrderRecord = {
+      id: 'ord-reorder-1',
+      orderCode: 'OM-20261120-RE01',
+      branchId: 'cs2-hem-33-nct',
+      branchName: 'Cơ sở 2 — Hẻm 33 Nguyễn Công Trứ',
+      customerName: 'Trần Minh',
+      customerPhone: '0945396117',
+      deliveryAddress: '10 Hẻm 33 Nguyễn Công Trứ, Đà Lạt',
+      paymentMethod: 'cod',
+      status: 'completed',
+      items: [
+        {
+          canonicalKey: 'tra-sua-atiso|size:M|sugar:50|ice:30|toppings:tran-chau-den',
+          productId: 'tra-sua-atiso',
+          productName: 'Trà Sữa Atiso',
+          kind: 'drink',
+          size: 'M',
+          sizeLabel: 'Size M (Chuẩn)',
+          quantity: 2,
+          sugarLevel: '50',
+          iceLevel: '30',
+          toppings: [
+            {
+              id: 'tran-chau-den',
+              name: 'Trân châu đen nấu mật',
+              shortName: 'Trân châu đen',
+              price: 10000,
+            },
+          ],
+          basePrice: 45000,
+          unitPrice: 55000,
+          lineTotal: 110000,
+        },
+        {
+          canonicalKey: 'com-chay-cha-bong|size:STD|spice:cay-vua',
+          productId: 'com-chay-cha-bong',
+          productName: 'Cơm Cháy Chà Bông',
+          kind: 'snack',
+          size: 'STD',
+          sizeLabel: 'Phần tiêu chuẩn',
+          quantity: 1,
+          spiceLevel: 'cay-vua',
+          toppings: [],
+          basePrice: 45000,
+          unitPrice: 45000,
+          lineTotal: 45000,
+        },
+      ],
+      subtotal: 155000,
+      shippingFee: 0,
+      ecoFee: 0,
+      grandTotal: 155000,
+      totalItems: 3,
+      createdAt: '2026-11-20T01:00:00.000Z',
+      updatedAt: '2026-11-20T01:15:00.000Z',
+    };
+
+    // Case 1: com-chay-cha-bong is sold out, tra-sua-atiso is available -> adds tra-sua-atiso (x2) and opens CartCheckoutDrawer
+    const partialCatalog = {
+      ...catalog,
+      products: catalog.products.map((p) =>
+        p.id === 'com-chay-cha-bong' ? { ...p, isAvailable: false } : p,
+      ),
+    };
+    vi.spyOn(webApi, 'fetchCatalog').mockResolvedValue({
+      catalog: partialCatalog,
+      isFallback: false,
+    });
+    vi.spyOn(webApi, 'fetchOrderByCode').mockResolvedValue({
+      ok: true,
+      order: pastOrder,
+    });
+
+    const { unmount } = render(
+      <StorefrontClientShell
+        initialCatalog={partialCatalog}
+        initialBranches={OMSUA_BRANCHES}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Đơn đã đặt' }));
+    const lookupDialog = screen.getByRole('dialog');
+    fireEvent.change(
+      within(lookupDialog).getByPlaceholderText(/OM-20261119-AB12/i),
+      { target: { value: 'OM-20261120-RE01' } },
+    );
+    fireEvent.click(
+      within(lookupDialog).getByRole('button', { name: 'Tra cứu đơn' }),
+    );
+
+    const reorderBtn = await within(lookupDialog).findByRole('button', {
+      name: 'Đặt lại giỏ món này',
+    });
+    fireEvent.click(reorderBtn);
+
+    const cartDialog = await screen.findByRole('dialog', {
+      name: /Giỏ hàng của bạn/i,
+    });
+    expect(within(cartDialog).getByText('Trà Sữa Atiso')).toBeInTheDocument();
+    expect(within(cartDialog).getByText(/SL: 2 ly/i)).toBeInTheDocument();
+    expect(
+      within(cartDialog).queryByText('Cơm Cháy Chà Bông'),
+    ).not.toBeInTheDocument();
+
+    unmount();
+    window.localStorage.clear();
+
+    // Case 2: ALL items in pastOrder are sold out -> keeps OrderLookupModal open and displays polite warning
+    const allSoldOutCatalog = {
+      ...catalog,
+      products: catalog.products.map((p) =>
+        p.id === 'tra-sua-atiso' || p.id === 'com-chay-cha-bong'
+          ? { ...p, isAvailable: false }
+          : p,
+      ),
+    };
+    vi.spyOn(webApi, 'fetchCatalog').mockResolvedValue({
+      catalog: allSoldOutCatalog,
+      isFallback: false,
+    });
+
+    render(
+      <StorefrontClientShell
+        initialCatalog={allSoldOutCatalog}
+        initialBranches={OMSUA_BRANCHES}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Đơn đã đặt/i }));
+    const lookupDialog2 = screen.getByRole('dialog');
+    fireEvent.change(
+      within(lookupDialog2).getByPlaceholderText(/OM-20261119-AB12/i),
+      { target: { value: 'OM-20261120-RE01' } },
+    );
+    fireEvent.click(
+      within(lookupDialog2).getByRole('button', { name: 'Tra cứu đơn' }),
+    );
+
+    const reorderBtn2 = await within(lookupDialog2).findByRole('button', {
+      name: 'Đặt lại giỏ món này',
+    });
+    fireEvent.click(reorderBtn2);
+
+    expect(
+      within(lookupDialog2).getByText(
+        /Các món trong đơn cũ hiện đang tạm hết nên chưa thể đặt lại/i,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('dialog', { name: /Giỏ hàng của bạn/i }),
+    ).not.toBeInTheDocument();
+  });
 });

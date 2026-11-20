@@ -87,6 +87,7 @@ function StorefrontShellInner({
   const {
     selectedBranch,
     setSelectedBranchId,
+    addItem,
     totals,
     unavailableItems,
   } = useCart();
@@ -202,6 +203,78 @@ function StorefrontShellInner({
     setIsCartOpen(true);
     void onRefreshCatalog();
   }, [onRefreshCatalog]);
+
+  const handleReorderFromLookup = useCallback(
+    (order: OrderRecord): { addedCount: number; skippedCount: number } => {
+      const availableProducts = new Map(
+        catalog.products
+          .filter((product) => product.isAvailable)
+          .map((product) => [product.id, product]),
+      );
+      const availableToppingIds = new Set(
+        catalog.toppings
+          .filter((topping) => topping.isAvailable)
+          .map((topping) => topping.id),
+      );
+
+      let addedCount = 0;
+      let skippedCount = 0;
+
+      for (const item of order.items) {
+        const product = availableProducts.get(item.productId);
+        if (!product) {
+          skippedCount += 1;
+          continue;
+        }
+        const resolvedSize = product.sizes.some(
+          (option) => option.size === item.size,
+        )
+          ? item.size
+          : product.sizes[0]!.size;
+
+        if (product.kind === 'snack') {
+          addItem({
+            productId: product.id,
+            quantity: item.quantity,
+            size: resolvedSize,
+            spiceLevel: item.spiceLevel ?? 'cay-vua',
+          });
+        } else {
+          const validToppings = item.toppings
+            .map((topping) => topping.id)
+            .filter((id) => availableToppingIds.has(id));
+          addItem({
+            productId: product.id,
+            quantity: item.quantity,
+            size: resolvedSize,
+            sugarLevel: item.sugarLevel ?? '70',
+            iceLevel: item.iceLevel ?? '70',
+            toppingIds: validToppings,
+          });
+        }
+        addedCount += 1;
+      }
+
+      if (addedCount > 0) {
+        if (branches.some((branch) => branch.id === order.branchId)) {
+          setSelectedBranchId(order.branchId);
+        }
+        setIsOrderLookupOpen(false);
+        setTrackedOrder(null);
+        openCartDrawer();
+      }
+
+      return { addedCount, skippedCount };
+    },
+    [
+      addItem,
+      branches,
+      catalog.products,
+      catalog.toppings,
+      openCartDrawer,
+      setSelectedBranchId,
+    ],
+  );
 
   return (
     <div
@@ -374,6 +447,7 @@ function StorefrontShellInner({
         apiBaseUrl={apiBaseUrl}
         initialOrder={trackedOrder}
         onOrderLoaded={syncRecentOrderCount}
+        onReorder={handleReorderFromLookup}
       />
     </div>
   );

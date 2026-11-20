@@ -38,6 +38,10 @@ export interface OrderLookupModalProps {
   initialOrder?: OrderRecord | null;
   fetchOrderByCodeFn?: FetchOrderByCodeHandler;
   onOrderLoaded?: (order: OrderRecord) => void;
+  onReorder?: (order: OrderRecord) => {
+    addedCount: number;
+    skippedCount: number;
+  };
 }
 
 const PROGRESS_STEPS: readonly OrderStatus[] = [
@@ -54,6 +58,7 @@ export function OrderLookupModal({
   initialOrder = null,
   fetchOrderByCodeFn,
   onOrderLoaded,
+  onReorder,
 }: OrderLookupModalProps) {
   const headingId = useId();
   const codeInputId = useId();
@@ -62,6 +67,7 @@ export function OrderLookupModal({
   const [recentOrders, setRecentOrders] = useState<RecentOrderSummary[]>([]);
   const [activeOrder, setActiveOrder] = useState<OrderRecord | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [reorderNotice, setReorderNotice] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const requestIdRef = useRef<number>(0);
   const onOrderLoadedRef = useRef(onOrderLoaded);
@@ -76,6 +82,7 @@ export function OrderLookupModal({
     requestIdRef.current += 1;
     setIsLoading(false);
     setErrorMessage(null);
+    setReorderNotice(null);
     onClose();
   }, [onClose]);
 
@@ -100,6 +107,7 @@ export function OrderLookupModal({
       requestIdRef.current = currentRequestId;
 
       setCodeInput(normalized);
+      setReorderNotice(null);
       if (!silentIfOffline) {
         setErrorMessage(null);
       }
@@ -156,6 +164,7 @@ export function OrderLookupModal({
     }
 
     setErrorMessage(null);
+    setReorderNotice(null);
     setRecentOrders(readRecentOrders());
 
     if (initialOrder) {
@@ -299,17 +308,47 @@ export function OrderLookupModal({
                   </p>
                 </div>
 
-                <button
-                  type="button"
-                  disabled={isLoading}
-                  onClick={() =>
-                    void executeLookup(activeOrder.orderCode, false)
-                  }
-                  className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-2xl border border-olive-primary/20 bg-surface-light px-3.5 py-2 text-xs font-bold text-olive-primary transition hover:bg-card-butter/65 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Làm mới trạng thái
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  {onReorder && activeOrder.items.length > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReorderNotice(null);
+                        const outcome = onReorder(activeOrder);
+                        if (outcome.addedCount === 0) {
+                          setReorderNotice(
+                            'Các món trong đơn cũ hiện đang tạm hết nên chưa thể đặt lại.',
+                          );
+                        }
+                      }}
+                      className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-2xl bg-terracotta-deep px-3.5 py-2 text-xs font-bold text-surface-light shadow-paper-rest transition-opacity hover:opacity-92"
+                    >
+                      Đặt lại giỏ món này
+                    </button>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    disabled={isLoading}
+                    onClick={() =>
+                      void executeLookup(activeOrder.orderCode, false)
+                    }
+                    className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-2xl border border-olive-primary/20 bg-surface-light px-3.5 py-2 text-xs font-bold text-olive-primary transition hover:bg-card-butter/65 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Làm mới trạng thái
+                  </button>
+                </div>
               </div>
+
+              {reorderNotice ? (
+                <p
+                  role="status"
+                  aria-live="polite"
+                  className="rounded-2xl border border-coral-sketch bg-coral-sketch/20 px-3.5 py-2.5 text-xs font-semibold text-espresso"
+                >
+                  {reorderNotice}
+                </p>
+              ) : null}
 
               {activeOrder.status === 'cancelled' ? (
                 <div className="rounded-2xl border border-coral-sketch bg-coral-sketch/25 px-4 py-3">

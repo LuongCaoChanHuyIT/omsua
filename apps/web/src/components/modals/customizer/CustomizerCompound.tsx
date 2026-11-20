@@ -350,65 +350,236 @@ function CustomizerHeader() {
   );
 }
 
+const CUP_BASE_FILL_BY_CATEGORY: Record<
+  string,
+  { fill: string; fillOpacity: number }
+> = {
+  'milk-tea': { fill: '#7A8B3B', fillOpacity: 0.36 },
+  'fruit-tea': { fill: '#D96B1E', fillOpacity: 0.28 },
+  'fresh-milk-blended': { fill: '#F4E3AD', fillOpacity: 0.78 },
+  coffee: { fill: '#594C00', fillOpacity: 0.38 },
+};
+
+const CUP_ICE_COORDS: ReadonlyArray<readonly [number, number, number]> = [
+  [36, 38, -8],
+  [56, 35, 7],
+  [74, 40, -5],
+  [44, 54, 9],
+  [66, 56, -9],
+];
+
+const CUP_PEARL_COORDS: ReadonlyArray<readonly [number, number]> = [
+  [44, 108],
+  [54, 110],
+  [64, 109],
+  [74, 110],
+  [82, 108],
+  [48, 100],
+  [59, 101],
+  [70, 100],
+  [79, 99],
+  [52, 92],
+  [64, 92],
+  [75, 92],
+];
+
 function CustomizerCupGauge() {
   const { state, meta } = useCustomizerContext();
-  const sugarRatio = Math.max(0.06, Number(state.sugarLevel) / 100);
+  const cupClipId = useId();
+  const sugarNumeric = Number(state.sugarLevel);
+  const sugarRatio = Math.max(0.06, sugarNumeric / 100);
   const iceRatio = Math.max(0.06, Number(state.iceLevel) / 100);
   const iceSummaryText =
     state.iceLevel === '0' ? '0% đá riêng' : `${state.iceLevel}% đá`;
+  const iceCubeCount =
+    state.iceLevel === '0'
+      ? 0
+      : state.iceLevel === '30'
+        ? 2
+        : state.iceLevel === '50'
+          ? 3
+          : 5;
+  const cupScale =
+    state.size === 'S' ? 0.9 : state.size === 'L' ? 1.03 : 0.96;
+  const sugarHeight =
+    sugarNumeric === 0 ? 0 : Math.round(8 + (sugarNumeric / 70) * 20);
+  const toppingCount = meta.previewLine.toppings.length;
+  const pearlDotsCount = Math.min(CUP_PEARL_COORDS.length, toppingCount * 4);
+  const baseLiquid = CUP_BASE_FILL_BY_CATEGORY[meta.product.categoryId] ?? {
+    fill: '#7A8B3B',
+    fillOpacity: 0.36,
+  };
 
   return (
     <div
       data-testid="customizer-cup-gauge"
-      className="space-y-2.5 rounded-2xl border border-olive-primary/14 bg-canvas-cream/80 p-3.5"
+      className="flex items-center gap-3.5 rounded-2xl border border-olive-primary/14 bg-canvas-cream/80 p-3.5"
     >
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-xs font-semibold">
-            <span className="text-warm-muted">Độ ngọt</span>
-            <span className="font-bold text-terracotta-deep tabular-nums">
-              {`${state.sugarLevel}% đường`}
-            </span>
-          </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-olive-primary/14">
-            <div
-              style={{ transform: `scaleX(${sugarRatio})` }}
-              className="h-full w-full origin-left rounded-full bg-terracotta transition-transform duration-200"
+      <div className="flex shrink-0 flex-col items-center rounded-xl border border-olive-primary/12 bg-surface-light px-2.5 py-2">
+        <svg
+          data-testid="customizer-cup-svg"
+          data-cup-size={state.size}
+          data-sugar-level={state.sugarLevel}
+          data-ice-cubes={String(iceCubeCount)}
+          data-topping-count={String(toppingCount)}
+          viewBox="0 0 128 128"
+          aria-hidden="true"
+          className="h-20 w-20"
+        >
+          <defs>
+            <clipPath id={cupClipId}>
+              <path d="M30 20 L98 20 L87 109 Q85 116 78 116 L50 116 Q43 116 41 109 Z" />
+            </clipPath>
+          </defs>
+          <g
+            style={{
+              transformBox: 'fill-box',
+              transformOrigin: 'bottom center',
+              transform: `scale(${cupScale})`,
+            }}
+            className="transition-transform duration-200"
+          >
+            <g clipPath={`url(#${cupClipId})`}>
+              <rect x="24" y="18" width="80" height="102" fill="#F7F4EC" />
+              <rect
+                x="24"
+                y="32"
+                width="80"
+                height="88"
+                fill={baseLiquid.fill}
+                fillOpacity={baseLiquid.fillOpacity}
+              />
+              <rect
+                x="24"
+                y="30"
+                width="80"
+                height="10"
+                fill="#F4E3AD"
+                fillOpacity="0.92"
+              />
+              {sugarHeight > 0 ? (
+                <rect
+                  x="24"
+                  y={116 - sugarHeight}
+                  width="80"
+                  height={sugarHeight}
+                  fill="#A84B0D"
+                  fillOpacity="0.44"
+                />
+              ) : null}
+              <g
+                fill="#F7F4EC"
+                stroke="#594C00"
+                strokeOpacity="0.3"
+                strokeWidth="1.1"
+              >
+                {CUP_ICE_COORDS.slice(0, iceCubeCount).map(([x, y, deg], i) => (
+                  <rect
+                    key={i}
+                    x={x}
+                    y={y}
+                    width="12"
+                    height="10"
+                    rx="2.2"
+                    transform={`rotate(${deg} ${x + 6} ${y + 5})`}
+                  />
+                ))}
+              </g>
+              <g>
+                {CUP_PEARL_COORDS.slice(0, pearlDotsCount).map(
+                  ([cx, cy], idx) => (
+                    <circle
+                      key={idx}
+                      cx={cx}
+                      cy={cy}
+                      r="3.4"
+                      fill={idx % 3 === 0 ? '#594C00' : '#29261D'}
+                    />
+                  ),
+                )}
+              </g>
+            </g>
+            <path
+              d="M30 20 L98 20 L87 109 Q85 116 78 116 L50 116 Q43 116 41 109 Z"
+              fill="none"
+              stroke="#594C00"
+              strokeWidth="2.2"
             />
-          </div>
-        </div>
-
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-xs font-semibold">
-            <span className="text-warm-muted">Mức đá</span>
-            <span className="font-bold text-olive-primary tabular-nums">
-              {iceSummaryText}
-            </span>
-          </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-olive-primary/14">
-            <div
-              style={{ transform: `scaleX(${iceRatio})` }}
-              className="h-full w-full origin-left rounded-full bg-olive-primary transition-transform duration-200"
+            <ellipse
+              cx="64"
+              cy="20"
+              rx="35"
+              ry="4.5"
+              fill="#F7F4EC"
+              stroke="#594C00"
+              strokeWidth="2"
             />
-          </div>
-        </div>
+            <line
+              x1="72"
+              y1="6"
+              x2="60"
+              y2="104"
+              stroke="#A84B0D"
+              strokeWidth="3.6"
+              strokeLinecap="round"
+              opacity="0.82"
+            />
+          </g>
+        </svg>
+        <span className="mt-0.5 text-xs font-bold text-olive-primary tabular-nums">
+          Size {state.size}
+        </span>
       </div>
 
-      {meta.previewLine.toppings.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-1.5 border-t border-olive-primary/10 pt-2">
-          <span className="text-xs font-semibold text-warm-muted">
-            Topping:
-          </span>
-          {meta.previewLine.toppings.map((topping) => (
-            <span
-              key={topping.id}
-              className="rounded-full bg-card-butter px-2.5 py-0.5 text-xs font-bold text-espresso"
-            >
-              {topping.shortName}
-            </span>
-          ))}
+      <div className="min-w-0 flex-1 space-y-2.5">
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-xs font-semibold">
+              <span className="text-warm-muted">Độ ngọt</span>
+              <span className="font-bold text-terracotta-deep tabular-nums">
+                {`${state.sugarLevel}% đường`}
+              </span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-olive-primary/14">
+              <div
+                style={{ transform: `scaleX(${sugarRatio})` }}
+                className="h-full w-full origin-left rounded-full bg-terracotta transition-transform duration-200"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-xs font-semibold">
+              <span className="text-warm-muted">Mức đá</span>
+              <span className="font-bold text-olive-primary tabular-nums">
+                {iceSummaryText}
+              </span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-olive-primary/14">
+              <div
+                style={{ transform: `scaleX(${iceRatio})` }}
+                className="h-full w-full origin-left rounded-full bg-olive-primary transition-transform duration-200"
+              />
+            </div>
+          </div>
         </div>
-      ) : null}
+
+        {meta.previewLine.toppings.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-1.5 border-t border-olive-primary/10 pt-2">
+            <span className="text-xs font-semibold text-warm-muted">
+              Topping:
+            </span>
+            {meta.previewLine.toppings.map((topping) => (
+              <span
+                key={topping.id}
+                className="rounded-full bg-card-butter px-2.5 py-0.5 text-xs font-bold text-espresso"
+              >
+                {topping.shortName}
+              </span>
+            ))}
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
