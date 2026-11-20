@@ -12,11 +12,58 @@ import {
   startTransition,
   useCallback,
   useDeferredValue,
+  useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { ProductMedia } from '@/components/artwork/ProductMedia';
 import { AppViewTransition } from '@/components/transitions/AppViewTransition';
+
+export type FlavorMoodId = 'all' | 'thanh-mat' | 'dam-vi' | 'tinh-tao';
+
+export const FLAVOR_MOOD_OPTIONS: ReadonlyArray<{
+  id: FlavorMoodId;
+  label: string;
+}> = [
+  { id: 'all', label: 'Tất cả vị' },
+  { id: 'thanh-mat', label: 'Thanh mát ít ngọt' },
+  { id: 'dam-vi', label: 'Đậm trà béo mịn' },
+  { id: 'tinh-tao', label: 'Tỉnh táo Cầu Đất' },
+];
+
+const CREAMY_RICH_IDS = new Set<string>([
+  'tra-sua-atiso-chuoi',
+  'tra-sua-flan-chay-canh',
+  'tra-sua-tiramisu',
+  'tra-sua-gao-rang-khuc-bach',
+  'sua-tuoi-kem-trung-nuong',
+  'sua-tuoi-duong-den',
+  'oreo-tra-da-xay',
+  'ca-phe-kem-tiramisu',
+  'ca-phe-muoi',
+  'bac-xiu-da-lat',
+]);
+
+function matchesFlavorMood(drink: ProductItem, mood: FlavorMoodId): boolean {
+  if (mood === 'all') return true;
+  if (mood === 'thanh-mat') {
+    return (
+      drink.categoryId === 'fruit-tea' ||
+      drink.id === 'tra-sua-atiso' ||
+      drink.id === 'oolong-sen-gung' ||
+      drink.id === 'cold-brew-me'
+    );
+  }
+  if (mood === 'dam-vi') {
+    return CREAMY_RICH_IDS.has(drink.id);
+  }
+  return (
+    drink.categoryId === 'coffee' ||
+    drink.id === 'matcha-latte' ||
+    drink.id === 'matcha-oreo-da-xay'
+  );
+}
 
 export interface DrinkMenuSectionProps {
   categories: CategoryInfo[];
@@ -28,6 +75,8 @@ export interface DrinkMenuSectionProps {
   onToggleMediaMode?: (preferIllustration: boolean) => void;
   searchQuery?: string;
   onChangeSearchQuery?: (query: string) => void;
+  activeMood?: FlavorMoodId;
+  onChangeMood?: (mood: FlavorMoodId) => void;
 }
 
 const CATEGORY_CONTAINER_STYLES: Record<DrinkCategoryId, string> = {
@@ -138,10 +187,47 @@ export function DrinkMenuSection({
   onToggleMediaMode,
   searchQuery,
   onChangeSearchQuery,
+  activeMood,
+  onChangeMood,
 }: DrinkMenuSectionProps) {
   const [uncontrolledQuery, setUncontrolledQuery] = useState<string>('');
+  const [uncontrolledMood, setUncontrolledMood] = useState<FlavorMoodId>('all');
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
   const effectiveQuery = searchQuery ?? uncontrolledQuery;
+  const effectiveMood = activeMood ?? uncontrolledMood;
   const deferredQuery = useDeferredValue(effectiveQuery);
+
+  useEffect(() => {
+    function handleSlashShortcut(event: KeyboardEvent) {
+      if (
+        event.key !== '/' ||
+        event.defaultPrevented ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.altKey
+      ) {
+        return;
+      }
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      if (document.querySelector('[role="dialog"][aria-modal="true"]')) {
+        return;
+      }
+      event.preventDefault();
+      searchInputRef.current?.focus();
+    }
+
+    window.addEventListener('keydown', handleSlashShortcut);
+    return () => window.removeEventListener('keydown', handleSlashShortcut);
+  }, []);
 
   const drinksById = useMemo(
     () => new Map(drinks.map((drink) => [drink.id, drink])),
@@ -166,6 +252,16 @@ export function DrinkMenuSection({
     }
   }
 
+  function handleMoodChange(nextMood: FlavorMoodId) {
+    startTransition(() => {
+      if (onChangeMood) {
+        onChangeMood(nextMood);
+      } else {
+        setUncontrolledMood(nextMood);
+      }
+    });
+  }
+
   function handleCategoryClick(nextCat: DrinkCategoryId | 'all') {
     startTransition(() => {
       onChangeCategory(nextCat);
@@ -187,6 +283,7 @@ export function DrinkMenuSection({
       .map((category) => {
         const categoryDrinks = drinks.filter((drink) => {
           if (drink.categoryId !== category.id) return false;
+          if (!matchesFlavorMood(drink, effectiveMood)) return false;
           if (!normalizedQuery) return true;
           const haystack = normalizeVietnameseText(
             `${drink.name} ${drink.englishName} ${drink.description}`,
@@ -195,8 +292,12 @@ export function DrinkMenuSection({
         });
         return { category, categoryDrinks };
       })
-      .filter((group) => !normalizedQuery || group.categoryDrinks.length > 0);
-  }, [activeCategory, categories, drinks, normalizedQuery]);
+      .filter(
+        (group) =>
+          (!normalizedQuery && effectiveMood === 'all') ||
+          group.categoryDrinks.length > 0,
+      );
+  }, [activeCategory, categories, drinks, effectiveMood, normalizedQuery]);
 
   const totalVisibleDrinks = useMemo(
     () =>
@@ -255,8 +356,9 @@ export function DrinkMenuSection({
       </div>
 
       <div className="flex flex-col gap-3 rounded-2xl border border-olive-primary/15 bg-canvas-cream/95 p-3 shadow-paper-rest backdrop-blur-md lg:sticky lg:top-[69px] lg:z-30 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-1 items-center gap-2">
+        <div className="relative flex flex-1 items-center gap-2">
           <input
+            ref={searchInputRef}
             type="search"
             name="drinkSearch"
             aria-label="Tìm nhanh thức uống"
@@ -264,13 +366,19 @@ export function DrinkMenuSection({
             value={effectiveQuery}
             onChange={(event) => handleQueryChange(event.target.value)}
             placeholder="Tìm món: atiso, me, kem trứng, khúc bạch…"
-            className="min-h-11 w-full rounded-full border border-olive-primary/20 bg-surface-light px-4 py-2 text-base text-espresso placeholder:text-warm-muted/75 focus:border-olive-primary focus:outline-none lg:max-w-xs lg:text-xs"
+            className="min-h-11 w-full rounded-full border border-olive-primary/20 bg-surface-light px-4 py-2 text-base text-espresso placeholder:text-warm-muted/75 focus:border-olive-primary focus:outline-none lg:max-w-xs lg:pr-9 lg:text-xs"
           />
+          <kbd
+            aria-hidden="true"
+            className="pointer-events-none hidden rounded-md border border-olive-primary/20 bg-canvas-cream px-1.5 py-0.5 text-xs font-bold text-warm-muted lg:inline-block"
+          >
+            /
+          </kbd>
           <span
             role="status"
             aria-live="polite"
             className={
-              normalizedQuery
+              normalizedQuery || effectiveMood !== 'all'
                 ? 'shrink-0 rounded-full bg-card-butter px-3 py-1.5 text-xs font-bold text-olive-primary tabular-nums'
                 : 'sr-only'
             }
@@ -346,6 +454,48 @@ export function DrinkMenuSection({
         </div>
       </div>
 
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-bold tracking-wider text-ochre-deep uppercase">
+          Gợi ý hợp vị:
+        </span>
+        <div
+          role="group"
+          aria-label="Gợi ý hợp vị theo tâm trạng"
+          className="flex flex-wrap items-center gap-2"
+        >
+          {FLAVOR_MOOD_OPTIONS.map((option) => {
+            const isMoodActive = effectiveMood === option.id;
+            return (
+              <button
+                key={option.id}
+                type="button"
+                aria-pressed={isMoodActive}
+                onClick={() => handleMoodChange(option.id)}
+                className={`relative isolate inline-flex min-h-11 cursor-pointer items-center rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                  isMoodActive
+                    ? 'bg-olive-primary text-surface-light shadow-paper-rest'
+                    : 'border border-olive-primary/18 bg-surface-light/85 text-espresso hover:bg-card-butter/55'
+                }`}
+              >
+                {isMoodActive ? (
+                  <AppViewTransition
+                    name="drink-mood-pill"
+                    share="tab-pill"
+                    default="none"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-x-3 bottom-1 h-[2px] rounded-full bg-card-butter"
+                    />
+                  </AppViewTransition>
+                ) : null}
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {totalVisibleDrinks === 0 ? (
         <div className="rounded-3xl border border-olive-primary/14 bg-surface-light p-8 text-center shadow-paper-rest">
           <p className="font-display text-lg font-bold text-espresso">
@@ -361,6 +511,11 @@ export function DrinkMenuSection({
               startTransition(() => {
                 handleQueryChange('');
                 onChangeCategory('all');
+                if (onChangeMood) {
+                  onChangeMood('all');
+                } else {
+                  setUncontrolledMood('all');
+                }
               });
             }}
             className="mt-4 inline-flex min-h-11 cursor-pointer items-center rounded-full bg-terracotta-deep px-5 py-2.5 text-xs font-bold text-surface-light transition-opacity hover:opacity-92 sm:text-sm"

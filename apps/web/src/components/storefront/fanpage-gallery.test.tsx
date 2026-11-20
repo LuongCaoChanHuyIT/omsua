@@ -27,6 +27,11 @@ describe('FanpageGallerySection, PhotoLightboxModal & BrandFooter social/branch 
     expect(
       screen.getByRole('button', { name: 'Tất cả (16)' }),
     ).toHaveAttribute('aria-pressed', 'true');
+    const allArticles = document.querySelectorAll('#khong-gian article');
+    expect(allArticles).toHaveLength(16);
+    expect(allArticles[0]!.className).toContain('sm:col-span-2');
+    expect(allArticles[0]!.className).toContain('sm:row-span-2');
+    expect(allArticles[1]!.className).not.toContain('sm:col-span-2');
     expect(screen.getByText(/14K người theo dõi/i)).toBeInTheDocument();
     expect(
       screen.getByRole('button', {

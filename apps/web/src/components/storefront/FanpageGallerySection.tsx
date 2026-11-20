@@ -139,11 +139,14 @@ export function FanpageGallerySection({
         {filteredItems.map((item, index) => {
           const isFailed = failedIds.has(item.id);
           const isOpenInLightbox = lightboxIndex === index;
+          const isLeadBento = activeFilter === 'all' && index === 0;
           const vtName = `gallery-photo-${item.id}`;
           const thumbnailNode = (
             <div
               data-vt-name={isOpenInLightbox ? undefined : vtName}
-              className="relative aspect-[4/5] w-full overflow-hidden bg-hero-espresso/15"
+              className={`relative w-full overflow-hidden bg-hero-espresso/15 ${
+                isLeadBento ? 'aspect-[4/5] sm:aspect-auto sm:flex-1' : 'aspect-[4/5]'
+              }`}
             >
               {isFailed ? (
                 <span
@@ -176,7 +179,11 @@ export function FanpageGallerySection({
 
           return (
             <AppViewTransition key={item.id} default="none">
-              <article className="group flex flex-col overflow-hidden rounded-2xl border border-olive-primary/12 bg-canvas-cream shadow-paper-rest transition-colors hover:border-olive-primary/35">
+              <article
+                className={`group flex flex-col overflow-hidden rounded-2xl border border-olive-primary/12 bg-canvas-cream shadow-paper-rest transition-colors hover:border-olive-primary/35 ${
+                  isLeadBento ? 'sm:col-span-2 sm:row-span-2' : ''
+                }`}
+              >
                 <button
                   type="button"
                   onClick={() => {
@@ -184,7 +191,9 @@ export function FanpageGallerySection({
                       updateLightboxIndex(index);
                     });
                   }}
-                  className="flex cursor-pointer flex-col text-left focus-visible:outline-offset-[-2px]"
+                  className={`flex cursor-pointer flex-col text-left focus-visible:outline-offset-[-2px] ${
+                    isLeadBento ? 'sm:flex-1' : ''
+                  }`}
                 >
                   {isOpenInLightbox ? (
                     thumbnailNode

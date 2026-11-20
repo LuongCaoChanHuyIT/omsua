@@ -629,4 +629,86 @@ describe('Storefront Sections', () => {
       vi.unstubAllGlobals();
     }
   });
+
+  it('filters drinks by FlavorMoodId, syncs ?mood= while clamping unknown moods, focuses search on /, ignores / inside inputs or modals, and applies distinct editorial surfaces', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockRejectedValue(new Error('offline fallback')),
+    );
+    const originalUrl = window.location.href;
+
+    try {
+      window.history.replaceState(null, '', '/?mood=unknown-mood');
+      const { unmount, container } = render(
+        <StorefrontClientShell
+          initialCatalog={getDefaultCatalog()}
+          initialBranches={[...OMSUA_BRANCHES]}
+        />,
+      );
+
+      const allMoodBtn = await screen.findByRole('button', {
+        name: 'Tất cả vị',
+        pressed: true,
+      });
+      expect(allMoodBtn).toBeInTheDocument();
+
+      // ToppingStripSection uses warm parchment band, BrandStorySection uses open broadsheet border-y
+      const toppingHeading = screen.getByRole('heading', {
+        name: /TOPPING NHÀ LÀM MỖI NGÀY/i,
+      });
+      const toppingSection = toppingHeading.closest('section')!;
+      expect(toppingSection.className).toContain('bg-card-butter/45');
+
+      const storySection = container.querySelector('#cau-chuyen')!;
+      expect(storySection.className).toContain('border-y');
+      expect(storySection.className).not.toContain('bg-surface-light');
+
+      // Select "Đậm trà béo mịn" mood -> syncs ?mood=dam-vi and filters drinks
+      fireEvent.click(
+        screen.getByRole('button', { name: /Đậm trà béo mịn/i }),
+      );
+      expect(window.location.search).toBe('?mood=dam-vi');
+      expect(
+        screen.getByText('Trà Sữa Flan Cháy Cạnh'),
+      ).toBeInTheDocument();
+      expect(screen.queryByText('Cà Phê Đen')).not.toBeInTheDocument();
+
+      // "/" shortcut focuses searchbox when outside inputs and no modal is open
+      const searchbox = screen.getByRole('searchbox', {
+        name: /Tìm nhanh thức uống/i,
+      });
+      (document.activeElement as HTMLElement | null)?.blur?.();
+      fireEvent.keyDown(window, { key: '/' });
+      expect(document.activeElement).toBe(searchbox);
+
+      // "/" while focused in an input does not preventDefault
+      const branchSelect = screen.getByLabelText(/Chọn chi nhánh/i);
+      branchSelect.focus();
+      const slashInSelect = new KeyboardEvent('keydown', {
+        key: '/',
+        bubbles: true,
+        cancelable: true,
+      });
+      branchSelect.dispatchEvent(slashInSelect);
+      expect(slashInSelect.defaultPrevented).toBe(false);
+      expect(document.activeElement).toBe(branchSelect);
+
+      // "/" while a modal is open is ignored
+      fireEvent.click(screen.getByRole('button', { name: 'Đơn đã đặt' }));
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      const slashInModal = new KeyboardEvent('keydown', {
+        key: '/',
+        bubbles: true,
+        cancelable: true,
+      });
+      window.dispatchEvent(slashInModal);
+      expect(slashInModal.defaultPrevented).toBe(false);
+      expect(document.activeElement).not.toBe(searchbox);
+
+      unmount();
+    } finally {
+      window.history.replaceState(null, '', originalUrl);
+      vi.unstubAllGlobals();
+    }
+  });
 });

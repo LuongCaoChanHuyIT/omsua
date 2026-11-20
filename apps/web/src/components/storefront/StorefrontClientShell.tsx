@@ -28,7 +28,11 @@ import { readRecentOrders } from '@/lib/recent-orders';
 import { CartProvider, useCart } from '@/store/cart-store';
 import { BrandFooter } from './BrandFooter';
 import { BrandStorySection } from './BrandStorySection';
-import { DrinkMenuSection } from './DrinkMenuSection';
+import {
+  DrinkMenuSection,
+  FLAVOR_MOOD_OPTIONS,
+  type FlavorMoodId,
+} from './DrinkMenuSection';
 import { FanpageGallerySection } from './FanpageGallerySection';
 import { HeroSpotlight } from './HeroSpotlight';
 import { SnackMenuSection } from './SnackMenuSection';
@@ -49,10 +53,14 @@ interface StorefrontShellInnerProps {
 }
 
 const VALID_DRINK_CATEGORIES = new Set<string>(DRINK_CATEGORY_IDS);
+const VALID_FLAVOR_MOODS = new Set<string>(
+  FLAVOR_MOOD_OPTIONS.map((option) => option.id).filter((id) => id !== 'all'),
+);
 export const CLIENT_CATALOG_TIMEOUT_MS = 20_000;
 
 function parseUrlMenuState(search: string): {
   category: DrinkCategoryId | 'all';
+  mood: FlavorMoodId;
   query: string;
   preferIllustration: boolean;
 } {
@@ -61,9 +69,13 @@ function parseUrlMenuState(search: string): {
   const category = VALID_DRINK_CATEGORIES.has(rawCat)
     ? (rawCat as DrinkCategoryId)
     : 'all';
+  const rawMood = params.get('mood')?.trim() ?? '';
+  const mood = VALID_FLAVOR_MOODS.has(rawMood)
+    ? (rawMood as FlavorMoodId)
+    : 'all';
   const query = params.get('q')?.trim() ?? '';
   const preferIllustration = params.get('media') === 'studio';
-  return { category, query, preferIllustration };
+  return { category, mood, query, preferIllustration };
 }
 
 function StorefrontShellInner({
@@ -82,6 +94,7 @@ function StorefrontShellInner({
   const [activeCategory, setActiveCategory] = useState<DrinkCategoryId | 'all'>(
     'all',
   );
+  const [activeMood, setActiveMood] = useState<FlavorMoodId>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [preferIllustration, setPreferIllustration] = useState<boolean>(false);
   const [activeSpice, setActiveSpice] = useState<SpiceLevel>('cay-vua');
@@ -110,6 +123,7 @@ function StorefrontShellInner({
     }
     const parsed = parseUrlMenuState(window.location.search);
     setActiveCategory(parsed.category);
+    setActiveMood(parsed.mood);
     setSearchQuery(parsed.query);
     setPreferIllustration(parsed.preferIllustration);
     setHasHydratedUrl(true);
@@ -124,6 +138,12 @@ function StorefrontShellInner({
       params.delete('cat');
     } else {
       params.set('cat', activeCategory);
+    }
+
+    if (activeMood === 'all') {
+      params.delete('mood');
+    } else {
+      params.set('mood', activeMood);
     }
 
     const trimmedQuery = searchQuery.trim();
@@ -145,7 +165,13 @@ function StorefrontShellInner({
     if (nextUrl !== currentUrl) {
       window.history.replaceState(null, '', nextUrl);
     }
-  }, [activeCategory, hasHydratedUrl, preferIllustration, searchQuery]);
+  }, [
+    activeCategory,
+    activeMood,
+    hasHydratedUrl,
+    preferIllustration,
+    searchQuery,
+  ]);
 
   const syncRecentOrderCount = useCallback(() => {
     setRecentOrderCount(readRecentOrders().length);
@@ -225,6 +251,8 @@ function StorefrontShellInner({
               setActiveCategory(nextCat);
             });
           }}
+          activeMood={activeMood}
+          onChangeMood={setActiveMood}
           searchQuery={searchQuery}
           onChangeSearchQuery={setSearchQuery}
           preferIllustration={preferIllustration}
