@@ -5,7 +5,7 @@
   "description": "OmSua monorepo — NestJS backend, Next.js web, React + Vite admin",
   "packageManager": "pnpm@12.18.0",
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=22.5.0"
   },
   "scripts": {
     "build:shared": "pnpm --filter @omsua/shared build",

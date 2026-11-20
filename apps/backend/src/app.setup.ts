@@ -1,7 +1,7 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { parseCorsOrigins } from './config/cors.config';
+import { createCorsOriginDelegate } from './config/cors.config';
 
 export function configureApp(app: INestApplication): void {
   const configService = app.get(ConfigService);
@@ -16,11 +16,8 @@ export function configureApp(app: INestApplication): void {
     }),
   );
 
-  const allowedOrigins = parseCorsOrigins(
-    configService.get<string>('CORS_ORIGINS'),
-  );
   app.enableCors({
-    origin: allowedOrigins,
+    origin: createCorsOriginDelegate(configService.get<string>('CORS_ORIGINS')),
     credentials: true,
   });
 

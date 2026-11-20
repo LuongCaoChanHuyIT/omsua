@@ -7,6 +7,7 @@ dist/
 build/
 .next/
 .next-dev/
+.vercel/
 next-env.d.ts
 out/
 coverage/

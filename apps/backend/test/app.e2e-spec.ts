@@ -97,6 +97,40 @@ describe('Backend App (e2e)', () => {
     }
   });
 
+  it('allows scoped Vercel wildcard preflight OPTIONS /api/orders and blocks attacker origins', async () => {
+    process.env.CORS_ORIGINS = 'https://omsua-web*.vercel.app';
+    const wildcardModule = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+    const wildcardApp = wildcardModule.createNestApplication();
+    configureApp(wildcardApp);
+    await wildcardApp.init();
+
+    try {
+      const previewOrigin =
+        'https://omsua-web-luong-cao-chan-huys-projects.vercel.app';
+      const allowedPreflight = await request(wildcardApp.getHttpServer())
+        .options('/api/orders')
+        .set('Origin', previewOrigin)
+        .set('Access-Control-Request-Method', 'POST')
+        .expect(204);
+      expect(allowedPreflight.headers['access-control-allow-origin']).toBe(
+        previewOrigin,
+      );
+
+      const blockedPreflight = await request(wildcardApp.getHttpServer())
+        .options('/api/orders')
+        .set('Origin', 'https://attacker.vercel.app')
+        .set('Access-Control-Request-Method', 'POST');
+      expect(
+        blockedPreflight.headers['access-control-allow-origin'],
+      ).toBeUndefined();
+    } finally {
+      process.env.CORS_ORIGINS = '';
+      await wildcardApp.close();
+    }
+  });
+
   it('rejects non-whitelisted query parameters via global ValidationPipe', async () => {
     await request(app.getHttpServer())
       .get('/api/health?unexpectedParam=1')
