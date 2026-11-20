@@ -3,6 +3,16 @@
 > **“Trà sữa của người Đà Lạt — Gói trọn sương sớm & vị ngọt lành nguyên bản từ 2017”**  
 > *Commercial Full-Stack Monorepo (`pnpm workspaces`) • `@omsua/shared` · `@omsua/backend` · `@omsua/web` · `@omsua/admin`*
 
+### Liên kết Triển khai Thực tế (Live Cloud Production)
+
+| Phân hệ | Nền tảng | Liên kết Production | Ghi chú |
+|---|---|---|---|
+| **Storefront Đặt món (`@omsua/web`)** | Vercel (`luong-cao-chan-huys-projects`) | https://omsua-web.vercel.app | Next.js 15 App Router SSR + Edge CDN |
+| **Cổng Quản trị Quầy (`@omsua/admin`)** | Vercel (`luong-cao-chan-huys-projects`) | https://omsua-admin.vercel.app | React 19 + Vite 6 Static SPA + Deep-Link Rewrite |
+| **Backend REST API (`@omsua/backend`)** | Render (`singapore`) | https://omsua-backend.onrender.com/api/health | NestJS 11 + Node 22 `node:sqlite` (`WAL`) |
+| **Tài liệu OpenAPI / Swagger UI** | Render (`singapore`) | https://omsua-backend.onrender.com/api/docs | 8 REST Endpoints tương tác trực tiếp |
+| **Kho mã nguồn GitHub** | GitHub | https://github.com/LuongCaoChanHuyIT/omsua | Tự động CD từ nhánh `main` sang Vercel & Render |
+
 ---
 
 ## 1. Giới thiệu dự án Ốm Sữa (*Since 2017*)
@@ -270,7 +280,7 @@ curl "http://localhost:4000/api/orders/code/OM-20261119-A1B2"
 
 ### Yêu cầu hệ thống (Prerequisites)
 
-- **Node.js** `>= 22.0.0` *(bắt buộc để sử dụng mô-đun `node:sqlite` tích hợp sẵn)*
+- **Node.js** `>= 22.5.0` *(được ghim qua `.node-version` = `22` để sử dụng mô-đun `node:sqlite` tích hợp sẵn)*
 - **pnpm** `>= 10.0.0` *(được cấu hình chuẩn với `pnpm@12.18.0` trong `packageManager`)*
 
 ### Khởi tạo nhanh (Quick Start)
@@ -370,3 +380,20 @@ pnpm --reporter=append-only test
 - **`@omsua/web` (Vitest + Testing Library + Static Palette Scanner)**: Kiểm thử luồng chọn món, hộp tùy chỉnh giá tổ hợp `Customizer.*`, giỏ hàng & ngăn thanh toán tổ hợp `Checkout.*`, chuyển cảnh `<AppViewTransition />`, đặt đơn, tra cứu mã đơn và quét tĩnh đảm bảo không vi phạm mã màu thuần trắng/đen hay `forwardRef` / `useContext`.
 - **`@omsua/admin` (Vitest + Testing Library + Static Palette Scanner)**: Kiểm thử điều phối đơn hàng, điều hướng trang có hướng `<DirectionalNavLink />`, xác nhận hủy 2 bước, tự động làm mới ngầm `12s`, tìm kiếm tiếng Việt không dấu, bộ lọc thực đơn, thống kê chi nhánh, kiểm tra kết nối hệ thống và quét tĩnh toàn bộ mã nguồn/SVG.
 - **Kiểm thử E2E & Đo lường LCP bằng Python Playwright (`scripts/webapp-playwright-verify.py`)**: Chạy trình duyệt Chromium không giao diện trên `/usr/bin/google-chrome` xác minh đồng thời `LCP < 2500ms`, `img[fetchpriority="high"] == 1`, `0` lỗi Console/Page, chuyển cảnh `data-vt-name` độc nhất 1-đối-1, hộp thoại `DrinkCustomizerModal` / `SnackCustomizerModal` / `CartCheckoutDrawer` và điều hướng Admin có hướng, xuất báo cáo JSON cùng ảnh chụp vào `output/playwright/`.
+
+---
+
+## 7. Triển khai Đám mây (Vercel + Render Runbook)
+
+Hệ thống được cấu hình sẵn dưới dạng hạ tầng khai báo (*Infrastructure-as-Code*) để tự động triển khai mỗi khi cập nhật nhánh `main` trên GitHub:
+
+1. **Render Backend (`render.yaml` + `.node-version`):**
+   - Dịch vụ `omsua-backend` (`runtime: node`, `region: singapore`, `healthCheckPath: /api/health`) tự động cài đặt đầy đủ `devDependencies` (`pnpm install --frozen-lockfile --prod=false`), biên dịch `@omsua/shared` + `@omsua/backend` trên Node 22 và lắng nghe trên `0.0.0.0`.
+   - Biến môi trường chính: `NODE_VERSION=22`, `NODE_ENV=production`, `SQLITE_PATH=/tmp/omsua.sqlite` (tự động tạo bảng & seed dữ liệu gốc; có thể đổi sang `/var/data/omsua.sqlite` khi gắn Render Persistent Disk), `CORS_ORIGINS=https://omsua-web.vercel.app,https://omsua-admin.vercel.app,https://omsua-web*.vercel.app,https://omsua-admin*.vercel.app,http://localhost:3000,http://localhost:3001` (hỗ trợ khớp nhãn đơn DNS an toàn qua `isCorsOriginAllowed`).
+2. **Vercel Storefront (`apps/web/vercel.json` -> dự án `omsua-web`):**
+   - `Root Directory`: `apps/web`, lệnh build tự động biên dịch gói dùng chung trước (`pnpm --dir ../.. build:shared && pnpm build`).
+   - Biến môi trường: `NEXT_PUBLIC_API_URL=https://omsua-backend.onrender.com/api`, `API_URL=https://omsua-backend.onrender.com/api`.
+   - SSR `HomePage` giữ giới hạn chờ nhanh `1500ms` để luôn phản hồi tức thì từ dữ liệu chuẩn khi Render Free đang ngủ, trong khi `StorefrontClientShell` đồng bộ nền với `CLIENT_CATALOG_TIMEOUT_MS = 20_000ms` để đánh thức Backend êm ái ở hậu cảnh.
+3. **Vercel Admin Portal (`apps/admin/vercel.json` -> dự án `omsua-admin`):**
+   - `Root Directory`: `apps/admin`, `outputDirectory`: `dist`, lệnh build `pnpm --dir ../.. build:shared && pnpm build`, kèm quy tắc `rewrites` chuyển các đường dẫn điều hướng SPA (`/menu`, `/branches`, `/settings`) về `/index.html` mà không ảnh hưởng `/assets/*`, `/images/*`, `/favicon.svg` hay `/robots.txt`.
+   - Biến môi trường: `VITE_API_URL=https://omsua-backend.onrender.com/api`.
