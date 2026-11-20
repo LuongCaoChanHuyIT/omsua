@@ -49,6 +49,7 @@ interface StorefrontShellInnerProps {
 }
 
 const VALID_DRINK_CATEGORIES = new Set<string>(DRINK_CATEGORY_IDS);
+export const CLIENT_CATALOG_TIMEOUT_MS = 20_000;
 
 function parseUrlMenuState(search: string): {
   category: DrinkCategoryId | 'all';
@@ -363,7 +364,11 @@ export function StorefrontClientShell({
 
   const refreshCatalog = useCallback(async () => {
     const seq = ++requestSeqRef.current;
-    const result = await fetchCatalog(resolvedApiBaseUrl);
+    const result = await fetchCatalog(
+      resolvedApiBaseUrl,
+      fetch,
+      CLIENT_CATALOG_TIMEOUT_MS,
+    );
     if (seq === requestSeqRef.current && !result.isFallback) {
       setCatalog(result.catalog);
     }
@@ -373,7 +378,11 @@ export function StorefrontClientShell({
     let isCancelled = false;
     const seq = ++requestSeqRef.current;
 
-    void fetchCatalog(resolvedApiBaseUrl).then((result) => {
+    void fetchCatalog(
+      resolvedApiBaseUrl,
+      fetch,
+      CLIENT_CATALOG_TIMEOUT_MS,
+    ).then((result) => {
       if (!isCancelled && seq === requestSeqRef.current && !result.isFallback) {
         setCatalog(result.catalog);
       }

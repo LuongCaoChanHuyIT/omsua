@@ -17,7 +17,11 @@ import {
 } from '@testing-library/react';
 import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { StorefrontClientShell } from '@/components/storefront/StorefrontClientShell';
+import {
+  CLIENT_CATALOG_TIMEOUT_MS,
+  StorefrontClientShell,
+} from '@/components/storefront/StorefrontClientShell';
+import * as webApi from '@/lib/api';
 import { CartProvider, useCart } from '@/store/cart-store';
 import { CartCheckoutDrawer } from './CartCheckoutDrawer';
 import { Checkout } from './checkout/CheckoutCompound';
@@ -1680,6 +1684,30 @@ describe('Interactive Customizer Modal & Cart Checkout Flow', () => {
       quantity: 1,
       size: 'STD',
       spiceLevel: 'it-cay',
+    });
+  });
+
+  it('uses cold-start resilient CLIENT_CATALOG_TIMEOUT_MS (20_000ms) for background StorefrontClientShell catalog sync', async () => {
+    expect(CLIENT_CATALOG_TIMEOUT_MS).toBe(20_000);
+
+    const fetchCatalogSpy = vi
+      .spyOn(webApi, 'fetchCatalog')
+      .mockResolvedValue({ catalog, isFallback: false });
+
+    render(
+      <StorefrontClientShell
+        initialCatalog={catalog}
+        initialBranches={OMSUA_BRANCHES}
+        apiBaseUrl="https://omsua-backend.onrender.com/api"
+      />,
+    );
+
+    await waitFor(() => {
+      expect(fetchCatalogSpy).toHaveBeenCalledWith(
+        'https://omsua-backend.onrender.com/api',
+        expect.any(Function),
+        20_000,
+      );
     });
   });
 });

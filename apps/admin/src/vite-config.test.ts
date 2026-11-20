@@ -80,6 +80,45 @@ describe('Vite server configuration (admin)', () => {
     expect(resolveAdminPort({ ADMIN_PORT: '0' })).toBe(3001);
     expect(resolveAdminPort({ ADMIN_PORT: '70000' })).toBe(3001);
   });
+
+  it('configures apps/admin/vercel.json with shared prebuild, dist output, and SPA deep-link rewrite excluding static assets', () => {
+    const vercelJsonPath = path.join(ADMIN_ROOT, 'vercel.json');
+    expect(fs.existsSync(vercelJsonPath)).toBe(true);
+
+    const vercelConfig = JSON.parse(fs.readFileSync(vercelJsonPath, 'utf8')) as {
+      framework?: string;
+      installCommand?: string;
+      buildCommand?: string;
+      outputDirectory?: string;
+      rewrites?: Array<{ source: string; destination: string }>;
+    };
+
+    expect(vercelConfig.framework).toBe('vite');
+    expect(vercelConfig.installCommand).toContain('--frozen-lockfile');
+    expect(vercelConfig.buildCommand).toBe(
+      'pnpm --dir ../.. build:shared && pnpm build',
+    );
+    expect(vercelConfig.outputDirectory).toBe('dist');
+    expect(vercelConfig.rewrites?.length).toBe(1);
+
+    const rewrite = vercelConfig.rewrites![0]!;
+    expect(rewrite.destination).toBe('/index.html');
+
+    const routePattern = new RegExp(`^${rewrite.source}$`);
+    expect(routePattern.test('/')).toBe(true);
+    expect(routePattern.test('/menu')).toBe(true);
+    expect(routePattern.test('/branches')).toBe(true);
+    expect(routePattern.test('/settings')).toBe(true);
+
+    expect(routePattern.test('/assets/index-abc.js')).toBe(false);
+    expect(
+      routePattern.test(
+        '/images/fanpage/branches/branch-cs1-hoang-dieu.webp',
+      ),
+    ).toBe(false);
+    expect(routePattern.test('/favicon.svg')).toBe(false);
+    expect(routePattern.test('/robots.txt')).toBe(false);
+  });
 });
 
 describe('Admin brand favicon, typography, a11y CSS, and zero pure B/W rule', () => {

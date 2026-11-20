@@ -212,6 +212,34 @@ describe('web config & HomePage Storefront SSR consistency', () => {
     expect(pageSource).not.toMatch(/process\.env(?:\.NEXT_PUBLIC_API_URL|\[\s*['"`]NEXT_PUBLIC_API_URL['"`]\s*\])/);
   });
 
+  it('configures apps/web/vercel.json for monorepo shared build and keeps fast 1500ms SSR timeout on HomePage', async () => {
+    const webRoot = path.resolve(__dirname, '..', '..');
+    const vercelJsonPath = path.join(webRoot, 'vercel.json');
+    expect(existsSync(vercelJsonPath)).toBe(true);
+
+    const vercelConfig = JSON.parse(readFileSync(vercelJsonPath, 'utf8')) as {
+      framework?: string;
+      installCommand?: string;
+      buildCommand?: string;
+    };
+    expect(vercelConfig.framework).toBe('nextjs');
+    expect(vercelConfig.installCommand).toContain('--frozen-lockfile');
+    expect(vercelConfig.buildCommand).toBe(
+      'pnpm --dir ../.. build:shared && pnpm build',
+    );
+
+    const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(
+      new Error('Simulated cold Render backend during SSR'),
+    );
+
+    await HomePage();
+
+    const scheduledDelays = setTimeoutSpy.mock.calls.map((call) => call[1]);
+    expect(scheduledDelays).toContain(1500);
+    expect(scheduledDelays).not.toContain(20_000);
+  });
+
   it('compiles scripts/webapp-playwright-verify.py cleanly with python3 -m py_compile and keeps zero pure B/W tokens in Python scripts', () => {
     const repoRoot = path.resolve(__dirname, '..', '..', '..', '..');
     const playwrightScriptPath = path.join(
