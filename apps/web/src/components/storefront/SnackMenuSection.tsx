@@ -52,11 +52,11 @@ export const SnackMenuItemCard = memo(function SnackMenuItemCard({
           {SPICE_LEVEL_LABELS[activeSpice]}
         </span>
         <div className="absolute bottom-2 left-2 flex flex-wrap items-center gap-1">
-          <span className="rounded-full bg-terracotta px-2.5 py-0.5 text-xs font-bold text-surface-light tabular-nums">
+          <span className="rounded-full bg-terracotta-deep px-2.5 py-0.5 text-xs font-bold text-surface-light tabular-nums">
             {formatShortPrice(price)}
           </span>
           {snack.isBestSeller ? (
-            <span className="rounded-full bg-artichoke px-2 py-0.5 text-xs font-bold text-surface-light">
+            <span className="rounded-full bg-artichoke-deep px-2 py-0.5 text-xs font-bold text-surface-light">
               BEST SELLER
             </span>
           ) : null}
@@ -126,7 +126,7 @@ export function SnackMenuSection({
       className="scroll-mt-24 rounded-3xl border border-olive-primary/14 bg-surface-light p-5 shadow-paper-rest sm:p-7"
     >
       <div className="mb-5 flex flex-col gap-3 border-b border-olive-primary/12 pb-4 lg:flex-row lg:items-center lg:justify-between">
-        <h2 className="font-snack text-xl font-extrabold tracking-tight text-terracotta uppercase sm:text-2xl">
+        <h2 className="font-snack text-xl font-extrabold tracking-tight text-terracotta-deep uppercase sm:text-2xl">
           ✦ BÁNH TRÁNG SNACK ĐÀ LẠT
         </h2>
 
@@ -153,7 +153,7 @@ export function SnackMenuSection({
                 }}
                 className={`relative isolate inline-flex min-h-11 cursor-pointer items-center rounded-full px-3.5 py-2 text-xs font-bold transition-colors ${
                   isActive
-                    ? 'bg-terracotta text-surface-light shadow-paper-rest'
+                    ? 'bg-terracotta-deep text-surface-light shadow-paper-rest'
                     : 'border border-olive-primary/15 bg-canvas-cream text-espresso hover:bg-card-butter/60'
                 }`}
               >

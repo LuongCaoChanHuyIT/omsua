@@ -238,7 +238,7 @@ export function OrderLookupModal({
               <button
                 type="submit"
                 disabled={isLoading}
-                className="inline-flex min-h-11 shrink-0 cursor-pointer items-center justify-center rounded-2xl bg-terracotta px-5 py-2.5 text-sm font-bold text-surface-light shadow-paper-rest transition-opacity hover:opacity-92 disabled:cursor-not-allowed disabled:opacity-65"
+                className="inline-flex min-h-11 shrink-0 cursor-pointer items-center justify-center rounded-2xl bg-terracotta-deep px-5 py-2.5 text-sm font-bold text-surface-light shadow-paper-rest transition-opacity hover:opacity-92 disabled:cursor-not-allowed disabled:opacity-65"
               >
                 {isLoading ? 'Đang tra cứu…' : 'Tra cứu đơn'}
               </button>
@@ -335,7 +335,7 @@ export function OrderLookupModal({
                         aria-current={isCurrentStep ? 'step' : undefined}
                         className={`rounded-2xl border p-2.5 text-center transition ${
                           isCurrentStep
-                            ? 'border-artichoke bg-artichoke text-surface-light shadow-2xs'
+                            ? 'border-artichoke-deep bg-artichoke-deep text-surface-light shadow-2xs'
                             : isCompletedStep
                               ? 'border-olive-primary/25 bg-card-butter text-espresso'
                               : 'border-olive-primary/12 bg-surface-light/80 text-warm-muted'
@@ -378,7 +378,7 @@ export function OrderLookupModal({
                                 {item.iceLevel}% đá
                               </p>
                               {item.toppings.length > 0 && (
-                                <p className="font-semibold text-artichoke">
+                                <p className="font-semibold text-artichoke-deep">
                                   +{' '}
                                   {item.toppings
                                     .map(
@@ -399,7 +399,7 @@ export function OrderLookupModal({
                             </p>
                           )}
                         </div>
-                        <span className="shrink-0 font-bold text-terracotta tabular-nums sm:text-sm">
+                        <span className="shrink-0 font-bold text-terracotta-deep tabular-nums sm:text-sm">
                           {formatVnd(item.lineTotal)}
                         </span>
                       </li>
@@ -439,7 +439,7 @@ export function OrderLookupModal({
                   <span className="font-bold text-espresso">
                     Tổng thanh toán:
                   </span>
-                  <span className="font-extrabold text-terracotta tabular-nums">
+                  <span className="font-extrabold text-terracotta-deep tabular-nums">
                     {formatVnd(activeOrder.grandTotal)}
                   </span>
                 </div>

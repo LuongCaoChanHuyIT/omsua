@@ -28,7 +28,7 @@ const ToppingChipCard = memo(function ToppingChipCard({
       <p className="mt-2 text-xs font-semibold text-espresso">
         {topping.shortName}
       </p>
-      <span className="mt-0.5 text-xs font-bold text-terracotta tabular-nums">
+      <span className="mt-0.5 text-xs font-bold text-terracotta-deep tabular-nums">
         +{formatShortPrice(topping.price)}
       </span>
 
@@ -39,7 +39,7 @@ const ToppingChipCard = memo(function ToppingChipCard({
               type="button"
               aria-label={`Chọn topping ${topping.shortName}`}
               onClick={() => onSelectById(topping.id)}
-              className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center rounded-full bg-artichoke px-3 py-1.5 text-xs font-bold text-surface-light transition-opacity hover:opacity-92"
+              className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center rounded-full bg-artichoke-deep px-3 py-1.5 text-xs font-bold text-surface-light transition-opacity hover:opacity-92"
             >
               + Chọn
             </button>
@@ -93,7 +93,7 @@ export function ToppingStripSection({
         <h2 className="font-display text-xl font-bold tracking-tight text-olive-primary uppercase sm:text-2xl">
           TOPPING NHÀ LÀM MỖI NGÀY
         </h2>
-        <p className="text-xs font-semibold text-subhead-ochre tabular-nums sm:text-sm">
+        <p className="text-xs font-semibold text-ochre-deep tabular-nums sm:text-sm">
           Định lượng Đường / Đá tùy chọn miễn phí: 70% (Chuẩn quán) | 50% | 30%
           | 0%
         </p>

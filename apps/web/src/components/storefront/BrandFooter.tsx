@@ -117,29 +117,9 @@ export function BrandFooter({
                 Boolean(branchPhoto) && !failedBranchPhotoIds.has(branch.id);
 
               return (
-                <div
+                <article
                   key={branch.id}
-                  role={onSelectBranch ? 'button' : undefined}
-                  aria-pressed={onSelectBranch ? isSelected : undefined}
-                  tabIndex={onSelectBranch ? 0 : undefined}
-                  onClick={
-                    onSelectBranch
-                      ? () => onSelectBranch(branch.id)
-                      : undefined
-                  }
-                  onKeyDown={
-                    onSelectBranch
-                      ? (event) => {
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault();
-                            onSelectBranch(branch.id);
-                          }
-                        }
-                      : undefined
-                  }
                   className={`flex flex-col justify-between rounded-2xl border p-4 transition-colors ${
-                    onSelectBranch ? 'cursor-pointer' : ''
-                  } ${
                     isSelected
                       ? 'border-card-butter bg-surface-light/12'
                       : 'border-surface-light/15 bg-surface-light/5 hover:border-surface-light/30'
@@ -174,14 +154,31 @@ export function BrandFooter({
                     <h3 className="font-editorial text-sm font-semibold text-card-butter">
                       {branch.name}
                     </h3>
-                    <p className="mt-1.5 text-xs leading-relaxed text-surface-light/80">
+                    <p className="mt-1.5 text-xs leading-relaxed text-surface-light/85">
                       {branch.address}
                     </p>
                   </div>
-                  <p className="mt-3 text-xs font-semibold text-terracotta tabular-nums">
-                    📞 Hotline: {branch.hotline}
-                  </p>
-                </div>
+                  <div className="mt-3 space-y-2.5">
+                    <p className="text-xs font-semibold text-card-butter tabular-nums">
+                      📞 Hotline: {branch.hotline}
+                    </p>
+                    {onSelectBranch ? (
+                      <button
+                        type="button"
+                        aria-pressed={isSelected}
+                        aria-label={`Chọn giao từ ${branch.name}`}
+                        onClick={() => onSelectBranch(branch.id)}
+                        className={`inline-flex min-h-11 w-full cursor-pointer items-center justify-center rounded-xl border px-3 py-2 text-xs font-bold transition-colors ${
+                          isSelected
+                            ? 'border-card-butter bg-card-butter text-espresso'
+                            : 'border-surface-light/25 bg-surface-light/10 text-surface-light hover:border-card-butter hover:text-card-butter'
+                        }`}
+                      >
+                        {isSelected ? '✓ Đang giao cơ sở này' : 'Giao từ cơ sở này'}
+                      </button>
+                    ) : null}
+                  </div>
+                </article>
               );
             })}
           </div>
@@ -231,7 +228,7 @@ export function BrandFooter({
           </div>
         </div>
 
-        <div className="mt-8 flex flex-col items-center justify-between gap-2 border-t border-surface-light/12 pt-5 text-xs text-surface-light/65 sm:flex-row">
+        <div className="mt-8 flex flex-col items-center justify-between gap-2 border-t border-surface-light/12 pt-5 text-xs text-surface-light/80 sm:flex-row">
           <p>© 2017 - 2026 Ốm Sữa • Mở cửa 08:00 - 22:00 hàng ngày</p>
           <p>Trà sữa của người Đà Lạt • Miễn phí giao nội thành</p>
         </div>

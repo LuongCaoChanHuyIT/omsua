@@ -112,7 +112,11 @@ export function StorefrontHeader({
               className="min-h-11 cursor-pointer appearance-none bg-transparent pr-5 text-base font-semibold text-espresso focus:outline-none sm:text-xs"
             >
               {branches.map((branch) => (
-                <option key={branch.id} value={branch.id}>
+                <option
+                  key={branch.id}
+                  value={branch.id}
+                  className="bg-surface-light text-espresso"
+                >
                   {branch.shortLabel}
                 </option>
               ))}
@@ -139,7 +143,7 @@ export function StorefrontHeader({
             type="button"
             data-cart-pulse={isCartPulsing ? 'true' : undefined}
             onClick={onOpenCart}
-            className={`inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-full bg-terracotta px-4 py-2 text-xs font-bold text-surface-light shadow-paper-rest tabular-nums transition-transform duration-200 hover:opacity-92 sm:text-sm ${
+            className={`inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-full bg-terracotta-deep px-4 py-2 text-xs font-bold text-surface-light shadow-paper-rest tabular-nums transition-transform duration-200 hover:opacity-92 sm:text-sm ${
               isCartPulsing ? 'scale-105' : 'scale-100'
             }`}
           >

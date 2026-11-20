@@ -29,6 +29,26 @@ function collectSourceFiles(dir: string): string[] {
   return results;
 }
 
+function wcagContrastRatio(hexA: string, hexB: string): number {
+  const luminance = (hex: string): number => {
+    const num = Number.parseInt(hex.replace('#', ''), 16);
+    const channels = [(num >> 16) & 255, (num >> 8) & 255, num & 255].map(
+      (value) => {
+        const srgb = value / 255;
+        return srgb <= 0.03928
+          ? srgb / 12.92
+          : Math.pow((srgb + 0.055) / 1.055, 2.4);
+      },
+    );
+    return (
+      0.2126 * channels[0]! + 0.7152 * channels[1]! + 0.0722 * channels[2]!
+    );
+  };
+  const lum1 = luminance(hexA);
+  const lum2 = luminance(hexB);
+  return (Math.max(lum1, lum2) + 0.05) / (Math.min(lum1, lum2) + 0.05);
+}
+
 describe('web config & HomePage Storefront SSR consistency', () => {
   const originalApiUrl = process.env.NEXT_PUBLIC_API_URL;
   const originalServerApiUrl = process.env.API_URL;
@@ -108,6 +128,15 @@ describe('web config & HomePage Storefront SSR consistency', () => {
     expect(globalsCss).toContain('--shadow-paper-rest');
     expect(globalsCss).toContain('--shadow-paper-lift');
     expect(globalsCss).toContain('bg-paper-grain');
+    expect(globalsCss).toContain('--color-terracotta-deep: #A84B0D');
+    expect(globalsCss).toContain('--color-artichoke-deep: #4D5922');
+    expect(globalsCss).toContain('--color-ochre-deep: #805B1A');
+
+    expect(wcagContrastRatio('#F7F4EC', '#A84B0D')).toBeGreaterThanOrEqual(4.5);
+    expect(wcagContrastRatio('#EEEADF', '#A84B0D')).toBeGreaterThanOrEqual(4.5);
+    expect(wcagContrastRatio('#F7F4EC', '#4D5922')).toBeGreaterThanOrEqual(4.5);
+    expect(wcagContrastRatio('#F7F4EC', '#805B1A')).toBeGreaterThanOrEqual(4.5);
+    expect(wcagContrastRatio('#EEEADF', '#805B1A')).toBeGreaterThanOrEqual(4.5);
 
     const layoutSource = readFileSync(
       path.join(srcRoot, 'app', 'layout.tsx'),
@@ -147,6 +176,19 @@ describe('web config & HomePage Storefront SSR consistency', () => {
       {
         label: 'legacy React useContext (use React 19 use())',
         regex: /\buseContext\s*\(/,
+      },
+      {
+        label: 'non-semantic <div role="button"> anti-pattern',
+        regex: /<div\b[^>]*\brole=(?:\{[^}]*['"]button['"][^}]*\}|['"]button['"])/,
+      },
+      {
+        label: 'low-contrast bg-terracotta/bg-artichoke paired with text-surface-light',
+        regex:
+          /\bbg-(terracotta|artichoke)(?![-a-z0-9])(?=[^\n`"]*text-surface-light)/,
+      },
+      {
+        label: 'low-contrast text-subhead-ochre, text-terracotta, or text-artichoke on text',
+        regex: /\btext-(subhead-ochre|terracotta|artichoke)(?![-a-z0-9])/,
       },
     ];
 

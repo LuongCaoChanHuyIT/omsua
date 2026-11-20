@@ -10,7 +10,7 @@ export default function NotFound() {
           <AtisoMascot className="h-16 w-16 shrink-0" />
         </div>
 
-        <p className="mt-4 text-xs font-bold tracking-[0.18em] text-subhead-ochre uppercase">
+        <p className="mt-4 text-xs font-bold tracking-[0.18em] text-ochre-deep uppercase">
           404 • ỐM SỮA ĐÀ LẠT
         </p>
 
@@ -26,7 +26,7 @@ export default function NotFound() {
         <div className="mt-6">
           <Link
             href="/"
-            className="inline-flex min-h-11 items-center justify-center rounded-full bg-terracotta px-6 py-3 text-sm font-bold text-surface-light shadow-xs transition hover:opacity-92"
+            className="inline-flex min-h-11 items-center justify-center rounded-full bg-terracotta-deep px-6 py-3 text-sm font-bold text-surface-light shadow-xs transition hover:opacity-92"
           >
             Quay về Thực đơn Ốm Sữa
           </Link>

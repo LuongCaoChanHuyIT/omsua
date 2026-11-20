@@ -336,6 +336,9 @@ describe('Storefront Sections', () => {
     expect(branchSelect.className).toContain('min-h-11');
     expect(branchSelect.className).toContain('text-base');
     expect(branchSelect.className).toContain('sm:text-xs');
+    const firstBranchOption = branchSelect.querySelector('option');
+    expect(firstBranchOption?.className).toContain('bg-surface-light');
+    expect(firstBranchOption?.className).toContain('text-espresso');
 
     const menuNavLink = screen.getByRole('link', { name: 'Thực đơn' });
     expect(menuNavLink.className).toContain('min-h-11');
@@ -469,8 +472,19 @@ describe('Storefront Sections', () => {
     const branch4Btn = screen.getByRole('button', {
       name: /Cơ sở 4 — Đức Trọng/i,
     });
+    expect(branch1Btn.tagName).toBe('BUTTON');
+    expect(branch4Btn.tagName).toBe('BUTTON');
     expect(branch1Btn).toHaveAttribute('aria-pressed', 'true');
     expect(branch4Btn).toHaveAttribute('aria-pressed', 'false');
+
+    const footerEl = container.querySelector('footer')!;
+    const footerHeadings = footerEl.querySelectorAll('h3');
+    expect(footerHeadings).toHaveLength(4);
+    for (const h3 of footerHeadings) {
+      expect(h3.closest('button')).toBeNull();
+    }
+    fireEvent.click(branch4Btn);
+    expect(onSelectBranch).toHaveBeenCalledWith('cs4-duc-trong');
 
     const printMenuLink = screen.getByRole('link', {
       name: /Tải Menu Ấn Phẩm Đà Lạt \(PDF\)/i,

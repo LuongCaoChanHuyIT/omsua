@@ -13,8 +13,11 @@
   --color-warm-muted: #6B6255;
   --color-subhead-ochre: #A67C2E;
   --color-terracotta: #D96B1E;
+  --color-terracotta-deep: #A84B0D;
   --color-coral-sketch: #E07D77;
   --color-artichoke: #7A8B3B;
+  --color-artichoke-deep: #4D5922;
+  --color-ochre-deep: #805B1A;
 
   --font-display: var(--font-fraunces), Georgia, serif;
   --font-editorial: var(--font-lora), Georgia, serif;

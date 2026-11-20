@@ -58,7 +58,7 @@ export function HeroSpotlight({
           <div className="flex flex-wrap items-center gap-3 pt-1">
             <a
               href="#thuc-don"
-              className="inline-flex min-h-11 items-center rounded-full bg-terracotta px-6 py-2.5 text-sm font-bold text-surface-light shadow-paper-rest transition-opacity hover:opacity-92"
+              className="inline-flex min-h-11 items-center rounded-full bg-terracotta-deep px-6 py-2.5 text-sm font-bold text-surface-light shadow-paper-rest transition-opacity hover:opacity-92"
             >
               Đặt món ngay →
             </a>
@@ -94,8 +94,8 @@ export function HeroSpotlight({
                   ? '★ MÓN MỚI'
                   : '✦ SIGNATURE';
               const badgeClass = product.isBestSeller
-                ? 'bg-artichoke text-surface-light'
-                : 'bg-terracotta text-surface-light';
+                ? 'bg-artichoke-deep text-surface-light'
+                : 'bg-terracotta-deep text-surface-light';
 
               return (
                 <article
@@ -135,7 +135,7 @@ export function HeroSpotlight({
                       <button
                         type="button"
                         onClick={() => onSelectProduct(product)}
-                        className="inline-flex min-h-11 cursor-pointer items-center rounded-full bg-terracotta px-4 py-2 text-xs font-bold text-surface-light transition-opacity hover:opacity-92"
+                        className="inline-flex min-h-11 cursor-pointer items-center rounded-full bg-terracotta-deep px-4 py-2 text-xs font-bold text-surface-light transition-opacity hover:opacity-92"
                       >
                         + Đặt ngay
                       </button>

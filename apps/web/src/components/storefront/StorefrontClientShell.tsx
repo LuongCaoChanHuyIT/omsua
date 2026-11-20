@@ -301,7 +301,7 @@ function StorefrontShellInner({
           <button
             type="button"
             onClick={openCartDrawer}
-            className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center rounded-2xl bg-terracotta px-4 py-3 text-sm font-bold text-surface-light tabular-nums transition-opacity hover:opacity-92"
+            className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center rounded-2xl bg-terracotta-deep px-4 py-3 text-sm font-bold text-surface-light tabular-nums transition-opacity hover:opacity-92"
           >
             {totals.totalItems > 0
               ? `Xem giỏ hàng (${totals.totalItems} món) • ${formatVnd(totals.grandTotal)} →`

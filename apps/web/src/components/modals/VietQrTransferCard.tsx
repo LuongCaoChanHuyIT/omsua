@@ -211,7 +211,7 @@ export function VietQrTransferCard({
           </p>
           <p className="text-espresso">
             <span className="text-warm-muted">Số tiền CK:</span>{' '}
-            <strong className="font-bold text-terracotta tabular-nums">
+            <strong className="font-bold text-terracotta-deep tabular-nums">
               {formatVnd(amount)}
             </strong>
           </p>

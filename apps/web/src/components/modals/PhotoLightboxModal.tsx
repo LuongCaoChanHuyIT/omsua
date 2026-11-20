@@ -116,7 +116,7 @@ export function PhotoLightboxModal({
       >
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-olive-primary/12 px-5 py-3.5 sm:px-6">
           <div className="min-w-0">
-            <span className="text-xs font-bold tracking-wider text-subhead-ochre tabular-nums uppercase">
+            <span className="text-xs font-bold tracking-wider text-ochre-deep tabular-nums uppercase">
               {`${activeIndex + 1} / ${total}`}
             </span>
             <h3
@@ -214,7 +214,7 @@ export function PhotoLightboxModal({
               href={currentItem.postUrl}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex min-h-11 items-center justify-center rounded-full bg-terracotta px-4 py-2 text-xs font-bold text-surface-light transition hover:opacity-92"
+              className="inline-flex min-h-11 items-center justify-center rounded-full bg-terracotta-deep px-4 py-2 text-xs font-bold text-surface-light transition hover:opacity-92"
             >
               Xem bài gốc trên Fanpage ↗
             </a>

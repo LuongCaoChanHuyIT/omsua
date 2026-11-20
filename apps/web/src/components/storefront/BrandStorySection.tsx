@@ -114,11 +114,11 @@ export function BrandStorySection() {
             <div className="flex items-center gap-2">
               <span
                 aria-hidden="true"
-                className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-artichoke text-xs font-bold text-surface-light tabular-nums"
+                className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-artichoke-deep text-xs font-bold text-surface-light tabular-nums"
               >
                 {pillar.step}
               </span>
-              <span className="text-xs font-bold tracking-wider text-subhead-ochre uppercase">
+              <span className="text-xs font-bold tracking-wider text-ochre-deep uppercase">
                 {pillar.badge}
               </span>
             </div>

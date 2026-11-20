@@ -332,7 +332,7 @@ function CustomizerHeader() {
       </div>
       <div className="min-w-0 space-y-1">
         {product.isSignature ? (
-          <span className="inline-flex items-center rounded-full bg-artichoke px-2.5 py-0.5 text-xs font-bold tracking-wide text-surface-light uppercase">
+          <span className="inline-flex items-center rounded-full bg-artichoke-deep px-2.5 py-0.5 text-xs font-bold tracking-wide text-surface-light uppercase">
             + SIGNATURE
           </span>
         ) : null}
@@ -342,7 +342,7 @@ function CustomizerHeader() {
         <p className="text-xs text-warm-muted sm:text-sm">
           {product.description}
         </p>
-        <p className="pt-0.5 text-sm font-bold text-terracotta tabular-nums">
+        <p className="pt-0.5 text-sm font-bold text-terracotta-deep tabular-nums">
           Giá gốc: {formatVnd(selectedSizeOption.price)}
         </p>
       </div>
@@ -366,7 +366,7 @@ function CustomizerCupGauge() {
         <div className="space-y-1">
           <div className="flex items-center justify-between text-xs font-semibold">
             <span className="text-warm-muted">Độ ngọt</span>
-            <span className="font-bold text-terracotta tabular-nums">
+            <span className="font-bold text-terracotta-deep tabular-nums">
               {`${state.sugarLevel}% đường`}
             </span>
           </div>
@@ -507,7 +507,7 @@ function CustomizerSugarSelector() {
               onClick={() => actions.setSugarLevel(level)}
               className={`inline-flex min-h-11 cursor-pointer items-center justify-center rounded-2xl border px-3 py-2.5 text-xs font-bold tabular-nums transition-colors ${
                 isActive
-                  ? 'border-terracotta bg-terracotta text-surface-light'
+                  ? 'border-terracotta-deep bg-terracotta-deep text-surface-light'
                   : 'border-olive-primary/20 bg-canvas-cream/70 text-espresso hover:bg-card-butter/45'
               }`}
             >
@@ -606,7 +606,7 @@ function CustomizerToppingPicker() {
                 </span>
               </div>
 
-              <span className="shrink-0 text-xs font-bold text-terracotta tabular-nums sm:text-sm">
+              <span className="shrink-0 text-xs font-bold text-terracotta-deep tabular-nums sm:text-sm">
                 {topping.isAvailable
                   ? `+${formatVnd(topping.price)}`
                   : 'Tạm hết'}
@@ -639,7 +639,7 @@ function CustomizerSpiceSelector() {
                 onClick={() => actions.setSpiceLevel(level)}
                 className={`inline-flex min-h-11 cursor-pointer items-center justify-center rounded-2xl border px-3 py-2.5 text-xs font-bold transition-colors sm:text-sm ${
                   isActive
-                    ? 'border-terracotta bg-terracotta text-surface-light'
+                    ? 'border-terracotta-deep bg-terracotta-deep text-surface-light'
                     : 'border-olive-primary/20 bg-canvas-cream/70 text-espresso hover:bg-card-butter/45'
                 }`}
               >
@@ -681,7 +681,7 @@ function CustomizerFooter() {
             aria-label="Tăng số lượng"
             disabled={state.quantity >= 99}
             onClick={actions.incrementQuantity}
-            className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl text-base font-bold text-terracotta transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl text-base font-bold text-terracotta-deep transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
           >
             +
           </button>
@@ -690,7 +690,7 @@ function CustomizerFooter() {
         <button
           type="button"
           onClick={actions.submit}
-          className="inline-flex min-h-11 flex-1 cursor-pointer items-center justify-center rounded-2xl bg-terracotta px-5 py-3 text-sm font-bold text-surface-light shadow-paper-rest tabular-nums transition-opacity hover:opacity-92 sm:text-base"
+          className="inline-flex min-h-11 flex-1 cursor-pointer items-center justify-center rounded-2xl bg-terracotta-deep px-5 py-3 text-sm font-bold text-surface-light shadow-paper-rest tabular-nums transition-opacity hover:opacity-92 sm:text-base"
         >
           Thêm vào giỏ • {formatVnd(meta.previewLine.lineTotal)}
         </button>

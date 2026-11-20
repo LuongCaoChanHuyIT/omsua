@@ -81,7 +81,7 @@ export const DrinkMenuItemCard = memo(function DrinkMenuItemCard({
           preferIllustration={preferIllustration}
         />
         {drink.isSignature ? (
-          <span className="absolute top-1.5 left-1.5 rounded-full bg-artichoke px-2 py-0.5 text-xs font-bold tracking-wide text-surface-light">
+          <span className="absolute top-1.5 left-1.5 rounded-full bg-artichoke-deep px-2 py-0.5 text-xs font-bold tracking-wide text-surface-light">
             + SIGNATURE
           </span>
         ) : null}
@@ -101,7 +101,7 @@ export const DrinkMenuItemCard = memo(function DrinkMenuItemCard({
         </div>
 
         <div className="mt-3 flex items-center justify-between gap-2">
-          <span className="text-xs font-bold text-terracotta tabular-nums sm:text-sm">
+          <span className="text-xs font-bold text-terracotta-deep tabular-nums sm:text-sm">
             {formatDrinkSizes(drink)}
           </span>
 
@@ -109,7 +109,7 @@ export const DrinkMenuItemCard = memo(function DrinkMenuItemCard({
             <button
               type="button"
               onClick={() => onSelectById(drink.id)}
-              className="inline-flex min-h-11 cursor-pointer items-center rounded-full bg-terracotta px-4 py-2 text-xs font-bold text-surface-light transition-opacity hover:opacity-90"
+              className="inline-flex min-h-11 cursor-pointer items-center rounded-full bg-terracotta-deep px-4 py-2 text-xs font-bold text-surface-light transition-opacity hover:opacity-90"
             >
               + Thêm
             </button>
@@ -232,7 +232,7 @@ export function DrinkMenuSection({
               onClick={() => onToggleMediaMode(false)}
               className={`inline-flex min-h-11 cursor-pointer items-center rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors ${
                 !preferIllustration
-                  ? 'bg-terracotta text-surface-light'
+                  ? 'bg-terracotta-deep text-surface-light'
                   : 'text-espresso hover:bg-canvas-cream'
               }`}
             >
@@ -363,7 +363,7 @@ export function DrinkMenuSection({
                 onChangeCategory('all');
               });
             }}
-            className="mt-4 inline-flex min-h-11 cursor-pointer items-center rounded-full bg-terracotta px-5 py-2.5 text-xs font-bold text-surface-light transition-opacity hover:opacity-92 sm:text-sm"
+            className="mt-4 inline-flex min-h-11 cursor-pointer items-center rounded-full bg-terracotta-deep px-5 py-2.5 text-xs font-bold text-surface-light transition-opacity hover:opacity-92 sm:text-sm"
           >
             Xóa bộ lọc tìm kiếm
           </button>

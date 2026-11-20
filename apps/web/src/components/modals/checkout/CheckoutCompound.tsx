@@ -573,7 +573,7 @@ function CheckoutReceiptView() {
     <div className="space-y-5">
       <div className="space-y-3 rounded-3xl border border-olive-primary/15 bg-card-butter p-5">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center rounded-full bg-artichoke px-3 py-1 text-xs font-bold tracking-wide text-surface-light uppercase">
+          <span className="inline-flex items-center rounded-full bg-artichoke-deep px-3 py-1 text-xs font-bold tracking-wide text-surface-light uppercase">
             ✓ ĐẶT MÓN THÀNH CÔNG
           </span>
           <span className="inline-flex items-center rounded-full border border-olive-primary/20 bg-surface-light px-3 py-1 text-xs font-bold text-olive-primary">
@@ -616,7 +616,7 @@ function CheckoutReceiptView() {
                         {item.iceLevel}% đá
                       </p>
                       {item.toppings.length > 0 ? (
-                        <p className="font-semibold text-artichoke tabular-nums">
+                        <p className="font-semibold text-artichoke-deep tabular-nums">
                           +{' '}
                           {item.toppings
                             .map(
@@ -641,7 +641,7 @@ function CheckoutReceiptView() {
                     {item.kind === 'snack' ? 'phần' : 'ly'}
                   </p>
                 </div>
-                <span className="shrink-0 font-bold text-terracotta tabular-nums sm:text-sm">
+                <span className="shrink-0 font-bold text-terracotta-deep tabular-nums sm:text-sm">
                   {formatVnd(item.lineTotal)}
                 </span>
               </li>
@@ -679,7 +679,7 @@ function CheckoutReceiptView() {
         </div>
         <div className="flex justify-between gap-2 border-t border-olive-primary/12 pt-2">
           <span className="font-bold text-espresso">Tổng thanh toán:</span>
-          <span className="font-bold text-terracotta tabular-nums">
+          <span className="font-bold text-terracotta-deep tabular-nums">
             {formatVnd(confirmedOrder.grandTotal)}
           </span>
         </div>
@@ -703,7 +703,7 @@ function CheckoutReceiptView() {
         <button
           type="button"
           onClick={actions.close}
-          className="inline-flex min-h-11 flex-1 cursor-pointer items-center justify-center rounded-2xl bg-terracotta px-5 py-3 text-sm font-bold text-surface-light shadow-paper-rest transition-opacity hover:opacity-92 sm:text-base"
+          className="inline-flex min-h-11 flex-1 cursor-pointer items-center justify-center rounded-2xl bg-terracotta-deep px-5 py-3 text-sm font-bold text-surface-light shadow-paper-rest transition-opacity hover:opacity-92 sm:text-base"
         >
           Tiếp tục đặt món
         </button>
@@ -726,7 +726,7 @@ function CheckoutEmptyState() {
       <button
         type="button"
         onClick={actions.close}
-        className="mt-2 inline-flex min-h-11 cursor-pointer items-center rounded-full bg-terracotta px-5 py-2.5 text-xs font-bold text-surface-light transition-opacity hover:opacity-92 sm:text-sm"
+        className="mt-2 inline-flex min-h-11 cursor-pointer items-center rounded-full bg-terracotta-deep px-5 py-2.5 text-xs font-bold text-surface-light transition-opacity hover:opacity-92 sm:text-sm"
       >
         Khám phá thực đơn
       </button>
@@ -745,7 +745,7 @@ function CheckoutUnavailableBanner() {
     <div className="space-y-3 rounded-2xl border border-coral-sketch bg-coral-sketch/20 p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="space-y-0.5">
-          <p className="text-xs font-bold tracking-wider text-terracotta uppercase">
+          <p className="text-xs font-bold tracking-wider text-terracotta-deep uppercase">
             ⚠ CÓ MÓN TRONG GIỎ VỪA TẠM HẾT
           </p>
           <p className="text-xs text-espresso">
@@ -755,7 +755,7 @@ function CheckoutUnavailableBanner() {
         <button
           type="button"
           onClick={actions.removeAllUnavailableItems}
-          className="inline-flex min-h-11 cursor-pointer items-center rounded-full bg-terracotta px-4 py-2 text-xs font-bold text-surface-light transition-opacity hover:opacity-92"
+          className="inline-flex min-h-11 cursor-pointer items-center rounded-full bg-terracotta-deep px-4 py-2 text-xs font-bold text-surface-light transition-opacity hover:opacity-92"
         >
           Gỡ món tạm hết
         </button>
@@ -780,7 +780,7 @@ function CheckoutUnavailableBanner() {
               type="button"
               aria-label={`Xóa món tạm hết ${item.productName}`}
               onClick={() => actions.removeSingleUnavailableItem(item.key)}
-              className="inline-flex min-h-11 shrink-0 cursor-pointer items-center px-3 text-xs font-semibold text-terracotta underline-offset-2 hover:underline"
+              className="inline-flex min-h-11 shrink-0 cursor-pointer items-center px-3 text-xs font-semibold text-terracotta-deep underline-offset-2 hover:underline"
             >
               Xóa
             </button>
@@ -820,7 +820,7 @@ function CheckoutItemList() {
                 <h3 className="font-editorial text-base leading-snug font-semibold text-espresso">
                   {line.productName}
                 </h3>
-                <span className="shrink-0 text-sm font-bold text-terracotta tabular-nums">
+                <span className="shrink-0 text-sm font-bold text-terracotta-deep tabular-nums">
                   {formatVnd(line.lineTotal)}
                 </span>
               </div>
@@ -832,7 +832,7 @@ function CheckoutItemList() {
                     {line.iceLevel}% đá
                   </p>
                   {line.toppings.length > 0 ? (
-                    <p className="text-xs font-semibold text-artichoke tabular-nums">
+                    <p className="text-xs font-semibold text-artichoke-deep tabular-nums">
                       +{' '}
                       {line.toppings
                         .map(
@@ -852,7 +852,7 @@ function CheckoutItemList() {
                       : 'Cay vừa'}{' '}
                     • {line.sizeLabel}
                   </p>
-                  <p className="text-xs font-semibold text-subhead-ochre">
+                  <p className="text-xs font-semibold text-ochre-deep">
                     Ăn kèm sốt tắc hành phi nhà làm
                   </p>
                 </>
@@ -881,7 +881,7 @@ function CheckoutItemList() {
                   onClick={() =>
                     meta.updateQuantity(line.canonicalKey, line.quantity + 1)
                   }
-                  className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-xs font-bold text-terracotta transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-xs font-bold text-terracotta-deep transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   +
                 </button>
@@ -891,7 +891,7 @@ function CheckoutItemList() {
                 type="button"
                 aria-label={`Xóa ${line.productName}`}
                 onClick={() => meta.removeItem(line.canonicalKey)}
-                className="inline-flex min-h-11 cursor-pointer items-center px-3 text-xs font-semibold text-warm-muted underline-offset-2 transition-colors hover:text-terracotta hover:underline"
+                className="inline-flex min-h-11 cursor-pointer items-center px-3 text-xs font-semibold text-warm-muted underline-offset-2 transition-colors hover:text-terracotta-deep hover:underline"
               >
                 Xóa
               </button>
@@ -996,7 +996,7 @@ function CheckoutDeliveryFields() {
           {state.fieldErrors.name ? (
             <p
               id={`${meta.nameInputId}-error`}
-              className="text-xs font-medium text-terracotta"
+              className="text-xs font-medium text-terracotta-deep"
             >
               {state.fieldErrors.name}
             </p>
@@ -1034,7 +1034,7 @@ function CheckoutDeliveryFields() {
           {state.fieldErrors.phone ? (
             <p
               id={`${meta.phoneInputId}-error`}
-              className="text-xs font-medium text-terracotta"
+              className="text-xs font-medium text-terracotta-deep"
             >
               {state.fieldErrors.phone}
             </p>
@@ -1073,7 +1073,7 @@ function CheckoutDeliveryFields() {
         {state.fieldErrors.address ? (
           <p
             id={`${meta.addressInputId}-error`}
-            className="text-xs font-medium text-terracotta"
+            className="text-xs font-medium text-terracotta-deep"
           >
             {state.fieldErrors.address}
           </p>
@@ -1110,7 +1110,7 @@ function CheckoutDeliveryFields() {
         {state.fieldErrors.note ? (
           <p
             id={`${meta.noteInputId}-error`}
-            className="text-xs font-medium text-terracotta"
+            className="text-xs font-medium text-terracotta-deep"
           >
             {state.fieldErrors.note}
           </p>
@@ -1136,7 +1136,7 @@ function CheckoutTotalsCard() {
 
       <div className="flex items-center justify-between">
         <span className="text-warm-muted">{meta.shippingFeeLabel}</span>
-        <span className="font-bold text-artichoke">Miễn phí</span>
+        <span className="font-bold text-artichoke-deep">Miễn phí</span>
       </div>
 
       <div className="flex items-center justify-between">
@@ -1150,7 +1150,7 @@ function CheckoutTotalsCard() {
         <span className="font-display text-base font-bold text-espresso">
           Tổng thanh toán:
         </span>
-        <span className="text-lg font-extrabold text-terracotta tabular-nums">
+        <span className="text-lg font-extrabold text-terracotta-deep tabular-nums">
           {formatVnd(meta.totals.grandTotal)}
         </span>
       </div>
@@ -1217,7 +1217,7 @@ function CheckoutSubmitSection() {
             meta.unavailableItems.length > 0 ||
             meta.lines.length === 0
           }
-          className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center rounded-2xl bg-terracotta px-5 py-3.5 text-sm font-bold text-surface-light shadow-paper-rest tabular-nums transition-opacity hover:opacity-92 disabled:cursor-not-allowed disabled:opacity-65 sm:text-base"
+          className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center rounded-2xl bg-terracotta-deep px-5 py-3.5 text-sm font-bold text-surface-light shadow-paper-rest tabular-nums transition-opacity hover:opacity-92 disabled:cursor-not-allowed disabled:opacity-65 sm:text-base"
         >
           {state.isSubmitting
             ? 'Đang xử lý đơn hàng…'
