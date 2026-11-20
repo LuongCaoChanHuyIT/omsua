@@ -15,4 +15,4 @@ services:
       - key: SQLITE_PATH
         value: /tmp/omsua.sqlite
       - key: CORS_ORIGINS
-        value: https://omsua-web.vercel.app,https://omsua-admin.vercel.app,https://omsua-web*.vercel.app,https://omsua-admin*.vercel.app,http://localhost:3000,http://localhost:3001
+        value: https://omsua-web.vercel.app,https://omsua-admin.vercel.app,https://omsua-web*-luong-cao-chan-huys-projects.vercel.app,https://omsua-admin*-luong-cao-chan-huys-projects.vercel.app

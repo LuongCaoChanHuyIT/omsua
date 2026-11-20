@@ -134,4 +134,45 @@ describe('cloud deployment repository invariants (Render & Node 22)', () => {
     expect(renderYaml).toContain('--prod=false');
     expect(renderYaml).toContain('node apps/backend/dist/main.js');
   });
+
+  it('scopes production render.yaml CORS_ORIGINS to luong-cao-chan-huys-projects and rejects third-party .vercel.app tenants and localhost', () => {
+    const renderYaml = readFileSync(resolve(REPO_ROOT, 'render.yaml'), 'utf8');
+    const corsMatch = renderYaml.match(
+      /- key:\s*CORS_ORIGINS\s*\n\s*value:\s*(.+)/,
+    );
+    expect(corsMatch?.[1]).toBeDefined();
+
+    const prodPatterns = parseCorsOrigins(corsMatch![1]!.trim());
+    expect(
+      isCorsOriginAllowed('https://omsua-web.vercel.app', prodPatterns),
+    ).toBe(true);
+    expect(
+      isCorsOriginAllowed('https://omsua-admin.vercel.app', prodPatterns),
+    ).toBe(true);
+    expect(
+      isCorsOriginAllowed(
+        'https://omsua-web-git-main-luong-cao-chan-huys-projects.vercel.app',
+        prodPatterns,
+      ),
+    ).toBe(true);
+    expect(
+      isCorsOriginAllowed(
+        'https://omsua-admin-9jxtj8wxl-luong-cao-chan-huys-projects.vercel.app',
+        prodPatterns,
+      ),
+    ).toBe(true);
+
+    expect(
+      isCorsOriginAllowed('https://omsua-web-evil.vercel.app', prodPatterns),
+    ).toBe(false);
+    expect(
+      isCorsOriginAllowed('https://omsua-admin-evil.vercel.app', prodPatterns),
+    ).toBe(false);
+    expect(isCorsOriginAllowed('http://localhost:3000', prodPatterns)).toBe(
+      false,
+    );
+    expect(isCorsOriginAllowed('http://localhost:3001', prodPatterns)).toBe(
+      false,
+    );
+  });
 });

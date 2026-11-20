@@ -389,7 +389,7 @@ Hệ thống được cấu hình sẵn dưới dạng hạ tầng khai báo (*I
 
 1. **Render Backend (`render.yaml` + `.node-version`):**
    - Dịch vụ `omsua-backend` (`runtime: node`, `region: singapore`, `healthCheckPath: /api/health`) tự động cài đặt đầy đủ `devDependencies` (`pnpm install --frozen-lockfile --prod=false`), biên dịch `@omsua/shared` + `@omsua/backend` trên Node 22 và lắng nghe trên `0.0.0.0`.
-   - Biến môi trường chính: `NODE_VERSION=22`, `NODE_ENV=production`, `SQLITE_PATH=/tmp/omsua.sqlite` (tự động tạo bảng & seed dữ liệu gốc; có thể đổi sang `/var/data/omsua.sqlite` khi gắn Render Persistent Disk), `CORS_ORIGINS=https://omsua-web.vercel.app,https://omsua-admin.vercel.app,https://omsua-web*.vercel.app,https://omsua-admin*.vercel.app,http://localhost:3000,http://localhost:3001` (hỗ trợ khớp nhãn đơn DNS an toàn qua `isCorsOriginAllowed`).
+   - Biến môi trường chính: `NODE_VERSION=22`, `NODE_ENV=production`, `SQLITE_PATH=/tmp/omsua.sqlite` (tự động tạo bảng & seed dữ liệu gốc; có thể đổi sang `/var/data/omsua.sqlite` khi gắn Render Persistent Disk), `CORS_ORIGINS=https://omsua-web.vercel.app,https://omsua-admin.vercel.app,https://omsua-web*-luong-cao-chan-huys-projects.vercel.app,https://omsua-admin*-luong-cao-chan-huys-projects.vercel.app` (khóa chặt theo tên miền chính thức và hậu tố team Vercel qua `isCorsOriginAllowed`).
 2. **Vercel Storefront (`apps/web/vercel.json` -> dự án `omsua-web`):**
    - `Root Directory`: `apps/web`, lệnh build tự động biên dịch gói dùng chung trước (`pnpm --dir ../.. build:shared && pnpm build`).
    - Biến môi trường: `NEXT_PUBLIC_API_URL=https://omsua-backend.onrender.com/api`, `API_URL=https://omsua-backend.onrender.com/api`.
