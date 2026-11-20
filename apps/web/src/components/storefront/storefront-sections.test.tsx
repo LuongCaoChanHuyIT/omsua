@@ -56,9 +56,33 @@ describe('Storefront Sections', () => {
       '#nhuong-quyen',
     );
 
-    const branchSelect = screen.getByLabelText(/Chọn chi nhánh/i);
-    fireEvent.change(branchSelect, { target: { value: 'cs4-duc-trong' } });
+    const branchTrigger = screen.getByRole('button', {
+      name: /Chọn chi nhánh/i,
+    });
+    expect(branchTrigger).toHaveAttribute('aria-expanded', 'false');
+    expect(document.querySelector('header select')).toBeNull();
+
+    fireEvent.click(branchTrigger);
+    expect(branchTrigger).toHaveAttribute('aria-expanded', 'true');
+    const listbox = screen.getByRole('listbox', {
+      name: /Chọn cơ sở phục vụ/i,
+    });
+    const options = within(listbox).getAllByRole('option');
+    expect(options).toHaveLength(4);
+    expect(options[0]).toHaveAttribute('aria-selected', 'true');
+
+    // Keyboard ArrowDown -> ArrowDown -> ArrowDown -> click/select Đức Trọng
+    fireEvent.keyDown(options[0]!, { key: 'ArrowDown' });
+    expect(document.activeElement).toBe(options[1]);
+    fireEvent.keyDown(options[1]!, { key: 'End' });
+    expect(document.activeElement).toBe(options[3]);
+    fireEvent.keyDown(options[3]!, { key: 'Home' });
+    expect(document.activeElement).toBe(options[0]);
+
+    fireEvent.click(options[3]!);
     expect(onSelectBranch).toHaveBeenCalledWith('cs4-duc-trong');
+    expect(branchTrigger).toHaveAttribute('aria-expanded', 'false');
+    expect(document.activeElement).toBe(branchTrigger);
 
     const cartButton = screen.getByRole('button', {
       name: /Giỏ hàng \(2\) • 90k/i,
@@ -344,13 +368,18 @@ describe('Storefront Sections', () => {
 
     const branchSelect = screen.getByLabelText(/Chọn chi nhánh/i);
     expect(branchSelect).toHaveAttribute('id', 'storefront-branch-select');
-    expect(branchSelect).toHaveAttribute('name', 'branchId');
+    expect(branchSelect.tagName).toBe('BUTTON');
     expect(branchSelect.className).toContain('min-h-11');
-    expect(branchSelect.className).toContain('text-base');
-    expect(branchSelect.className).toContain('sm:text-xs');
-    const firstBranchOption = branchSelect.querySelector('option');
-    expect(firstBranchOption?.className).toContain('bg-surface-light');
-    expect(firstBranchOption?.className).toContain('text-espresso');
+    expect(branchSelect.className).toContain('rounded-full');
+    expect(
+      document.querySelector('input[type="hidden"][name="branchId"]'),
+    ).toHaveValue(OMSUA_BRANCHES[0]!.id);
+
+    fireEvent.click(branchSelect);
+    expect(branchSelect).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(branchSelect).toHaveAttribute('aria-expanded', 'false');
+    expect(document.activeElement).toBe(branchSelect);
 
     const storesNavLink = screen.getByRole('link', { name: 'CỬA HÀNG' });
     expect(storesNavLink.className).toContain('min-h-11');

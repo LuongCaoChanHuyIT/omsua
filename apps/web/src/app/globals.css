@@ -69,8 +69,13 @@ select {
   outline-offset: 2px;
 }
 
+header :focus-visible,
 .bg-hero-espresso :focus-visible {
   outline-color: var(--color-card-butter);
+}
+
+.bg-surface-light :focus-visible {
+  outline-color: var(--color-olive-primary);
 }
 
 :root {

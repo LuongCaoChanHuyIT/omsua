@@ -214,6 +214,7 @@ export function DrinkMenuSection({
         (target.tagName === 'INPUT' ||
           target.tagName === 'TEXTAREA' ||
           target.tagName === 'SELECT' ||
+          target.closest?.('[data-branch-picker="true"], [role="listbox"]') ||
           target.isContentEditable)
       ) {
         return;
