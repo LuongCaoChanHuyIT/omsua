@@ -33,7 +33,7 @@ export function HeroSpotlight({
     >
       <div className="mb-5 flex flex-wrap items-center justify-between gap-2 border-b border-dashed border-olive-primary/22 pb-3 text-xs font-semibold tracking-wider text-ochre-deep uppercase">
         <span>BẢN KHẮC THỰC ĐƠN CAO NGUYÊN • TỪ 2017</span>
-        <span className="tabular-nums">CẦU ĐẤT — ĐÀ LẠT • 1.500M</span>
+        <span>CẦU ĐẤT — LÂM ĐỒNG • Ủ TRÀ MỖI SÁNG</span>
       </div>
       <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12">
         <div className="space-y-5 lg:col-span-6">
