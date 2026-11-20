@@ -88,7 +88,10 @@ export function ToppingStripSection({
   );
 
   return (
-    <section className="rounded-2xl border-y border-olive-primary/18 bg-card-butter/45 px-5 py-6 sm:px-7">
+    <section
+      id="topping"
+      className="scroll-mt-32 rounded-2xl border-y border-olive-primary/18 bg-card-butter/45 px-5 py-6 sm:px-7"
+    >
       <div className="mb-4 flex flex-col gap-1.5 lg:flex-row lg:items-baseline lg:justify-between">
         <h2 className="font-display text-xl font-bold tracking-tight text-olive-primary uppercase sm:text-2xl">
           TOPPING NHÀ LÀM MỖI NGÀY

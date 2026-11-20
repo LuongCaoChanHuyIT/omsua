@@ -107,7 +107,7 @@ export function BrandFooter({
 
         <div
           id="chi-nhanh"
-          className="scroll-mt-24 grid grid-cols-1 items-stretch gap-4 lg:grid-cols-12"
+          className="scroll-mt-32 grid grid-cols-1 items-stretch gap-4 lg:grid-cols-12"
         >
           <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:col-span-9 lg:grid-cols-4">
             {branches.map((branch) => {

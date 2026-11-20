@@ -309,7 +309,7 @@ export function DrinkMenuSection({
   );
 
   return (
-    <section id="thuc-don" className="scroll-mt-24 space-y-6">
+    <section id="thuc-don" className="scroll-mt-32 space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1">
           <h2 className="font-display text-2xl font-bold tracking-tight text-olive-primary uppercase sm:text-[28px]">

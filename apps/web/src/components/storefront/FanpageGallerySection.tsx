@@ -69,7 +69,7 @@ export function FanpageGallerySection({
   return (
     <section
       id="khong-gian"
-      className="scroll-mt-24 rounded-3xl border border-olive-primary/14 bg-surface-light p-6 shadow-paper-rest sm:p-8"
+      className="scroll-mt-32 rounded-3xl border border-olive-primary/14 bg-surface-light p-6 shadow-paper-rest sm:p-8"
     >
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-2">

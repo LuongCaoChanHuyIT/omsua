@@ -36,13 +36,25 @@ describe('Storefront Sections', () => {
       />,
     );
 
-    expect(screen.getByRole('link', { name: /Thực đơn/i })).toHaveAttribute(
-      'href',
-      '#thuc-don',
-    );
     expect(
-      screen.getByRole('link', { name: /Bánh tráng Snack/i }),
-    ).toHaveAttribute('href', '#banh-trang');
+      screen.getByRole('button', { name: 'SẢN PHẨM' }),
+    ).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('link', { name: 'CỬA HÀNG' })).toHaveAttribute(
+      'href',
+      '#chi-nhanh',
+    );
+    expect(screen.getByRole('link', { name: 'TUYỂN DỤNG' })).toHaveAttribute(
+      'href',
+      '#tuyen-dung',
+    );
+    expect(screen.getByRole('link', { name: 'THÀNH VIÊN' })).toHaveAttribute(
+      'href',
+      '#thanh-vien',
+    );
+    expect(screen.getByRole('link', { name: 'NHƯỢNG QUYỀN' })).toHaveAttribute(
+      'href',
+      '#nhuong-quyen',
+    );
 
     const branchSelect = screen.getByLabelText(/Chọn chi nhánh/i);
     fireEvent.change(branchSelect, { target: { value: 'cs4-duc-trong' } });
@@ -340,8 +352,8 @@ describe('Storefront Sections', () => {
     expect(firstBranchOption?.className).toContain('bg-surface-light');
     expect(firstBranchOption?.className).toContain('text-espresso');
 
-    const menuNavLink = screen.getByRole('link', { name: 'Thực đơn' });
-    expect(menuNavLink.className).toContain('min-h-11');
+    const storesNavLink = screen.getByRole('link', { name: 'CỬA HÀNG' });
+    expect(storesNavLink.className).toContain('min-h-11');
 
     const lookupBtnZero = screen.getByRole('button', { name: 'Đơn đã đặt' });
     expect(lookupBtnZero.className).toContain('min-h-11');
@@ -731,5 +743,92 @@ describe('Storefront Sections', () => {
       window.history.replaceState(null, '', originalUrl);
       vi.unstubAllGlobals();
     }
+  });
+
+  it('renders 2-tier bg-hero-espresso Flagship StorefrontHeader with 7 nav items, mutually exclusive disclosure dropdowns, Escape focus return, outside-click close, and mobile Menu panel', () => {
+    const onSelectDrinkCategory = vi.fn();
+    const onSelectNewsCategory = vi.fn();
+
+    const { container } = render(
+      <div>
+        <StorefrontHeader
+          branches={OMSUA_BRANCHES}
+          selectedBranch={OMSUA_BRANCHES[0]!}
+          onSelectBranch={vi.fn()}
+          cartItemCount={1}
+          cartTotal={45000}
+          onOpenCart={vi.fn()}
+          onSelectDrinkCategory={onSelectDrinkCategory}
+          onSelectNewsCategory={onSelectNewsCategory}
+        />
+        <ToppingStripSection toppings={getDefaultCatalog().toppings} />
+      </div>,
+    );
+
+    const header = container.querySelector('header')!;
+    expect(header.className).toContain('bg-hero-espresso');
+    expect(container.querySelector('#topping')).not.toBeNull();
+
+    const gioiThieuBtn = screen.getByRole('button', { name: 'GIỚI THIỆU' });
+    const sanPhamBtn = screen.getByRole('button', { name: 'SẢN PHẨM' });
+    const tinTucBtn = screen.getByRole('button', { name: 'TIN TỨC' });
+
+    for (const btn of [gioiThieuBtn, sanPhamBtn, tinTucBtn]) {
+      expect(btn).toHaveAttribute('aria-expanded', 'false');
+      expect(btn.getAttribute('aria-label')).toBeNull();
+      expect(btn.className).toContain('min-h-11');
+    }
+
+    // Open SẢN PHẨM dropdown -> reveals drink categories, #topping, and #banh-trang
+    fireEvent.click(sanPhamBtn);
+    expect(sanPhamBtn).toHaveAttribute('aria-expanded', 'true');
+    expect(
+      screen.getByRole('link', { name: /Tất cả Thực đơn Đồ uống/i }),
+    ).toHaveAttribute('href', '#thuc-don');
+    expect(
+      screen.getByRole('link', { name: /Topping Nhà Làm Mỗi Sáng/i }),
+    ).toHaveAttribute('href', '#topping');
+    const snackSubLink = screen.getByRole('link', {
+      name: /Bánh Tráng Snack Đà Lạt/i,
+    });
+    expect(snackSubLink).toHaveAttribute('href', '#banh-trang');
+    expect(snackSubLink.className).toContain('min-h-11');
+
+    // Clicking a drink category invokes onSelectDrinkCategory and closes the dropdown
+    fireEvent.click(
+      screen.getByRole('link', { name: /2\. Giữ Dáng — Fruit Tea & Kombucha/i }),
+    );
+    expect(onSelectDrinkCategory).toHaveBeenCalledWith('fruit-tea');
+    expect(sanPhamBtn).toHaveAttribute('aria-expanded', 'false');
+
+    // Mutual exclusion: opening SẢN PHẨM then GIỚI THIỆU closes SẢN PHẨM
+    fireEvent.click(sanPhamBtn);
+    expect(sanPhamBtn).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.click(gioiThieuBtn);
+    expect(sanPhamBtn).toHaveAttribute('aria-expanded', 'false');
+    expect(gioiThieuBtn).toHaveAttribute('aria-expanded', 'true');
+    expect(
+      screen.getByRole('link', { name: /Ấn phẩm Menu Đà Lạt \(PDF\)/i }),
+    ).toHaveAttribute('href', '/brand/omsua-botanical-menu-poster.pdf');
+
+    // Pressing Escape closes GIỚI THIỆU and restores focus to gioiThieuBtn
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(gioiThieuBtn).toHaveAttribute('aria-expanded', 'false');
+    expect(document.activeElement).toBe(gioiThieuBtn);
+
+    // Outside pointerDown closes TIN TỨC
+    fireEvent.click(tinTucBtn);
+    expect(tinTucBtn).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.pointerDown(document.body);
+    expect(tinTucBtn).toHaveAttribute('aria-expanded', 'false');
+
+    // Mobile Menu toggle mounts #mobile-flagship-nav only when expanded
+    expect(container.querySelector('#mobile-flagship-nav')).toBeNull();
+    const mobileMenuBtn = screen.getByRole('button', { name: 'Menu' });
+    expect(mobileMenuBtn.getAttribute('aria-label')).toBeNull();
+    expect(mobileMenuBtn).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(mobileMenuBtn);
+    expect(mobileMenuBtn).toHaveAttribute('aria-expanded', 'true');
+    expect(container.querySelector('#mobile-flagship-nav')).not.toBeNull();
   });
 });

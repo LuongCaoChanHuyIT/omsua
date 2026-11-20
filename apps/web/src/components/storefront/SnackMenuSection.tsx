@@ -123,7 +123,7 @@ export function SnackMenuSection({
   return (
     <section
       id="banh-trang"
-      className="scroll-mt-24 rounded-3xl border border-olive-primary/14 bg-surface-light p-5 shadow-paper-rest sm:p-7"
+      className="scroll-mt-32 rounded-3xl border border-olive-primary/14 bg-surface-light p-5 shadow-paper-rest sm:p-7"
     >
       <div className="mb-5 flex flex-col gap-3 border-b border-olive-primary/12 pb-4 lg:flex-row lg:items-center lg:justify-between">
         <h2 className="font-snack text-xl font-extrabold tracking-tight text-terracotta-deep uppercase sm:text-2xl">

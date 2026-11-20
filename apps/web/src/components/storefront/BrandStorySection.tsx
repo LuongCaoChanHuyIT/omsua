@@ -35,7 +35,7 @@ export function BrandStorySection() {
   return (
     <section
       id="cau-chuyen"
-      className="scroll-mt-24 border-y border-olive-primary/16 py-8 sm:py-10"
+      className="scroll-mt-32 border-y border-olive-primary/16 py-8 sm:py-10"
     >
       <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12">
         <div className="space-y-4 lg:col-span-7">

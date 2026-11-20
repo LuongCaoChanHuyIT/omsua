@@ -29,7 +29,7 @@ export function HeroSpotlight({
   return (
     <section
       id="hero"
-      className="scroll-mt-24 rounded-3xl border border-olive-primary/18 bg-surface-light p-6 shadow-paper-rest sm:p-8 lg:p-10"
+      className="scroll-mt-32 rounded-3xl border border-olive-primary/18 bg-surface-light p-6 shadow-paper-rest sm:p-8 lg:p-10"
     >
       <div className="mb-5 flex flex-wrap items-center justify-between gap-2 border-b border-dashed border-olive-primary/22 pb-3 text-xs font-semibold tracking-wider text-ochre-deep uppercase">
         <span>BẢN KHẮC THỰC ĐƠN CAO NGUYÊN • TỪ 2017</span>
