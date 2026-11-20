@@ -1,4 +1,4 @@
-import type { DrinkCategoryId, OrderRecord } from '@omsua/shared';
+import type { DrinkCategoryId } from '@omsua/shared';
 
 export type NewsCategoryFilter = 'all' | 'mua-vu' | 'uu-dai';
 export type HeaderDropdownKey = 'gioi-thieu' | 'san-pham' | 'tin-tuc';
@@ -330,9 +330,15 @@ export function isValidVietnamPhone(raw: string): boolean {
   return /^0\d{9}$/.test(normalized);
 }
 
+export interface LoyaltyOrderEntry {
+  status: string;
+  grandTotal: number;
+  customerPhone?: string;
+}
+
 export function computeMemberStatus(
   phone: string,
-  recentOrders: readonly OrderRecord[],
+  recentOrders: readonly LoyaltyOrderEntry[],
   savedProfile: SavedMemberProfile | null,
 ): {
   normalizedPhone: string;
@@ -344,11 +350,15 @@ export function computeMemberStatus(
   pointsToNext: number;
 } {
   const normalizedPhone = normalizeVietnamPhone(phone);
-  const matchingOrders = recentOrders.filter(
-    (order) =>
-      order.status !== 'cancelled' &&
-      normalizeVietnamPhone(order.customerPhone) === normalizedPhone,
-  );
+  const matchingOrders = recentOrders.filter((order) => {
+    if (order.status === 'cancelled') {
+      return false;
+    }
+    if (typeof order.customerPhone === 'string' && order.customerPhone.trim()) {
+      return normalizeVietnamPhone(order.customerPhone) === normalizedPhone;
+    }
+    return Boolean(normalizedPhone);
+  });
   const totalSpent = matchingOrders.reduce(
     (sum, order) => sum + order.grandTotal,
     0,

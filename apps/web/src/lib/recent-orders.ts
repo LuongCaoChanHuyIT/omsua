@@ -17,6 +17,7 @@ export interface RecentOrderSummary {
   paymentMethod: PaymentMethod;
   status: OrderStatus;
   createdAt: string;
+  customerPhone?: string;
 }
 
 const VALID_PAYMENT_METHODS = new Set<string>(PAYMENT_METHODS);
@@ -95,6 +96,7 @@ export function saveRecentOrder(order: OrderRecord): RecentOrderSummary[] {
     paymentMethod: order.paymentMethod,
     status: order.status,
     createdAt: order.createdAt,
+    customerPhone: order.customerPhone,
   };
 
   const existing = readRecentOrders().filter(
