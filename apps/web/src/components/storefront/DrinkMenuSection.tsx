@@ -499,7 +499,9 @@ export function DrinkMenuSection({
       {totalVisibleDrinks === 0 ? (
         <div className="rounded-3xl border border-olive-primary/14 bg-surface-light p-8 text-center shadow-paper-rest">
           <p className="font-display text-lg font-bold text-espresso">
-            Chưa tìm thấy thức uống khớp từ khóa “{effectiveQuery.trim()}”
+            {effectiveQuery.trim()
+              ? `Chưa tìm thấy thức uống khớp từ khóa “${effectiveQuery.trim()}”`
+              : 'Chưa có thức uống phù hợp với bộ lọc nhóm và khẩu vị đang chọn'}
           </p>
           <p className="mt-1 text-xs text-warm-muted sm:text-sm">
             Thử tìm theo nguyên liệu Đà Lạt như Atiso, dâu tằm, me, kem trứng

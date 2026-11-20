@@ -1859,10 +1859,13 @@ describe('Admin App routes & operational portals', () => {
 
     // 1. Valid URL params on OrdersPage + Compact Kitchen Ticket mode + single-card print isolation
     let printObservedActiveIds: string[] = [];
+    let printObservedIsolating = false;
     const printSpy = vi.spyOn(window, 'print').mockImplementation(() => {
       printObservedActiveIds = Array.from(
         document.querySelectorAll('[data-print-active="true"]'),
       ).map((el) => el.getAttribute('data-testid') ?? '');
+      printObservedIsolating =
+        document.querySelector('[data-print-isolating="true"]') !== null;
     });
 
     const { unmount } = render(
@@ -1897,11 +1900,14 @@ describe('Admin App routes & operational portals', () => {
     expect(compactBtn).toHaveAttribute('aria-pressed', 'true');
     expect(document.querySelector('[data-view-mode="compact"]')).not.toBeNull();
 
+    expect(document.querySelector('[data-print-isolating="true"]')).toBeNull();
     const card1 = screen.getByTestId('order-card-ord-print-1');
     fireEvent.click(within(card1).getByRole('button', { name: /In phiếu bếp/i }));
     expect(printSpy).toHaveBeenCalledTimes(1);
+    expect(printObservedIsolating).toBe(true);
     expect(printObservedActiveIds).toEqual(['order-card-ord-print-1']);
     fireEvent(window, new Event('afterprint'));
+    expect(document.querySelector('[data-print-isolating="true"]')).toBeNull();
     expect(document.querySelectorAll('[data-print-active="true"]')).toHaveLength(
       0,
     );

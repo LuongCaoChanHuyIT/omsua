@@ -14,7 +14,7 @@
   --color-subhead-ochre: #A67C2E;
   --color-ochre-deep: #805B1A;
   --color-terracotta: #D96B1E;
-  --color-terracotta-deep: #A84B0D;
+  --color-terracotta-deep: #9E450B;
   --color-coral-sketch: #E07D77;
   --color-artichoke: #7A8B3B;
   --color-artichoke-deep: #4D5922;
@@ -200,10 +200,10 @@ select {
   aside,
   header,
   [data-admin-toolbar],
-  [data-admin-kpi],
   [data-order-actions],
   [data-print-hide],
-  article[data-testid^="order-card-"]:not([data-print-active="true"]) {
+  [data-admin-orders-root="isolating"] [data-admin-kpi],
+  [data-print-isolating="true"] article[data-testid^="order-card-"]:not([data-print-active="true"]) {
     display: none !important;
   }
 

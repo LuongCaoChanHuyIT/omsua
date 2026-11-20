@@ -673,6 +673,27 @@ describe('Storefront Sections', () => {
       ).toBeInTheDocument();
       expect(screen.queryByText('Cà Phê Đen')).not.toBeInTheDocument();
 
+      // Non-overlapping Category + Mood with empty search query renders filter-specific empty message (never empty quotes “”)
+      fireEvent.click(
+        screen.getByRole('button', { name: /Giữ Dáng \(6\)/i }),
+      );
+      expect(screen.queryByText(/khớp từ khóa “”/)).not.toBeInTheDocument();
+      expect(
+        screen.getByText(
+          /Chưa có thức uống phù hợp với bộ lọc nhóm và khẩu vị đang chọn/i,
+        ),
+      ).toBeInTheDocument();
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Xóa bộ lọc tìm kiếm' }),
+      );
+
+      // BrandFooter branch buttons conform to WCAG 2.5.3 Label in Name (accessible name contains visible text)
+      const cs1FooterBtn = screen.getByRole('button', {
+        name: /Cơ sở 1 — Hoàng Diệu/i,
+      });
+      expect(cs1FooterBtn.getAttribute('aria-label')).toBeNull();
+      expect(cs1FooterBtn).toHaveTextContent(/Đang giao cơ sở này/);
+
       // "/" shortcut focuses searchbox when outside inputs and no modal is open
       const searchbox = screen.getByRole('searchbox', {
         name: /Tìm nhanh thức uống/i,

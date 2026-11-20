@@ -64,7 +64,14 @@ export function DalatMorningMistCanvas({
   defaultPaused = false,
 }: DalatMorningMistCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const hostSizeRef = useRef<{ width: number; height: number }>({
+  const hostRectRef = useRef<{
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  }>({
+    left: 0,
+    top: 0,
     width: 640,
     height: 360,
   });
@@ -85,13 +92,20 @@ export function DalatMorningMistCanvas({
   const [isInView, setIsInView] = useState<boolean>(true);
 
   const applyPointerBreeze = useCallback(
-    (rawX: number, rawY: number) => {
-      if (isPaused || prefersReducedMotion) {
+    (clientX: number, clientY: number) => {
+      if (
+        isPaused ||
+        prefersReducedMotion ||
+        !Number.isFinite(clientX) ||
+        !Number.isFinite(clientY)
+      ) {
         return;
       }
-      const { width, height } = hostSizeRef.current;
-      const nx = Math.max(-1, Math.min(1, (rawX / width - 0.5) * 2));
-      const ny = Math.max(-1, Math.min(1, (rawY / height - 0.5) * 2));
+      const { left, top, width, height } = hostRectRef.current;
+      const relX = clientX - left;
+      const relY = clientY - top;
+      const nx = Math.max(-1, Math.min(1, (relX / width - 0.5) * 2));
+      const ny = Math.max(-1, Math.min(1, (relY / height - 0.5) * 2));
       breezeRef.current.targetX = nx;
       breezeRef.current.targetY = ny;
       canvasRef.current?.setAttribute('data-breeze-active', 'true');
@@ -107,19 +121,7 @@ export function DalatMorningMistCanvas({
 
   const handleCanvasPointerMove = useCallback(
     (event: ReactPointerEvent<HTMLCanvasElement>) => {
-      const nativeEvt = event.nativeEvent as PointerEvent & {
-        offsetX?: number;
-        offsetY?: number;
-      };
-      const rawX =
-        typeof nativeEvt.offsetX === 'number' && nativeEvt.offsetX !== 0
-          ? nativeEvt.offsetX
-          : event.clientX;
-      const rawY =
-        typeof nativeEvt.offsetY === 'number' && nativeEvt.offsetY !== 0
-          ? nativeEvt.offsetY
-          : event.clientY;
-      applyPointerBreeze(rawX, rawY);
+      applyPointerBreeze(event.clientX, event.clientY);
     },
     [applyPointerBreeze],
   );
@@ -163,12 +165,26 @@ export function DalatMorningMistCanvas({
         const entry = entries[0];
         if (entry) {
           setIsInView(entry.isIntersecting);
+          if (entry.boundingClientRect) {
+            hostRectRef.current = {
+              left: entry.boundingClientRect.left || 0,
+              top: entry.boundingClientRect.top || 0,
+              width: Math.max(
+                1,
+                entry.boundingClientRect.width || hostRectRef.current.width,
+              ),
+              height: Math.max(
+                1,
+                entry.boundingClientRect.height || hostRectRef.current.height,
+              ),
+            };
+          }
         }
       },
       { threshold: 0.05 },
     );
 
-    observer.observe(canvas);
+    observer.observe(canvas.parentElement ?? canvas);
     return () => observer.disconnect();
   }, [prefersReducedMotion]);
 
@@ -190,7 +206,8 @@ export function DalatMorningMistCanvas({
       resizeObserver = new window.ResizeObserver((entries) => {
         const entry = entries[0];
         if (entry) {
-          hostSizeRef.current = {
+          hostRectRef.current = {
+            ...hostRectRef.current,
             width: Math.max(1, entry.contentRect.width || 640),
             height: Math.max(1, entry.contentRect.height || 360),
           };
@@ -200,15 +217,7 @@ export function DalatMorningMistCanvas({
     }
 
     const onHostPointerMove = (event: PointerEvent) => {
-      const rawX =
-        typeof event.offsetX === 'number' && event.offsetX !== 0
-          ? event.offsetX
-          : event.clientX;
-      const rawY =
-        typeof event.offsetY === 'number' && event.offsetY !== 0
-          ? event.offsetY
-          : event.clientY;
-      applyPointerBreeze(rawX, rawY);
+      applyPointerBreeze(event.clientX, event.clientY);
     };
 
     const onHostPointerLeave = () => {

@@ -13,13 +13,21 @@ export interface CartCheckoutDrawerProps {
   onClose: () => void;
   apiBaseUrl?: string;
   preferIllustration?: boolean;
+  reorderNotice?: string | null;
+  onDismissReorderNotice?: () => void;
   submitOrderFn?: SubmitOrderHandler;
   onOrderError?: (error: string) => void;
   onOrderCreated?: (order: OrderRecord) => void;
   onTrackOrder?: (order: OrderRecord) => void;
 }
 
-function CheckoutDrawerBody() {
+function CheckoutDrawerBody({
+  reorderNotice,
+  onDismissReorderNotice,
+}: {
+  reorderNotice?: string | null;
+  onDismissReorderNotice?: () => void;
+}) {
   const { state, actions, meta } = Checkout.useCheckoutContext();
 
   if (state.confirmedOrder) {
@@ -36,6 +44,24 @@ function CheckoutDrawerBody() {
       noValidate
       className="space-y-4"
     >
+      {reorderNotice ? (
+        <div
+          role="status"
+          data-testid="checkout-reorder-notice"
+          className="flex items-start justify-between gap-3 rounded-2xl border border-olive-primary/25 bg-card-butter/75 px-4 py-3 text-xs font-medium text-espresso sm:text-sm"
+        >
+          <p>{reorderNotice}</p>
+          {onDismissReorderNotice ? (
+            <button
+              type="button"
+              onClick={onDismissReorderNotice}
+              className="min-h-11 shrink-0 rounded-xl border border-olive-primary/20 bg-surface-light px-3 py-1.5 text-xs font-semibold text-espresso transition-colors hover:bg-canvas-cream"
+            >
+              Đã hiểu
+            </button>
+          ) : null}
+        </div>
+      ) : null}
       <Checkout.UnavailableBanner />
       <Checkout.ItemList />
       <Checkout.BranchCard />
@@ -47,11 +73,18 @@ function CheckoutDrawerBody() {
   );
 }
 
-export function CartCheckoutDrawer(props: CartCheckoutDrawerProps) {
+export function CartCheckoutDrawer({
+  reorderNotice,
+  onDismissReorderNotice,
+  ...props
+}: CartCheckoutDrawerProps) {
   return (
     <Checkout.Provider {...props}>
       <Checkout.DialogShell>
-        <CheckoutDrawerBody />
+        <CheckoutDrawerBody
+          reorderNotice={reorderNotice}
+          onDismissReorderNotice={onDismissReorderNotice}
+        />
       </Checkout.DialogShell>
     </Checkout.Provider>
   );

@@ -31,7 +31,7 @@ PALETTE = {
     "subhead_ochre": (166, 124, 46),      # #A67C2E
     "ochre_deep": (128, 91, 26),          # #805B1A
     "terracotta": (217, 107, 30),         # #D96B1E
-    "terracotta_deep": (168, 75, 13),     # #A84B0D
+    "terracotta_deep": (158, 69, 11),     # #9E450B
     "coral_sketch": (224, 125, 119),      # #E07D77
     "artichoke": (122, 139, 59),          # #7A8B3B
     "artichoke_deep": (77, 89, 34),       # #4D5922
@@ -635,7 +635,7 @@ def render_page_two() -> Image.Image:
     draw_centered_text(
         draw,
         2018,
-        "Đặt món trực tuyến tại omsua-web.vercel.app  •  Chọn độ ngọt (100% / 70% / 50% / 30% / 0%) & đá riêng linh hoạt",
+        "Đặt món trực tuyến tại omsua-web.vercel.app  •  Chọn độ ngọt (70% / 50% / 30% / 0%) & đá riêng linh hoạt",
         font_item_sub,
         PALETTE["surface_light"],
     )

@@ -794,7 +794,10 @@ export function OrdersPage() {
 
   return (
     <DirectionalPageTransition>
-      <div className="mx-auto max-w-6xl space-y-6">
+      <div
+        data-admin-orders-root={printingOrderId ? 'isolating' : undefined}
+        className="mx-auto max-w-6xl space-y-6"
+      >
         <div
           data-print-hide="true"
           className="flex flex-wrap items-start justify-between gap-4"
@@ -1019,6 +1022,7 @@ export function OrdersPage() {
         ) : (
           <div
             data-view-mode={isCompactView ? 'compact' : 'comfortable'}
+            data-print-isolating={printingOrderId ? 'true' : undefined}
             className={
               isCompactView ? 'grid gap-4 lg:grid-cols-2' : 'space-y-4'
             }

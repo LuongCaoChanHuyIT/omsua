@@ -1808,10 +1808,12 @@ describe('Interactive Customizer Modal & Cart Checkout Flow', () => {
         p.id === 'com-chay-cha-bong' ? { ...p, isAvailable: false } : p,
       ),
     };
-    vi.spyOn(webApi, 'fetchCatalog').mockResolvedValue({
-      catalog: partialCatalog,
-      isFallback: false,
-    });
+    const fetchCatalogSpy = vi
+      .spyOn(webApi, 'fetchCatalog')
+      .mockResolvedValue({
+        catalog: partialCatalog,
+        isFallback: false,
+      });
     vi.spyOn(webApi, 'fetchOrderByCode').mockResolvedValue({
       ok: true,
       order: pastOrder,
@@ -1824,7 +1826,9 @@ describe('Interactive Customizer Modal & Cart Checkout Flow', () => {
       />,
     );
 
+    const callsBeforeLookup = fetchCatalogSpy.mock.calls.length;
     fireEvent.click(screen.getByRole('button', { name: 'Đơn đã đặt' }));
+    expect(fetchCatalogSpy.mock.calls.length).toBeGreaterThan(callsBeforeLookup);
     const lookupDialog = screen.getByRole('dialog');
     fireEvent.change(
       within(lookupDialog).getByPlaceholderText(/OM-20261119-AB12/i),
@@ -1847,6 +1851,9 @@ describe('Interactive Customizer Modal & Cart Checkout Flow', () => {
     expect(
       within(cartDialog).queryByText('Cơm Cháy Chà Bông'),
     ).not.toBeInTheDocument();
+    expect(
+      within(cartDialog).getByTestId('checkout-reorder-notice'),
+    ).toHaveTextContent(/lược bỏ 1 món/i);
 
     unmount();
     window.localStorage.clear();

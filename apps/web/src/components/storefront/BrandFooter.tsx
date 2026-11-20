@@ -166,7 +166,6 @@ export function BrandFooter({
                       <button
                         type="button"
                         aria-pressed={isSelected}
-                        aria-label={`Chọn giao từ ${branch.name}`}
                         onClick={() => onSelectBranch(branch.id)}
                         className={`inline-flex min-h-11 w-full cursor-pointer items-center justify-center rounded-xl border px-3 py-2 text-xs font-bold transition-colors ${
                           isSelected
@@ -174,7 +173,12 @@ export function BrandFooter({
                             : 'border-surface-light/25 bg-surface-light/10 text-surface-light hover:border-card-butter hover:text-card-butter'
                         }`}
                       >
-                        {isSelected ? '✓ Đang giao cơ sở này' : 'Giao từ cơ sở này'}
+                        <span>
+                          {isSelected
+                            ? '✓ Đang giao cơ sở này'
+                            : 'Giao từ cơ sở này'}
+                        </span>
+                        <span className="sr-only"> — {branch.name}</span>
                       </button>
                     ) : null}
                   </div>

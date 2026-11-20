@@ -41,7 +41,7 @@ Toàn bộ giao diện trên cả `@omsua/web` và `@omsua/admin` tuân thủ **
 | **Điểm nhấn (Accent)** | `accentTerracotta` | `--color-terracotta` | `#D96B1E` | Nền nhấn đồ họa & biểu tượng thương hiệu ấm |
 | **Điểm nhấn (Accent)** | `accentCoralSketch` | `--color-coral-sketch` | `#E07D77` | Viền cảnh báo nhẹ, tia vẽ tay khu vực Snack |
 | **Điểm nhấn (Accent)** | `accentArtichoke` | `--color-artichoke` | `#7A8B3B` | Biểu tượng Búp Atiso xanh, hạt sương & tranh minh họa |
-| **Mực Đồng hành WCAG AA** | *(CSS Theme Token)* | `--color-terracotta-deep` | `#A84B0D` | Nút CTA chính & giá tiền chữ nhỏ (tương phản `5.20:1` trên `#F7F4EC`) |
+| **Mực Đồng hành WCAG AA** | *(CSS Theme Token)* | `--color-terracotta-deep` | `#9E450B` | Nút CTA chính & giá tiền chữ nhỏ (tương phản `5.76:1` trên `#F7F4EC`, `5.05:1` trên `#F4E3AD`) |
 | **Mực Đồng hành WCAG AA** | *(CSS Theme Token)* | `--color-artichoke-deep` | `#4D5922` | Nút mở bán / Best Seller / hoàn tất (tương phản `6.90:1` trên `#F7F4EC`) |
 | **Mực Đồng hành WCAG AA** | *(CSS Theme Token)* | `--color-ochre-deep` | `#805B1A` | Nhãn phân mục chữ in hoa cỡ `12px` (tương phản `5.55:1` trên `#F7F4EC`) |
 

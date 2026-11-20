@@ -161,10 +161,13 @@ describe('Admin brand favicon, typography, a11y CSS, and zero pure B/W rule', ()
     expect(indexCss).toContain('.bg-hero-espresso :focus-visible');
     expect(indexCss).toContain('var(--color-card-butter)');
     expect(indexCss).toContain('prefers-reduced-motion: reduce');
-    expect(indexCss).toContain('--color-terracotta-deep: #A84B0D');
+    expect(indexCss).toContain('--color-terracotta-deep: #9E450B');
     expect(indexCss).toContain('--color-artichoke-deep: #4D5922');
     expect(indexCss).toContain('--color-ochre-deep: #805B1A');
     expect(indexCss).toContain('@media print');
+    expect(indexCss).toContain(
+      '[data-print-isolating="true"] article[data-testid^="order-card-"]:not([data-print-active="true"])',
+    );
   });
 
   it('contains zero pure #FFFFFF / #000000 or *-white / *-black tokens across index.html, public/, and src/', () => {

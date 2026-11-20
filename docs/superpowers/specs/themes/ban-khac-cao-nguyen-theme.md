@@ -8,7 +8,7 @@
 
 ## 1. Visual Identity & Mood
 
-**Bản Khắc Cao Nguyên** pairs warm deckle-edged Đà Lạt art paper (`#EEEADF`, `#F7F4EC`) and sun-warmed botanical pigments (`#F4E3AD`, `#C7CBBD`, `#C8BA9B`, `#B6A152`) with three WCAG AA-calibrated deep roasted inks (`#A84B0D`, `#4D5922`, `#805B1A`) so every 12px badge, price numeral, and primary CTA achieves `>= 4.7:1` contrast without ever touching sterile white or pure black.
+**Bản Khắc Cao Nguyên** pairs warm deckle-edged Đà Lạt art paper (`#EEEADF`, `#F7F4EC`) and sun-warmed botanical pigments (`#F4E3AD`, `#C7CBBD`, `#C8BA9B`, `#B6A152`) with three WCAG AA-calibrated deep roasted inks (`#9E450B`, `#4D5922`, `#805B1A`) so every 12px badge, price numeral, and primary CTA achieves `>= 4.7:1` contrast without ever touching sterile white or pure black.
 
 ---
 
@@ -30,7 +30,7 @@
 - **Artichoke:** `#7A8B3B` (`--color-artichoke`) — Botanical illustration leaves & progress accents
 
 ### WCAG AA High-Contrast Companion Inks (`@theme` CSS Tokens)
-- **Terracotta Deep:** `#A84B0D` (`--color-terracotta-deep`) — Primary CTA fills with `#F7F4EC` text (`5.20:1` AA) and VND price numerals on `#F7F4EC` (`5.20:1` AA) / `#EEEADF` (`4.73:1` AA)
+- **Terracotta Deep:** `#9E450B` (`--color-terracotta-deep`) — Primary CTA fills with `#F7F4EC` text (`5.76:1` AA) and VND price numerals on `#F7F4EC` (`5.76:1` AA) / `#EEEADF` (`4.73:1` AA)
 - **Artichoke Deep:** `#4D5922` (`--color-artichoke-deep`) — Botanical badge fills (`+ SIGNATURE`, `★ BEST SELLER`, `+ Chọn`) with `#F7F4EC` text (`6.90:1` AA)
 - **Ochre Deep:** `#805B1A` (`--color-ochre-deep`) — Small `12px` eyebrow & metadata ink on `#F7F4EC` (`5.55:1` AA) and `#EEEADF` (`5.05:1` AA)
 

@@ -128,15 +128,18 @@ describe('web config & HomePage Storefront SSR consistency', () => {
     expect(globalsCss).toContain('--shadow-paper-rest');
     expect(globalsCss).toContain('--shadow-paper-lift');
     expect(globalsCss).toContain('bg-paper-grain');
-    expect(globalsCss).toContain('--color-terracotta-deep: #A84B0D');
+    expect(globalsCss).toContain('--color-terracotta-deep: #9E450B');
     expect(globalsCss).toContain('--color-artichoke-deep: #4D5922');
     expect(globalsCss).toContain('--color-ochre-deep: #805B1A');
 
-    expect(wcagContrastRatio('#F7F4EC', '#A84B0D')).toBeGreaterThanOrEqual(4.5);
-    expect(wcagContrastRatio('#EEEADF', '#A84B0D')).toBeGreaterThanOrEqual(4.5);
+    expect(wcagContrastRatio('#F7F4EC', '#9E450B')).toBeGreaterThanOrEqual(4.5);
+    expect(wcagContrastRatio('#EEEADF', '#9E450B')).toBeGreaterThanOrEqual(4.5);
+    expect(wcagContrastRatio('#F4E3AD', '#9E450B')).toBeGreaterThanOrEqual(4.5);
     expect(wcagContrastRatio('#F7F4EC', '#4D5922')).toBeGreaterThanOrEqual(4.5);
+    expect(wcagContrastRatio('#F4E3AD', '#4D5922')).toBeGreaterThanOrEqual(4.5);
     expect(wcagContrastRatio('#F7F4EC', '#805B1A')).toBeGreaterThanOrEqual(4.5);
     expect(wcagContrastRatio('#EEEADF', '#805B1A')).toBeGreaterThanOrEqual(4.5);
+    expect(wcagContrastRatio('#F4E3AD', '#805B1A')).toBeGreaterThanOrEqual(4.5);
 
     const layoutSource = readFileSync(
       path.join(srcRoot, 'app', 'layout.tsx'),
@@ -313,6 +316,8 @@ describe('web config & HomePage Storefront SSR consistency', () => {
     expect(posterScriptSource).not.toMatch(
       /(#fff\b|#ffffff\b|#000\b|#000000\b|rgb\(\s*(255\s*,\s*255\s*,\s*255|0\s*,\s*0\s*,\s*0))/i,
     );
+    expect(posterScriptSource).not.toContain('100%');
+    expect(posterScriptSource).toContain('(70% / 50% / 30% / 0%)');
 
     const posterPdfPath = path.join(
       repoRoot,

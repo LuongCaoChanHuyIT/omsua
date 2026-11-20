@@ -105,6 +105,7 @@ function StorefrontShellInner({
     string[]
   >([]);
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
+  const [reorderNotice, setReorderNotice] = useState<string | null>(null);
   const [isOrderLookupOpen, setIsOrderLookupOpen] = useState<boolean>(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState<boolean>(false);
   const [trackedOrder, setTrackedOrder] = useState<OrderRecord | null>(null);
@@ -219,10 +220,11 @@ function StorefrontShellInner({
 
       let addedCount = 0;
       let skippedCount = 0;
+      let droppedToppingCount = 0;
 
       for (const item of order.items) {
         const product = availableProducts.get(item.productId);
-        if (!product) {
+        if (!product || product.sizes.length === 0) {
           skippedCount += 1;
           continue;
         }
@@ -243,6 +245,7 @@ function StorefrontShellInner({
           const validToppings = item.toppings
             .map((topping) => topping.id)
             .filter((id) => availableToppingIds.has(id));
+          droppedToppingCount += item.toppings.length - validToppings.length;
           addItem({
             productId: product.id,
             quantity: item.quantity,
@@ -258,6 +261,20 @@ function StorefrontShellInner({
       if (addedCount > 0) {
         if (branches.some((branch) => branch.id === order.branchId)) {
           setSelectedBranchId(order.branchId);
+        }
+        if (skippedCount > 0 || droppedToppingCount > 0) {
+          const omittedParts: string[] = [];
+          if (skippedCount > 0) {
+            omittedParts.push(`${skippedCount} món`);
+          }
+          if (droppedToppingCount > 0) {
+            omittedParts.push(`${droppedToppingCount} topping`);
+          }
+          setReorderNotice(
+            `Đã khôi phục ${addedCount} dòng món còn bán vào giỏ; lược bỏ ${omittedParts.join(' và ')} đang tạm hết.`,
+          );
+        } else {
+          setReorderNotice(null);
         }
         setIsOrderLookupOpen(false);
         setTrackedOrder(null);
@@ -301,6 +318,7 @@ function StorefrontShellInner({
         onOpenOrderLookup={() => {
           setTrackedOrder(null);
           setIsOrderLookupOpen(true);
+          void onRefreshCatalog();
         }}
         suppressViewTransition={hasOpenOverlay}
       />
@@ -425,16 +443,25 @@ function StorefrontShellInner({
 
       <CartCheckoutDrawer
         isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
+        onClose={() => {
+          setIsCartOpen(false);
+          setReorderNotice(null);
+        }}
         apiBaseUrl={apiBaseUrl}
         preferIllustration={preferIllustration}
+        reorderNotice={reorderNotice}
+        onDismissReorderNotice={() => setReorderNotice(null)}
         onOrderError={() => {
           void onRefreshCatalog();
         }}
-        onOrderCreated={syncRecentOrderCount}
+        onOrderCreated={() => {
+          setReorderNotice(null);
+          syncRecentOrderCount();
+        }}
         onTrackOrder={(order) => {
           setTrackedOrder(order);
           setIsOrderLookupOpen(true);
+          void onRefreshCatalog();
         }}
       />
 

@@ -190,24 +190,64 @@ describe('DalatMorningMistCanvas seeded flow-field & a11y safety', () => {
       const baselineFirstPoint = moveToPoints[0]!;
       baseline.unmount();
 
-      // Active pointer-breeze frame
+      // Active pointer-breeze frame bubbling from nested child in right-column stage (left: 600, clientX: 600 -> left edge nx = -1, deflecting left)
+      let ioCallback: IntersectionObserverCallback = () => {};
+      vi.stubGlobal(
+        'IntersectionObserver',
+        class {
+          constructor(cb: IntersectionObserverCallback) {
+            ioCallback = cb;
+          }
+          observe() {}
+          disconnect() {}
+          unobserve() {}
+          takeRecords() {
+            return [];
+          }
+        },
+      );
+
       moveToPoints.length = 0;
       latestRaf = null;
       const { container, unmount } = render(
         <div data-testid="mist-host">
           <DalatMorningMistCanvas seed={2017} />
+          <div data-testid="nested-spotlight-card">Card</div>
         </div>,
       );
+      ioCallback(
+        [
+          {
+            isIntersecting: true,
+            boundingClientRect: {
+              left: 600,
+              top: 200,
+              width: 640,
+              height: 360,
+            } as DOMRectReadOnly,
+          } as IntersectionObserverEntry,
+        ],
+        {} as IntersectionObserver,
+      );
+
       const canvas = container.querySelector('canvas')!;
-      fireEvent.pointerMove(canvas, { clientX: 580, clientY: 40 });
+      const nestedCard = screen.getByTestId('nested-spotlight-card');
+      nestedCard.dispatchEvent(
+        new MouseEvent('pointermove', {
+          bubbles: true,
+          clientX: 600,
+          clientY: 220,
+        }),
+      );
       expect(canvas).toHaveAttribute('data-breeze-active', 'true');
 
       vi.advanceTimersByTime(150);
       latestRaf!(16);
       const breezedFirstPoint = moveToPoints[0]!;
 
-      expect(breezedFirstPoint[0]).not.toBeCloseTo(baselineFirstPoint[0], 5);
-      fireEvent.pointerLeave(canvas);
+      // Left edge of stage (nx = -1) must deflect particle LEFT relative to baseline (not right from viewport clientX=600)
+      expect(breezedFirstPoint[0]).toBeLessThan(baselineFirstPoint[0] - 0.05);
+      fireEvent.pointerLeave(container.querySelector('[data-testid="mist-host"]')!);
       expect(canvas).toHaveAttribute('data-breeze-active', 'false');
       expect(rectSpy).not.toHaveBeenCalled();
       unmount();
