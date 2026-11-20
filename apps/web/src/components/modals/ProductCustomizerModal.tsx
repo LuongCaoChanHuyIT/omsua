@@ -12,7 +12,6 @@ export interface DrinkCustomizerModalProps {
   product: ProductItem;
   toppings: readonly ToppingItem[];
   initialToppingIds?: readonly string[];
-  preferIllustration?: boolean;
   onClose: () => void;
   onAddToCart?: (item: OrderItemInput) => void;
 }
@@ -21,7 +20,6 @@ export function DrinkCustomizerModal({
   product,
   toppings,
   initialToppingIds,
-  preferIllustration = false,
   onClose,
   onAddToCart,
 }: DrinkCustomizerModalProps) {
@@ -30,7 +28,6 @@ export function DrinkCustomizerModal({
       product={product}
       toppings={toppings}
       initialToppingIds={initialToppingIds}
-      preferIllustration={preferIllustration}
       onClose={onClose}
       onAddToCart={onAddToCart}
     >
@@ -54,7 +51,6 @@ export function DrinkCustomizerModal({
 export interface SnackCustomizerModalProps {
   product: ProductItem;
   defaultSpice?: SpiceLevel;
-  preferIllustration?: boolean;
   onClose: () => void;
   onAddToCart?: (item: OrderItemInput) => void;
 }
@@ -62,7 +58,6 @@ export interface SnackCustomizerModalProps {
 export function SnackCustomizerModal({
   product,
   defaultSpice = 'cay-vua',
-  preferIllustration = false,
   onClose,
   onAddToCart,
 }: SnackCustomizerModalProps) {
@@ -70,7 +65,6 @@ export function SnackCustomizerModal({
     <Customizer.Provider
       product={product}
       defaultSpice={defaultSpice}
-      preferIllustration={preferIllustration}
       onClose={onClose}
       onAddToCart={onAddToCart}
     >
@@ -90,7 +84,6 @@ export interface ProductCustomizerModalProps {
   toppings: ToppingItem[];
   defaultSpice?: SpiceLevel;
   initialToppingIds?: string[];
-  preferIllustration?: boolean;
   onClose: () => void;
   onAddToCart?: (item: OrderItemInput) => void;
 }
@@ -100,7 +93,6 @@ export function ProductCustomizerModal({
   toppings,
   defaultSpice = 'cay-vua',
   initialToppingIds,
-  preferIllustration = false,
   onClose,
   onAddToCart,
 }: ProductCustomizerModalProps) {
@@ -116,7 +108,6 @@ export function ProductCustomizerModal({
         key={resetKey}
         product={product}
         defaultSpice={defaultSpice}
-        preferIllustration={preferIllustration}
         onClose={onClose}
         onAddToCart={onAddToCart}
       />
@@ -129,7 +120,6 @@ export function ProductCustomizerModal({
       product={product}
       toppings={toppings}
       initialToppingIds={initialToppingIds}
-      preferIllustration={preferIllustration}
       onClose={onClose}
       onAddToCart={onAddToCart}
     />

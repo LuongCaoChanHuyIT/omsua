@@ -15,7 +15,6 @@ export interface SnackMenuSectionProps {
   activeSpice: SpiceLevel;
   onChangeSpice: (spice: SpiceLevel) => void;
   onSelectSnack: (snack: ProductItem, spice: SpiceLevel) => void;
-  preferIllustration?: boolean;
 }
 
 const SPICE_OPTIONS: Array<{ value: SpiceLevel; baseLabel: string }> = [
@@ -27,14 +26,12 @@ const SPICE_OPTIONS: Array<{ value: SpiceLevel; baseLabel: string }> = [
 interface SnackMenuItemCardProps {
   snack: ProductItem;
   activeSpice: SpiceLevel;
-  preferIllustration: boolean;
   onSelectById: (snackId: string) => void;
 }
 
 export const SnackMenuItemCard = memo(function SnackMenuItemCard({
   snack,
   activeSpice,
-  preferIllustration,
   onSelectById,
 }: SnackMenuItemCardProps) {
   const price = snack.sizes[0]?.price ?? 0;
@@ -46,7 +43,6 @@ export const SnackMenuItemCard = memo(function SnackMenuItemCard({
           productId={snack.id}
           categoryId="snack"
           variant="snack"
-          preferIllustration={preferIllustration}
         />
         <span className="absolute top-2 left-2 rounded-full bg-coral-sketch px-2.5 py-0.5 text-xs font-bold text-espresso">
           {SPICE_LEVEL_LABELS[activeSpice]}
@@ -103,7 +99,6 @@ export function SnackMenuSection({
   activeSpice,
   onChangeSpice,
   onSelectSnack,
-  preferIllustration = false,
 }: SnackMenuSectionProps) {
   const snacksById = useMemo(
     () => new Map(snacks.map((snack) => [snack.id, snack])),
@@ -182,7 +177,6 @@ export function SnackMenuSection({
             key={snack.id}
             snack={snack}
             activeSpice={activeSpice}
-            preferIllustration={preferIllustration}
             onSelectById={handleSelectById}
           />
         ))}

@@ -12,7 +12,6 @@ export interface CartCheckoutDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   apiBaseUrl?: string;
-  preferIllustration?: boolean;
   reorderNotice?: string | null;
   onDismissReorderNotice?: () => void;
   submitOrderFn?: SubmitOrderHandler;

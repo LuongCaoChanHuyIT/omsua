@@ -176,14 +176,12 @@ describe('FanpageGallerySection, PhotoLightboxModal & BrandFooter social/branch 
       />,
     );
 
-    const realModeBtn = screen.getByRole('button', { name: 'Ảnh thực tế' });
-    const studioModeBtn = screen.getByRole('button', {
-      name: 'Minh họa Studio',
-    });
-    expect(realModeBtn.className).toContain('min-h-11');
-    expect(realModeBtn.className).not.toMatch(/sm:min-h-(9|10)\b/);
-    expect(studioModeBtn.className).toContain('min-h-11');
-    expect(studioModeBtn.className).not.toMatch(/sm:min-h-(9|10)\b/);
+    expect(
+      screen.queryByRole('button', { name: /Minh họa Studio/i }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole('group', { name: /Chế độ hiển thị hình món/i }),
+    ).toBeNull();
 
     // Verify macro topping photos (e.g. hat-sen, khuc-bach) render real .webp imgs in ToppingStripSection
     expect(
@@ -206,7 +204,7 @@ describe('FanpageGallerySection, PhotoLightboxModal & BrandFooter social/branch 
     }
   });
 
-  it('propagates Minh họa Studio mode into ProductCustomizerModal and CartCheckoutDrawer', () => {
+  it('renders real .webp photos exclusively in ProductCustomizerModal and CartCheckoutDrawer without Studio toggle', () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockRejectedValue(new Error('offline fallback')),
@@ -219,11 +217,9 @@ describe('FanpageGallerySection, PhotoLightboxModal & BrandFooter social/branch 
       />,
     );
 
-    const studioModeBtn = screen.getByRole('button', {
-      name: 'Minh họa Studio',
-    });
-    fireEvent.click(studioModeBtn);
-    expect(studioModeBtn).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      screen.queryByRole('button', { name: /Minh họa Studio/i }),
+    ).toBeNull();
 
     // Open ProductCustomizerModal for Trà Sữa Atiso from Spotlight
     const orderNowButtons = screen.getAllByRole('button', {
@@ -234,8 +230,7 @@ describe('FanpageGallerySection, PhotoLightboxModal & BrandFooter social/branch 
     const customizerDialog = screen.getByRole('dialog');
     expect(
       customizerDialog.querySelector('img[src^="/images/fanpage/"]'),
-    ).toBeNull();
-    expect(customizerDialog.querySelectorAll('svg').length).toBeGreaterThan(0);
+    ).not.toBeNull();
 
     fireEvent.click(
       within(customizerDialog).getByRole('button', { name: /Thêm vào giỏ/i }),
@@ -244,8 +239,9 @@ describe('FanpageGallerySection, PhotoLightboxModal & BrandFooter social/branch 
     // Open CartCheckoutDrawer
     fireEvent.click(screen.getByRole('button', { name: /^Giỏ hàng \(/i }));
     const cartDialog = screen.getByRole('dialog');
-    expect(cartDialog.querySelector('img[src^="/images/fanpage/"]')).toBeNull();
-    expect(cartDialog.querySelectorAll('svg').length).toBeGreaterThan(0);
+    expect(
+      cartDialog.querySelector('img[src^="/images/fanpage/"]'),
+    ).not.toBeNull();
   });
 
   it('disables share morph during lightbox-next / lightbox-prev transitions so carousel slides are not shadowed by background grid morphs', () => {

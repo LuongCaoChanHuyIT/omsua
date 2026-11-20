@@ -6,13 +6,11 @@ import { ProductMedia } from '@/components/artwork/ProductMedia';
 
 interface ToppingChipCardProps {
   topping: ToppingItem;
-  preferIllustration: boolean;
   onSelectById?: (toppingId: string) => void;
 }
 
 const ToppingChipCard = memo(function ToppingChipCard({
   topping,
-  preferIllustration,
   onSelectById,
 }: ToppingChipCardProps) {
   return (
@@ -22,7 +20,6 @@ const ToppingChipCard = memo(function ToppingChipCard({
           toppingId={topping.id}
           categoryId="topping"
           variant="topping"
-          preferIllustration={preferIllustration}
         />
       </div>
       <p className="mt-2 text-xs font-semibold text-espresso">
@@ -61,13 +58,11 @@ const ToppingChipCard = memo(function ToppingChipCard({
 export interface ToppingStripSectionProps {
   toppings: ToppingItem[];
   onSelectTopping?: (topping: ToppingItem) => void;
-  preferIllustration?: boolean;
 }
 
 export function ToppingStripSection({
   toppings,
   onSelectTopping,
-  preferIllustration = false,
 }: ToppingStripSectionProps) {
   const toppingsById = useMemo(
     () => new Map(toppings.map((item) => [item.id, item])),
@@ -107,7 +102,6 @@ export function ToppingStripSection({
           <ToppingChipCard
             key={topping.id}
             topping={topping}
-            preferIllustration={preferIllustration}
             onSelectById={onSelectTopping ? handleSelectById : undefined}
           />
         ))}

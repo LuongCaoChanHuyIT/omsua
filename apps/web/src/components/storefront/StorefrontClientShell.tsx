@@ -66,7 +66,6 @@ function parseUrlMenuState(search: string): {
   category: DrinkCategoryId | 'all';
   mood: FlavorMoodId;
   query: string;
-  preferIllustration: boolean;
 } {
   const params = new URLSearchParams(search);
   const rawCat = params.get('cat')?.trim() ?? '';
@@ -78,8 +77,7 @@ function parseUrlMenuState(search: string): {
     ? (rawMood as FlavorMoodId)
     : 'all';
   const query = params.get('q')?.trim() ?? '';
-  const preferIllustration = params.get('media') === 'studio';
-  return { category, mood, query, preferIllustration };
+  return { category, mood, query };
 }
 
 function StorefrontShellInner({
@@ -103,7 +101,6 @@ function StorefrontShellInner({
   const [activeNewsCategory, setActiveNewsCategory] =
     useState<NewsCategoryFilter>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [preferIllustration, setPreferIllustration] = useState<boolean>(false);
   const [activeSpice, setActiveSpice] = useState<SpiceLevel>('cay-vua');
   const [activeProductForModal, setActiveProductForModal] =
     useState<ProductItem | null>(null);
@@ -139,7 +136,6 @@ function StorefrontShellInner({
     setActiveCategory(parsed.category);
     setActiveMood(parsed.mood);
     setSearchQuery(parsed.query);
-    setPreferIllustration(parsed.preferIllustration);
     setHasHydratedUrl(true);
   }, []);
 
@@ -148,6 +144,7 @@ function StorefrontShellInner({
       return;
     }
     const params = new URLSearchParams(window.location.search);
+    params.delete('media');
     if (activeCategory === 'all') {
       params.delete('cat');
     } else {
@@ -167,25 +164,13 @@ function StorefrontShellInner({
       params.set('q', trimmedQuery);
     }
 
-    if (preferIllustration) {
-      params.set('media', 'studio');
-    } else {
-      params.delete('media');
-    }
-
     const serialized = params.toString();
     const nextUrl = `${window.location.pathname}${serialized ? `?${serialized}` : ''}${window.location.hash}`;
     const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
     if (nextUrl !== currentUrl) {
       window.history.replaceState(null, '', nextUrl);
     }
-  }, [
-    activeCategory,
-    activeMood,
-    hasHydratedUrl,
-    preferIllustration,
-    searchQuery,
-  ]);
+  }, [activeCategory, activeMood, hasHydratedUrl, searchQuery]);
 
   const syncRecentOrderCount = useCallback(() => {
     setRecentOrderCount(readRecentOrders().length);
@@ -352,7 +337,6 @@ function StorefrontShellInner({
       <main className="mx-auto flex max-w-7xl flex-col gap-10 px-4 pt-6 sm:px-6 lg:px-8">
         <HeroSpotlight
           spotlightProducts={spotlightProducts}
-          preferIllustration={preferIllustration}
           onSelectProduct={(product) => {
             setInitialToppingIdsForModal([]);
             setActiveProductForModal(product);
@@ -372,12 +356,6 @@ function StorefrontShellInner({
           onChangeMood={setActiveMood}
           searchQuery={searchQuery}
           onChangeSearchQuery={setSearchQuery}
-          preferIllustration={preferIllustration}
-          onToggleMediaMode={(preferStudio) => {
-            startTransition(() => {
-              setPreferIllustration(preferStudio);
-            });
-          }}
           onSelectDrink={(drink) => {
             setInitialToppingIdsForModal([]);
             setActiveProductForModal(drink);
@@ -387,7 +365,6 @@ function StorefrontShellInner({
         <AppViewTransition>
           <ToppingStripSection
             toppings={catalog.toppings}
-            preferIllustration={preferIllustration}
             onSelectTopping={(topping) => {
               const defaultDrink =
                 catalog.products.find(
@@ -414,7 +391,6 @@ function StorefrontShellInner({
                 setActiveSpice(nextSpice);
               });
             }}
-            preferIllustration={preferIllustration}
             onSelectSnack={(snack, spice) => {
               setActiveSpice(spice);
               setInitialToppingIdsForModal([]);
@@ -474,7 +450,6 @@ function StorefrontShellInner({
         toppings={catalog.toppings}
         defaultSpice={activeSpice}
         initialToppingIds={initialToppingIdsForModal}
-        preferIllustration={preferIllustration}
         onClose={() => {
           setActiveProductForModal(null);
           setInitialToppingIdsForModal([]);
@@ -488,7 +463,6 @@ function StorefrontShellInner({
           setReorderNotice(null);
         }}
         apiBaseUrl={apiBaseUrl}
-        preferIllustration={preferIllustration}
         reorderNotice={reorderNotice}
         onDismissReorderNotice={() => setReorderNotice(null)}
         onOrderError={() => {

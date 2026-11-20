@@ -84,7 +84,6 @@ export interface CheckoutMeta {
   phoneRef: RefObject<HTMLInputElement | null>;
   addressRef: RefObject<HTMLInputElement | null>;
   noteRef: RefObject<HTMLInputElement | null>;
-  preferIllustration: boolean;
   branches: BranchInfo[];
   selectedBranch: BranchInfo;
   lines: OrderLineResolved[];
@@ -118,7 +117,6 @@ export interface CheckoutProviderProps {
   isOpen: boolean;
   onClose: () => void;
   apiBaseUrl?: string;
-  preferIllustration?: boolean;
   submitOrderFn?: SubmitOrderHandler;
   onOrderError?: (error: string) => void;
   onOrderCreated?: (order: OrderRecord) => void;
@@ -130,7 +128,6 @@ function CheckoutProvider({
   isOpen,
   onClose,
   apiBaseUrl,
-  preferIllustration = false,
   submitOrderFn,
   onOrderError,
   onOrderCreated,
@@ -466,7 +463,6 @@ function CheckoutProvider({
       phoneRef,
       addressRef,
       noteRef,
-      preferIllustration,
       branches,
       selectedBranch,
       lines,
@@ -486,7 +482,6 @@ function CheckoutProvider({
       nameInputId,
       noteInputId,
       phoneInputId,
-      preferIllustration,
       removeItem,
       selectedBranch,
       shippingFeeLabel,
@@ -810,7 +805,6 @@ function CheckoutItemList() {
               productId={line.productId}
               categoryId={line.kind === 'snack' ? 'snack' : undefined}
               variant={line.kind === 'snack' ? 'snack' : 'card'}
-              preferIllustration={meta.preferIllustration}
             />
           </div>
 

@@ -8,7 +8,6 @@ import { ProductMedia } from '@/components/artwork/ProductMedia';
 export interface HeroSpotlightProps {
   spotlightProducts: ProductItem[];
   onSelectProduct: (product: ProductItem) => void;
-  preferIllustration?: boolean;
 }
 
 function formatSpotlightPriceLabel(product: ProductItem): string {
@@ -24,7 +23,6 @@ function formatSpotlightPriceLabel(product: ProductItem): string {
 export function HeroSpotlight({
   spotlightProducts,
   onSelectProduct,
-  preferIllustration = false,
 }: HeroSpotlightProps) {
   return (
     <section
@@ -112,7 +110,6 @@ export function HeroSpotlight({
                       categoryId={product.categoryId}
                       variant="spotlight"
                       priority={index === 0}
-                      preferIllustration={preferIllustration}
                     />
                     <span
                       className={`absolute top-2.5 left-2.5 rounded-full px-2.5 py-0.5 text-xs font-bold tracking-wide ${badgeClass}`}

@@ -55,7 +55,6 @@ export interface CustomizerActions {
 export interface CustomizerMeta {
   product: ProductItem;
   toppings: readonly ToppingItem[];
-  preferIllustration: boolean;
   selectedSizeOption: ProductSizeOption;
   previewLine: OrderLineResolved;
   headingId: string;
@@ -84,7 +83,6 @@ export interface CustomizerProviderProps {
   toppings?: readonly ToppingItem[];
   defaultSpice?: SpiceLevel;
   initialToppingIds?: readonly string[];
-  preferIllustration?: boolean;
   onClose: () => void;
   onAddToCart?: (item: OrderItemInput) => void;
   children: ReactNode;
@@ -95,7 +93,6 @@ function CustomizerProviderInner({
   toppings = [],
   defaultSpice = 'cay-vua',
   initialToppingIds,
-  preferIllustration = false,
   onClose,
   onAddToCart,
   children,
@@ -223,19 +220,11 @@ function CustomizerProviderInner({
     () => ({
       product,
       toppings,
-      preferIllustration,
       selectedSizeOption,
       previewLine,
       headingId,
     }),
-    [
-      headingId,
-      preferIllustration,
-      previewLine,
-      product,
-      selectedSizeOption,
-      toppings,
-    ],
+    [headingId, previewLine, product, selectedSizeOption, toppings],
   );
 
   const contextValue = useMemo<CustomizerContextValue>(
@@ -318,7 +307,7 @@ function CustomizerDialog({
 
 function CustomizerHeader() {
   const { meta } = useCustomizerContext();
-  const { product, preferIllustration, selectedSizeOption } = meta;
+  const { product, selectedSizeOption } = meta;
 
   return (
     <div className="flex items-center gap-4 rounded-2xl border border-olive-primary/15 bg-card-butter p-3.5 sm:p-4">
@@ -327,7 +316,6 @@ function CustomizerHeader() {
           productId={product.id}
           categoryId={product.categoryId}
           variant={product.kind === 'snack' ? 'snack' : 'card'}
-          preferIllustration={preferIllustration}
         />
       </div>
       <div className="min-w-0 space-y-1">
@@ -752,7 +740,6 @@ function CustomizerToppingPicker() {
                     toppingId={topping.id}
                     categoryId="topping"
                     variant="topping"
-                    preferIllustration={meta.preferIllustration}
                   />
                 </div>
                 <input

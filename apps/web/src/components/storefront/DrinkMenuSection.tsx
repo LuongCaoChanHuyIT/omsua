@@ -71,8 +71,6 @@ export interface DrinkMenuSectionProps {
   activeCategory: DrinkCategoryId | 'all';
   onChangeCategory: (cat: DrinkCategoryId | 'all') => void;
   onSelectDrink: (drink: ProductItem) => void;
-  preferIllustration?: boolean;
-  onToggleMediaMode?: (preferIllustration: boolean) => void;
   searchQuery?: string;
   onChangeSearchQuery?: (query: string) => void;
   activeMood?: FlavorMoodId;
@@ -104,14 +102,12 @@ function formatDrinkSizes(drink: ProductItem): string {
 interface DrinkMenuItemCardProps {
   drink: ProductItem;
   isCreamContainer: boolean;
-  preferIllustration: boolean;
   onSelectById: (drinkId: string) => void;
 }
 
 export const DrinkMenuItemCard = memo(function DrinkMenuItemCard({
   drink,
   isCreamContainer,
-  preferIllustration,
   onSelectById,
 }: DrinkMenuItemCardProps) {
   return (
@@ -127,7 +123,6 @@ export const DrinkMenuItemCard = memo(function DrinkMenuItemCard({
           productId={drink.id}
           categoryId={drink.categoryId}
           variant="card"
-          preferIllustration={preferIllustration}
         />
         {drink.isSignature ? (
           <span className="absolute top-1.5 left-1.5 rounded-full bg-artichoke-deep px-2 py-0.5 text-xs font-bold tracking-wide text-surface-light">
@@ -183,8 +178,6 @@ export function DrinkMenuSection({
   activeCategory,
   onChangeCategory,
   onSelectDrink,
-  preferIllustration = false,
-  onToggleMediaMode,
   searchQuery,
   onChangeSearchQuery,
   activeMood,
@@ -311,49 +304,14 @@ export function DrinkMenuSection({
 
   return (
     <section id="thuc-don" className="scroll-mt-32 space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="space-y-1">
-          <h2 className="font-display text-2xl font-bold tracking-tight text-olive-primary uppercase sm:text-[28px]">
-            THỰC ĐƠN NGUYÊN BẢN ỐM SỮA
-          </h2>
-          <p className="text-xs text-warm-muted sm:text-sm">
-            Trà ủ mới mỗi sáng từ bông Atiso xanh, nông sản Đà Lạt &amp; hạt cà
-            phê Cầu Đất
-          </p>
-        </div>
-
-        {onToggleMediaMode ? (
-          <div
-            role="group"
-            aria-label="Chế độ hiển thị hình món"
-            className="inline-flex self-start rounded-full border border-olive-primary/20 bg-surface-light p-1 shadow-paper-rest sm:self-auto"
-          >
-            <button
-              type="button"
-              aria-pressed={!preferIllustration}
-              onClick={() => onToggleMediaMode(false)}
-              className={`inline-flex min-h-11 cursor-pointer items-center rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors ${
-                !preferIllustration
-                  ? 'bg-terracotta-deep text-surface-light'
-                  : 'text-espresso hover:bg-canvas-cream'
-              }`}
-            >
-              Ảnh thực tế
-            </button>
-            <button
-              type="button"
-              aria-pressed={preferIllustration}
-              onClick={() => onToggleMediaMode(true)}
-              className={`inline-flex min-h-11 cursor-pointer items-center rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors ${
-                preferIllustration
-                  ? 'bg-olive-primary text-surface-light'
-                  : 'text-espresso hover:bg-canvas-cream'
-              }`}
-            >
-              Minh họa Studio
-            </button>
-          </div>
-        ) : null}
+      <div className="space-y-1">
+        <h2 className="font-display text-2xl font-bold tracking-tight text-olive-primary uppercase sm:text-[28px]">
+          THỰC ĐƠN NGUYÊN BẢN ỐM SỮA
+        </h2>
+        <p className="text-xs text-warm-muted sm:text-sm">
+          Trà ủ mới mỗi sáng từ bông Atiso xanh, nông sản Đà Lạt &amp; hạt cà
+          phê Cầu Đất
+        </p>
       </div>
 
       <div className="flex flex-col gap-3 rounded-2xl border border-olive-primary/15 bg-canvas-cream/95 p-3 shadow-paper-rest backdrop-blur-md lg:sticky lg:top-[122px] lg:z-30 lg:flex-row lg:items-center lg:justify-between">
@@ -558,7 +516,6 @@ export function DrinkMenuSection({
                       <DrinkMenuItemCard
                         drink={drink}
                         isCreamContainer={isCreamContainer}
-                        preferIllustration={preferIllustration}
                         onSelectById={handleSelectById}
                       />
                     </AppViewTransition>

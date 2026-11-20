@@ -9,7 +9,6 @@ import {
 } from './OmSuaArtwork';
 
 export interface ProductMediaProps extends ProductIllustrationProps {
-  preferIllustration?: boolean;
   priority?: boolean;
 }
 
@@ -24,7 +23,6 @@ const DIMENSIONS_BY_VARIANT: Record<
 };
 
 export function ProductMedia({
-  preferIllustration = false,
   priority = false,
   productId,
   toppingId,
@@ -37,7 +35,7 @@ export function ProductMedia({
 }: ProductMediaProps) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const targetId = productId ?? toppingId ?? id ?? '';
-  const photo = preferIllustration ? null : getProductPhoto(targetId);
+  const photo = getProductPhoto(targetId);
 
   if (!photo || failedSrc === photo.src) {
     return (

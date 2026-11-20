@@ -50,17 +50,13 @@ describe('ProductMedia hybrid photo + studio SVG fallback', () => {
     );
   });
 
-  it('renders accessible img label when alt is passed, and renders SVG directly when preferIllustration is true or product has no photo', () => {
+  it('renders accessible img label when alt is passed, renders real .webp photos across variants, and falls back safely for unmapped SKU', () => {
     const { rerender, container } = render(
       <ProductMedia productId="tra-sua-atiso" alt="Ly Trà Sữa Atiso thực tế" />,
     );
     expect(
       screen.getByRole('img', { name: 'Ly Trà Sữa Atiso thực tế' }),
     ).toBeInTheDocument();
-
-    rerender(<ProductMedia productId="tra-sua-atiso" preferIllustration />);
-    expect(container.querySelector('img')).toBeNull();
-    expect(container.querySelector('svg')).not.toBeNull();
 
     rerender(<ProductMedia productId="tra-sua-flan-chay-canh" />);
     const flanImg = container.querySelector('img');

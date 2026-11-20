@@ -607,7 +607,7 @@ describe('Storefront Sections', () => {
     expect(onChangeCategory).toHaveBeenCalledWith('all');
   });
 
-  it('clamps malformed URL query params safely and syncs valid ?cat=&q=&media=studio params in StorefrontClientShell', async () => {
+  it('clamps malformed URL query params safely, strips legacy ?media=studio, and syncs valid ?cat=&q= params in StorefrontClientShell', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockRejectedValue(new Error('offline fallback')),
@@ -631,8 +631,8 @@ describe('Storefront Sections', () => {
         screen.getByRole('button', { name: 'Tất cả (24)' }),
       ).toHaveAttribute('aria-pressed', 'true');
       expect(
-        screen.getByRole('button', { name: 'Ảnh thực tế' }),
-      ).toHaveAttribute('aria-pressed', 'true');
+        screen.queryByRole('button', { name: /Minh họa Studio/i }),
+      ).toBeNull();
       expect(
         screen.getByRole('searchbox', { name: /Tìm nhanh thức uống/i }),
       ).toHaveValue('');
@@ -659,12 +659,12 @@ describe('Storefront Sections', () => {
         }),
       ).toBeInTheDocument();
       expect(
-        screen.getByRole('button', { name: 'Minh họa Studio' }),
-      ).toHaveAttribute('aria-pressed', 'true');
+        screen.queryByRole('button', { name: /Minh họa Studio/i }),
+      ).toBeNull();
       expect(
         screen.getByRole('searchbox', { name: /Tìm nhanh thức uống/i }),
       ).toHaveValue('muoi');
-      expect(window.location.search).toBe('?cat=coffee&q=muoi&media=studio');
+      expect(window.location.search).toBe('?cat=coffee&q=muoi');
     } finally {
       window.history.replaceState(null, '', originalUrl);
       vi.unstubAllGlobals();
