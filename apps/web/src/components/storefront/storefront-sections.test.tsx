@@ -822,14 +822,33 @@ describe('Storefront Sections', () => {
     fireEvent.pointerDown(document.body);
     expect(tinTucBtn).toHaveAttribute('aria-expanded', 'false');
 
-    // Mobile Menu toggle mounts #mobile-flagship-nav only when expanded
+    // Tabbing / blurring outside the open dropdown <li> closes it (Review Focus #1)
+    fireEvent.click(sanPhamBtn);
+    expect(sanPhamBtn).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.blur(sanPhamBtn, { relatedTarget: document.body });
+    expect(sanPhamBtn).toHaveAttribute('aria-expanded', 'false');
+
+    // Clicking Giỏ hàng CTA closes any open header dropdown
+    fireEvent.click(sanPhamBtn);
+    expect(sanPhamBtn).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.click(screen.getByRole('button', { name: /Giỏ hàng/i }));
+    expect(sanPhamBtn).toHaveAttribute('aria-expanded', 'false');
+
+    // Mobile Menu toggle mounts #mobile-flagship-nav with viewport scroll cap, starts collapsed, and restores focus on Escape
     expect(container.querySelector('#mobile-flagship-nav')).toBeNull();
     const mobileMenuBtn = screen.getByRole('button', { name: 'Menu' });
     expect(mobileMenuBtn.getAttribute('aria-label')).toBeNull();
     expect(mobileMenuBtn).toHaveAttribute('aria-expanded', 'false');
     fireEvent.click(mobileMenuBtn);
     expect(mobileMenuBtn).toHaveAttribute('aria-expanded', 'true');
-    expect(container.querySelector('#mobile-flagship-nav')).not.toBeNull();
+    const mobileNav = container.querySelector('#mobile-flagship-nav')!;
+    expect(mobileNav).not.toBeNull();
+    expect(mobileNav.className).toContain('max-h-[calc(100dvh-7.5rem)]');
+    expect(mobileNav.className).toContain('overflow-y-auto');
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(mobileMenuBtn).toHaveAttribute('aria-expanded', 'false');
+    expect(document.activeElement).toBe(mobileMenuBtn);
   });
 
   it('wires StorefrontClientShell flagship header category/news jumps, resets conflicting mood/search filters, mounts all 4 brand hubs, and protects hub inputs from / shortcut', async () => {
@@ -856,11 +875,17 @@ describe('Storefront Sections', () => {
         expect(container.querySelector(anchorId)).not.toBeNull();
       }
 
-      // Activate a conflicting mood ("dam-vi") and search query ("flan")
-      const drinkMenuEl = container.querySelector('#thuc-don') as HTMLElement;
+      // DrinkMenuSection sticky filter bar clears the ~118px 2-tier header (lg:top-[122px], never lg:top-[69px])
       const searchbox = screen.getByRole('searchbox', {
         name: /Tìm nhanh thức uống/i,
       });
+      const stickyBar = searchbox.closest('.lg\\:sticky') as HTMLElement;
+      expect(stickyBar).not.toBeNull();
+      expect(stickyBar.className).toContain('lg:top-[122px]');
+      expect(stickyBar.className).not.toContain('lg:top-[69px]');
+
+      // Activate a conflicting mood ("dam-vi") and search query ("flan")
+      const drinkMenuEl = container.querySelector('#thuc-don') as HTMLElement;
       fireEvent.click(screen.getByRole('button', { name: /Đậm trà béo mịn/i }));
       fireEvent.change(searchbox, { target: { value: 'flan' } });
       expect(
@@ -909,6 +934,17 @@ describe('Storefront Sections', () => {
       memberPhoneInput.dispatchEvent(slashInMemberInput);
       expect(slashInMemberInput.defaultPrevented).toBe(false);
       expect(document.activeElement).toBe(memberPhoneInput);
+
+      // Opening NewsSeasonSection modal suppresses header viewTransitionName (Review Focus #5)
+      const headerEl = container.querySelector('header') as HTMLElement;
+      expect(headerEl.style.viewTransitionName).toBe('omsua-site-header');
+      const readButtons = within(newsSection).getAllByRole('button', {
+        name: /Đọc chi tiết/i,
+      });
+      fireEvent.click(readButtons[0]!);
+      expect(headerEl.style.viewTransitionName).toBe('');
+      fireEvent.keyDown(window, { key: 'Escape' });
+      expect(headerEl.style.viewTransitionName).toBe('omsua-site-header');
     } finally {
       vi.unstubAllGlobals();
     }

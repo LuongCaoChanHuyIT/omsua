@@ -1,8 +1,9 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { AppViewTransition } from '@/components/transitions/AppViewTransition';
+import { useModalAccessibility } from '@/hooks/use-modal-accessibility';
 import {
   OMSUA_NEWS_ARTICLES,
   type NewsArticleItem,
@@ -36,8 +37,7 @@ export function NewsSeasonSection({
   const [failedImageIds, setFailedImageIds] = useState<Set<string>>(
     () => new Set(),
   );
-  const openerButtonRef = useRef<HTMLButtonElement | null>(null);
-  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const restoreFocusRef = useRef<boolean>(true);
 
   const effectiveCategory = activeCategory ?? uncontrolledCategory;
 
@@ -49,45 +49,28 @@ export function NewsSeasonSection({
     }
   };
 
-  const openArticle = (
-    article: NewsArticleItem,
-    triggerEl: HTMLButtonElement,
-  ) => {
-    openerButtonRef.current = triggerEl;
+  const openArticle = (article: NewsArticleItem) => {
+    restoreFocusRef.current = true;
     setSelectedArticle(article);
     onModalOpenChange?.(true);
   };
 
-  const closeArticle = () => {
+  const closeArticle = useCallback(() => {
     setSelectedArticle(null);
     onModalOpenChange?.(false);
-    openerButtonRef.current?.focus();
-  };
+  }, [onModalOpenChange]);
 
-  useEffect(() => {
-    if (!selectedArticle) {
-      return undefined;
-    }
+  const closeArticleForNavigation = useCallback(() => {
+    restoreFocusRef.current = false;
+    setSelectedArticle(null);
+    onModalOpenChange?.(false);
+  }, [onModalOpenChange]);
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    closeButtonRef.current?.focus();
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        setSelectedArticle(null);
-        onModalOpenChange?.(false);
-        openerButtonRef.current?.focus();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [onModalOpenChange, selectedArticle]);
+  const dialogRef = useModalAccessibility<HTMLDivElement>({
+    isOpen: Boolean(selectedArticle),
+    onClose: closeArticle,
+    restoreFocusRef,
+  });
 
   const filteredArticles = useMemo(
     () =>
@@ -215,9 +198,7 @@ export function NewsSeasonSection({
                 </a>
                 <button
                   type="button"
-                  onClick={(event) =>
-                    openArticle(article, event.currentTarget)
-                  }
+                  onClick={() => openArticle(article)}
                   className="inline-flex min-h-11 cursor-pointer items-center rounded-full bg-terracotta-deep px-4 py-2 text-xs font-bold text-surface-light transition-opacity hover:opacity-92"
                 >
                   <span>Đọc chi tiết</span>
@@ -235,11 +216,13 @@ export function NewsSeasonSection({
           onClick={closeArticle}
         >
           <div
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="news-modal-title"
+            tabIndex={-1}
             onClick={(event) => event.stopPropagation()}
-            className="max-h-[88vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-olive-primary/20 bg-surface-light p-6 text-espresso shadow-paper-lift sm:p-8"
+            className="max-h-[88vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-olive-primary/20 bg-surface-light p-6 text-espresso shadow-paper-lift focus:outline-none sm:p-8"
           >
             <div className="flex items-start justify-between gap-4 border-b border-olive-primary/14 pb-4">
               <div className="space-y-1">
@@ -256,7 +239,6 @@ export function NewsSeasonSection({
               </div>
 
               <button
-                ref={closeButtonRef}
                 type="button"
                 onClick={closeArticle}
                 className="inline-flex min-h-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-olive-primary/20 bg-canvas-cream px-3.5 text-xs font-bold text-espresso transition-colors hover:bg-card-butter"
@@ -291,7 +273,7 @@ export function NewsSeasonSection({
             <div className="mt-6 flex flex-wrap justify-end gap-2.5 border-t border-olive-primary/14 pt-4">
               <a
                 href="#thuc-don"
-                onClick={closeArticle}
+                onClick={closeArticleForNavigation}
                 className="inline-flex min-h-11 items-center rounded-full bg-terracotta-deep px-5 py-2.5 text-xs font-bold text-surface-light transition-opacity hover:opacity-92 sm:text-sm"
               >
                 Đặt món ngay →

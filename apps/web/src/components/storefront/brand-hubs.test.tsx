@@ -62,13 +62,33 @@ describe('Flagship Brand Hubs (#tin-tuc, #thanh-vien, #tuyen-dung, #nhuong-quyen
       within(dialog).getByText(/Góp phần giảm túi nhựa dùng một lần/i),
     ).toBeInTheDocument();
 
-    fireEvent.keyDown(document, { key: 'Escape' });
+    // Tab focus trap wraps from last focusable ("Đặt món ngay →") back to first ("Đóng")
+    const closeBtn = within(dialog).getByRole('button', { name: 'Đóng' });
+    const orderNowLink = within(dialog).getByRole('link', {
+      name: /Đặt món ngay/i,
+    });
+    orderNowLink.focus();
+    fireEvent.keyDown(window, { key: 'Tab' });
+    expect(document.activeElement).toBe(closeBtn);
+
+    fireEvent.keyDown(window, { key: 'Escape' });
     expect(onModalOpenChange).toHaveBeenLastCalledWith(false);
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(document.activeElement).toBe(firstDetailBtn);
+
+    // Clicking "Đặt món ngay →" closes modal WITHOUT yanking focus back to firstDetailBtn
+    fireEvent.click(firstDetailBtn);
+    const reopenedDialog = screen.getByRole('dialog');
+    const reopenedCta = within(reopenedDialog).getByRole('link', {
+      name: /Đặt món ngay/i,
+    });
+    reopenedCta.focus();
+    fireEvent.click(reopenedCta);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(document.activeElement).not.toBe(firstDetailBtn);
   });
 
-  it('validates Vietnam mobile numbers in MemberClubSection, computes 600 points (Hạng Sương Sớm) from recent orders + welcome bonus, and persists profile', () => {
+  it('validates Vietnam mobile numbers in MemberClubSection, computes 600 points (Hạng Sương Sớm) excluding cancelled/other-phone/unphoned orders, and preserves unsaved edits across recentOrdersVersion bumps', () => {
     window.localStorage.setItem(
       RECENT_ORDERS_STORAGE_KEY,
       JSON.stringify([
@@ -82,10 +102,41 @@ describe('Flagship Brand Hubs (#tin-tuc, #thanh-vien, #tuyen-dung, #nhuong-quyen
           createdAt: '2026-11-20T03:00:00.000Z',
           customerPhone: '0905123456',
         },
+        {
+          orderCode: 'OM-20261120-OTHER',
+          branchName: 'Cơ sở 2 — Hẻm 33 Nguyễn Công Trứ',
+          grandTotal: 300000,
+          totalItems: 6,
+          paymentMethod: 'cod',
+          status: 'completed',
+          createdAt: '2026-11-20T03:05:00.000Z',
+          customerPhone: '0988777666',
+        },
+        {
+          orderCode: 'OM-20261120-CANC',
+          branchName: 'Cơ sở 1 — Hoàng Diệu',
+          grandTotal: 200000,
+          totalItems: 4,
+          paymentMethod: 'cod',
+          status: 'cancelled',
+          createdAt: '2026-11-20T03:10:00.000Z',
+          customerPhone: '0905123456',
+        },
+        {
+          orderCode: 'OM-20261120-NO-PHONE',
+          branchName: 'Cơ sở 1 — Hoàng Diệu',
+          grandTotal: 400000,
+          totalItems: 8,
+          paymentMethod: 'cod',
+          status: 'completed',
+          createdAt: '2026-11-20T03:12:00.000Z',
+        },
       ]),
     );
 
-    const { container, unmount } = render(<MemberClubSection />);
+    const { container, rerender, unmount } = render(
+      <MemberClubSection recentOrdersVersion={0} />,
+    );
     expect(container.querySelector('#thanh-vien')).not.toBeNull();
 
     const nameInput = screen.getByLabelText(/Họ và tên thành viên/i);
@@ -110,6 +161,11 @@ describe('Flagship Brand Hubs (#tin-tuc, #thanh-vien, #tuyen-dung, #nhuong-quyen
     expect(within(cardRegion).getByText('600 điểm')).toBeInTheDocument();
     expect(within(cardRegion).getByText('Hạng Sương Sớm')).toBeInTheDocument();
     expect(within(cardRegion).getByText(/Nguyễn Minh Anh/)).toBeInTheDocument();
+
+    // User starts typing a new name while a background order refresh bumps recentOrdersVersion -> must NOT overwrite unsaved nameInput
+    fireEvent.change(nameInput, { target: { value: 'Nguyễn Minh Anh (Đang sửa)' } });
+    rerender(<MemberClubSection recentOrdersVersion={1} />);
+    expect(nameInput).toHaveValue('Nguyễn Minh Anh (Đang sửa)');
 
     unmount();
 

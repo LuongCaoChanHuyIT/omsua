@@ -72,6 +72,9 @@ export function MemberClubSection({
       setPhoneInput(existing.phone);
       setFavoriteDrink(existing.favoriteDrink);
     }
+  }, []);
+
+  useEffect(() => {
     setRecentOrders(readRecentOrders());
   }, [recentOrdersVersion]);
 

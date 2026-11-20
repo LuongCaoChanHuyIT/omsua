@@ -14,6 +14,7 @@ export interface UseModalAccessibilityOptions {
   isOpen: boolean;
   onClose: () => void;
   isCloseDisabled?: boolean;
+  restoreFocusRef?: RefObject<boolean>;
 }
 
 const FOCUSABLE_SELECTOR = [
@@ -64,6 +65,7 @@ export function useModalAccessibility<T extends HTMLElement = HTMLDivElement>({
   isOpen,
   onClose,
   isCloseDisabled = false,
+  restoreFocusRef,
 }: UseModalAccessibilityOptions): RefObject<T | null> {
   const dialogRef = useRef<T | null>(null);
   const onCloseRef = useRef<() => void>(onClose);
@@ -141,11 +143,12 @@ export function useModalAccessibility<T extends HTMLElement = HTMLDivElement>({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       unlockBodyScroll();
-      if (previouslyFocused && previouslyFocused.isConnected) {
+      const shouldRestore = restoreFocusRef ? restoreFocusRef.current : true;
+      if (shouldRestore && previouslyFocused && previouslyFocused.isConnected) {
         previouslyFocused.focus();
       }
     };
-  }, [isOpen]);
+  }, [isOpen, restoreFocusRef]);
 
   return dialogRef;
 }

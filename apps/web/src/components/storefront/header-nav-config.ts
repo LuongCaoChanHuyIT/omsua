@@ -351,13 +351,13 @@ export function computeMemberStatus(
 } {
   const normalizedPhone = normalizeVietnamPhone(phone);
   const matchingOrders = recentOrders.filter((order) => {
-    if (order.status === 'cancelled') {
+    if (order.status === 'cancelled' || !normalizedPhone) {
       return false;
     }
-    if (typeof order.customerPhone === 'string' && order.customerPhone.trim()) {
-      return normalizeVietnamPhone(order.customerPhone) === normalizedPhone;
+    if (typeof order.customerPhone !== 'string' || !order.customerPhone.trim()) {
+      return false;
     }
-    return Boolean(normalizedPhone);
+    return normalizeVietnamPhone(order.customerPhone) === normalizedPhone;
   });
   const totalSpent = matchingOrders.reduce(
     (sum, order) => sum + order.grandTotal,

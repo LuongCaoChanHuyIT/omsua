@@ -69,6 +69,7 @@ export function StorefrontHeader({
   suppressViewTransition = false,
 }: StorefrontHeaderProps) {
   const headerRef = useRef<HTMLElement | null>(null);
+  const mobileMenuTriggerRef = useRef<HTMLButtonElement | null>(null);
   const triggerRefs = useRef<
     Partial<Record<HeaderDropdownKey, HTMLButtonElement | null>>
   >({});
@@ -79,7 +80,12 @@ export function StorefrontHeader({
   );
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [openMobileGroup, setOpenMobileGroup] =
-    useState<HeaderDropdownKey | null>('san-pham');
+    useState<HeaderDropdownKey | null>(null);
+
+  const closeHeaderMenus = useCallback(() => {
+    setOpenDropdown(null);
+    setIsMobileMenuOpen(false);
+  }, []);
 
   useEffect(() => {
     const previous = prevCartCountRef.current;
@@ -108,6 +114,7 @@ export function StorefrontHeader({
         }
         if (isMobileMenuOpen) {
           setIsMobileMenuOpen(false);
+          mobileMenuTriggerRef.current?.focus();
         }
       }
     };
@@ -170,6 +177,7 @@ export function StorefrontHeader({
         <div className="flex flex-wrap items-center justify-between gap-2.5 py-2.5">
           <a
             href="#hero"
+            onClick={closeHeaderMenus}
             className="flex min-h-11 items-center gap-3 rounded-2xl pr-2"
           >
             <OmSuaLogo className="h-10 w-10 shrink-0 sm:h-11 sm:w-11" />
@@ -220,7 +228,10 @@ export function StorefrontHeader({
             {onOpenOrderLookup ? (
               <button
                 type="button"
-                onClick={onOpenOrderLookup}
+                onClick={() => {
+                  closeHeaderMenus();
+                  onOpenOrderLookup();
+                }}
                 className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-full border border-card-butter/40 bg-card-butter px-3.5 py-2 text-xs font-bold text-olive-primary tabular-nums transition-opacity hover:opacity-92 sm:text-sm"
               >
                 <span>{orderLookupLabel}</span>
@@ -230,7 +241,10 @@ export function StorefrontHeader({
             <button
               type="button"
               data-cart-pulse={isCartPulsing ? 'true' : undefined}
-              onClick={onOpenCart}
+              onClick={() => {
+                closeHeaderMenus();
+                onOpenCart();
+              }}
               className={`inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-full border border-card-butter/35 bg-terracotta-deep px-4 py-2 text-xs font-bold text-surface-light tabular-nums transition-transform duration-200 hover:opacity-92 sm:text-sm ${
                 isCartPulsing ? 'scale-105' : 'scale-100'
               }`}
@@ -241,10 +255,14 @@ export function StorefrontHeader({
             </button>
 
             <button
+              ref={mobileMenuTriggerRef}
               type="button"
               aria-expanded={isMobileMenuOpen}
               aria-controls="mobile-flagship-nav"
-              onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+              onClick={() => {
+                setOpenDropdown(null);
+                setIsMobileMenuOpen((prev) => !prev);
+              }}
               className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-full border border-[#4D4636] bg-[#363125] px-3.5 py-2 text-xs font-bold tracking-wider text-surface-light uppercase transition-colors hover:border-card-butter hover:text-card-butter lg:hidden"
             >
               <span aria-hidden="true">{isMobileMenuOpen ? '✕' : '☰'}</span>
@@ -338,7 +356,7 @@ export function StorefrontHeader({
           {isMobileMenuOpen ? (
             <div
               id="mobile-flagship-nav"
-              className="space-y-2 py-3 lg:hidden"
+              className="max-h-[calc(100dvh-7.5rem)] space-y-2 overflow-y-auto overscroll-contain py-3 lg:hidden"
             >
               {FLAGSHIP_HEADER_NAV.map((entry) => {
                 if (entry.kind === 'link') {

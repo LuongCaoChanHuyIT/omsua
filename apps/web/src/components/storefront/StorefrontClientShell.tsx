@@ -117,6 +117,7 @@ function StorefrontShellInner({
   const [isNewsModalOpen, setIsNewsModalOpen] = useState<boolean>(false);
   const [trackedOrder, setTrackedOrder] = useState<OrderRecord | null>(null);
   const [recentOrderCount, setRecentOrderCount] = useState<number>(0);
+  const [recentOrdersVersion, setRecentOrdersVersion] = useState<number>(0);
   const [hasHydratedUrl, setHasHydratedUrl] = useState<boolean>(false);
   const hasOpenOverlay = Boolean(
     activeProductForModal ||
@@ -188,6 +189,7 @@ function StorefrontShellInner({
 
   const syncRecentOrderCount = useCallback(() => {
     setRecentOrderCount(readRecentOrders().length);
+    setRecentOrdersVersion((prev) => prev + 1);
   }, []);
 
   const spotlightProducts = useMemo(
@@ -435,7 +437,7 @@ function StorefrontShellInner({
           onModalOpenChange={setIsNewsModalOpen}
         />
 
-        <MemberClubSection recentOrdersVersion={recentOrderCount} />
+        <MemberClubSection recentOrdersVersion={recentOrdersVersion} />
 
         <CareersAndFranchiseSection branches={branches} />
       </main>
